@@ -4,6 +4,7 @@ const { parseStringPromise } = require('xml2js');
 const path = require('path');
 const { translateTitle } = require('./translate');
 const { scoreImportance, getImportanceLevel } = require('./scoring');
+const { upsertMany, searchArticles, getStats, getAllSources } = require('./db');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -368,7 +369,7 @@ app.get('/api/news', async (req, res) => {
     }
 });
 
-// ─── All Sources Combined ─────────────────────────────────
+// ─── Enrichment ───────────────────────────────────────────
 
 function enrichItem(item) {
     const titleZh = translateTitle(item.title);
@@ -377,9 +378,16 @@ function enrichItem(item) {
     return { ...item, titleZh, importance, importanceLevel };
 }
 
-app.get('/api/all', async (req, res) => {
+// ─── Fetch & Store (background job) ───────────────────────
+
+let isFetching = false;
+
+async function fetchAndStore() {
+    if (isFetching) return;
+    isFetching = true;
+    console.log('📥 Fetching data from all sources...');
+
     try {
-        const sortBy = req.query.sort || 'importance'; // 'importance' or 'date'
         const baseUrl = `http://localhost:${PORT}`;
         const [pubmed, arxiv, journals, news] = await Promise.allSettled([
             fetchJSON(`${baseUrl}/api/pubmed`),
@@ -395,29 +403,72 @@ app.get('/api/all', async (req, res) => {
             ...(news.status === 'fulfilled' ? news.value : []),
         ].map(enrichItem);
 
-        // Sort
-        if (sortBy === 'importance') {
-            all.sort((a, b) => b.importance - a.importance);
-        } else {
-            all.sort((a, b) => {
-                const da = new Date(a.date);
-                const db = new Date(b.date);
-                if (isNaN(da) && isNaN(db)) return 0;
-                if (isNaN(da)) return 1;
-                if (isNaN(db)) return -1;
-                return db - da;
-            });
-        }
-
-        res.json(all);
+        upsertMany(all);
+        const stats = getStats();
+        console.log(`✅ Stored ${all.length} items (DB total: ${stats.total})`);
     } catch (err) {
-        console.error('All error:', err.message);
-        res.json(DEMO_DATA.map(enrichItem));
+        console.error('fetchAndStore error:', err.message);
+        // Fallback: store demo data
+        upsertMany(DEMO_DATA.map(enrichItem));
+    } finally {
+        isFetching = false;
+    }
+}
+
+// ─── API: All (from database) ─────────────────────────────
+
+app.get('/api/all', (req, res) => {
+    try {
+        const { q, category, source, sort, page, limit } = req.query;
+        const result = searchArticles({
+            query: q,
+            category: category || 'all',
+            source,
+            sort: sort || 'importance',
+            page: parseInt(page) || 1,
+            limit: parseInt(limit) || 50
+        });
+        res.json(result);
+    } catch (err) {
+        console.error('DB query error:', err.message);
+        res.json({ items: [], total: 0, page: 1, limit: 50, hasMore: false });
+    }
+});
+
+// ─── API: Stats ───────────────────────────────────────────
+
+app.get('/api/stats', (req, res) => {
+    try {
+        res.json(getStats());
+    } catch (err) {
+        res.json({ total: 0, journals: 0, preprints: 0, news: 0 });
+    }
+});
+
+// ─── API: Sources ─────────────────────────────────────────
+
+app.get('/api/sources', (req, res) => {
+    try {
+        const { category } = req.query;
+        if (category && category !== 'all') {
+            const result = searchArticles({ category, limit: 1000 });
+            const sources = [...new Set(result.items.map(i => i.provider))].filter(Boolean);
+            return res.json(sources);
+        }
+        res.json(getAllSources());
+    } catch (err) {
+        res.json([]);
     }
 });
 
 // ─── Start ────────────────────────────────────────────────
 
+const FETCH_INTERVAL = 2 * 60 * 60 * 1000; // 2 hours
+
 app.listen(PORT, () => {
-    console.log(`🧠 BCI Tracker running at http://localhost:${PORT}`);
+    console.log(`🧠 BCI Tracker v2.0 running at http://localhost:${PORT}`);
+    // Initial fetch after 3 seconds (so server is ready)
+    setTimeout(fetchAndStore, 3000);
+    // Repeat every 2 hours
+    setInterval(fetchAndStore, FETCH_INTERVAL);
 });

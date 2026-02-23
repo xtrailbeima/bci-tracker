@@ -8,6 +8,7 @@
         "dev": "node server.js"
     },
     "dependencies": {
+        "better-sqlite3": "^12.6.2",
         "cors": "^2.8.5",
         "express": "^4.21.0",
         "xml2js": "^0.6.2"

@@ -4,6 +4,9 @@ let activeCategory = 'all';
 let activeSource = null;
 let searchQuery = '';
 let currentSort = 'importance'; // 'importance' or 'date'
+let currentPage = 1;
+let hasMore = false;
+let totalItems = 0;
 
 // Auto-refresh every 2 hours (7200000 ms)
 const REFRESH_INTERVAL = 2 * 60 * 60 * 1000;
@@ -25,19 +28,55 @@ const statUpdated = document.getElementById('statUpdated');
 const refreshCountdown = document.getElementById('refreshCountdown');
 
 // ── Fetch Data ────────────────────────────────────────
-async function fetchAll() {
-    loading.classList.remove('hidden');
-    emptyState.style.display = 'none';
-    cardGrid.innerHTML = '';
+async function fetchAll(append = false) {
+    if (!append) {
+        loading.classList.remove('hidden');
+        emptyState.style.display = 'none';
+        cardGrid.innerHTML = '';
+        currentPage = 1;
+        allItems = [];
+    }
     refreshBtn.classList.add('spinning');
 
     try {
-        const res = await fetch(`/api/all?sort=${currentSort}`);
+        const params = new URLSearchParams({
+            sort: currentSort,
+            page: currentPage,
+            limit: 50,
+        });
+        if (activeCategory && activeCategory !== 'all') {
+            params.set('category', activeCategory);
+        }
+        if (activeSource) {
+            params.set('source', activeSource);
+        }
+        if (searchQuery) {
+            params.set('q', searchQuery);
+        }
+
+        const res = await fetch(`/api/all?${params}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        allItems = await res.json();
-        updateStats();
-        buildSourceTags();
+        const data = await res.json();
+
+        // Handle both new format { items, total, hasMore } and old array format
+        if (Array.isArray(data)) {
+            allItems = data;
+            totalItems = data.length;
+            hasMore = false;
+        } else {
+            if (append) {
+                allItems = [...allItems, ...data.items];
+            } else {
+                allItems = data.items;
+            }
+            totalItems = data.total;
+            hasMore = data.hasMore;
+        }
+
+        await updateStats();
+        await buildSourceTags();
         renderCards();
+
         // Reset auto-refresh timer
         nextRefreshTime = Date.now() + REFRESH_INTERVAL;
         startCountdown();
@@ -73,15 +112,20 @@ function startCountdown() {
 }
 
 // ── Stats ─────────────────────────────────────────────
-function updateStats() {
-    const journals = allItems.filter(i => i.category === 'journal').length;
-    const preprints = allItems.filter(i => i.category === 'preprint').length;
-    const news = allItems.filter(i => i.category === 'news').length;
-
-    animateNumber(statTotal, allItems.length);
-    animateNumber(statJournal, journals);
-    animateNumber(statPreprint, preprints);
-    animateNumber(statNews, news);
+async function updateStats() {
+    try {
+        const res = await fetch('/api/stats');
+        if (res.ok) {
+            const stats = await res.json();
+            animateNumber(statTotal, stats.total);
+            animateNumber(statJournal, stats.journals);
+            animateNumber(statPreprint, stats.preprints);
+            animateNumber(statNews, stats.news);
+        }
+    } catch (e) {
+        // Fallback: use local data
+        animateNumber(statTotal, allItems.length);
+    }
 
     const now = new Date();
     statUpdated.textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
@@ -105,86 +149,76 @@ function animateNumber(el, target) {
 function pad(n) { return String(n).padStart(2, '0'); }
 
 // ── Source Tags ───────────────────────────────────────
-function buildSourceTags() {
-    let itemsForTags = [...allItems];
-    if (activeCategory !== 'all') {
-        itemsForTags = itemsForTags.filter(i => i.category === activeCategory);
-    }
-    const sources = [...new Set(itemsForTags.map(i => i.provider))].filter(Boolean);
+async function buildSourceTags() {
+    try {
+        const params = activeCategory !== 'all' ? `?category=${activeCategory}` : '';
+        const res = await fetch(`/api/sources${params}`);
+        const sources = res.ok ? await res.json() : [];
 
-    // Clear activeSource if it's not available in the new category
-    if (activeSource && !sources.includes(activeSource)) {
-        activeSource = null;
-    }
+        // Clear activeSource if it's not available in the new category
+        if (activeSource && !sources.includes(activeSource)) {
+            activeSource = null;
+        }
 
-    sourceFilters.innerHTML = sources.map(s => {
-        const isActive = s === activeSource ? 'active' : '';
-        return `<button class="source-tag ${isActive}" data-source="${s}">${s}</button>`;
-    }).join('');
+        sourceFilters.innerHTML = sources.map(s => {
+            const isActive = s === activeSource ? 'active' : '';
+            return `<button class="source-tag ${isActive}" data-source="${s}">${s}</button>`;
+        }).join('');
 
-    sourceFilters.querySelectorAll('.source-tag').forEach(btn => {
-        btn.addEventListener('click', () => {
-            if (activeSource === btn.dataset.source) {
-                activeSource = null;
-                btn.classList.remove('active');
-            } else {
-                sourceFilters.querySelectorAll('.source-tag').forEach(b => b.classList.remove('active'));
-                activeSource = btn.dataset.source;
-                btn.classList.add('active');
-            }
-            renderCards();
+        sourceFilters.querySelectorAll('.source-tag').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (activeSource === btn.dataset.source) {
+                    activeSource = null;
+                    btn.classList.remove('active');
+                } else {
+                    sourceFilters.querySelectorAll('.source-tag').forEach(b => b.classList.remove('active'));
+                    activeSource = btn.dataset.source;
+                    btn.classList.add('active');
+                }
+                fetchAll(); // Re-fetch from DB with new source filter
+            });
         });
-    });
+    } catch (e) {
+        console.error('Source tags error:', e);
+    }
 }
 
 // ── Render ─────────────────────────────────────────────
 function renderCards() {
-    let items = [...allItems];
-
-    // Category filter
-    if (activeCategory !== 'all') {
-        items = items.filter(i => i.category === activeCategory);
-    }
-
-    // Source filter
-    if (activeSource) {
-        items = items.filter(i => i.provider === activeSource);
-    }
-
-    // Search
-    if (searchQuery) {
-        const q = searchQuery.toLowerCase();
-        items = items.filter(i =>
-            (i.title && i.title.toLowerCase().includes(q)) ||
-            (i.titleZh && i.titleZh.toLowerCase().includes(q)) ||
-            (i.abstract && i.abstract.toLowerCase().includes(q)) ||
-            (i.authors && i.authors.toLowerCase().includes(q)) ||
-            (i.source && i.source.toLowerCase().includes(q))
-        );
-    }
-
-    // Client-side sort (for filtered results)
-    if (currentSort === 'importance') {
-        items.sort((a, b) => (b.importance || 0) - (a.importance || 0));
-    } else {
-        items.sort((a, b) => {
-            const da = new Date(a.date);
-            const db = new Date(b.date);
-            if (isNaN(da) && isNaN(db)) return 0;
-            if (isNaN(da)) return 1;
-            if (isNaN(db)) return -1;
-            return db - da;
-        });
-    }
-
-    if (items.length === 0) {
+    if (allItems.length === 0) {
         cardGrid.innerHTML = '';
         emptyState.style.display = 'flex';
+        removeLoadMore();
         return;
     }
 
     emptyState.style.display = 'none';
-    cardGrid.innerHTML = items.map(item => createCard(item)).join('');
+    cardGrid.innerHTML = allItems.map(item => createCard(item)).join('');
+
+    // Add "Load More" button if there's more data
+    if (hasMore) {
+        addLoadMore();
+    } else {
+        removeLoadMore();
+    }
+}
+
+function addLoadMore() {
+    removeLoadMore();
+    const btn = document.createElement('button');
+    btn.id = 'loadMoreBtn';
+    btn.className = 'load-more-btn';
+    btn.textContent = `加载更多 (已显示 ${allItems.length} / ${totalItems})`;
+    btn.addEventListener('click', () => {
+        currentPage++;
+        fetchAll(true);
+    });
+    cardGrid.parentElement.appendChild(btn);
+}
+
+function removeLoadMore() {
+    const existing = document.getElementById('loadMoreBtn');
+    if (existing) existing.remove();
 }
 
 function createCard(item) {
@@ -296,8 +330,7 @@ document.querySelectorAll('.filter-tab').forEach(tab => {
         document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
         tab.classList.add('active');
         activeCategory = tab.dataset.filter;
-        buildSourceTags(); // Rebuild tags for the new category
-        renderCards();
+        fetchAll(); // Re-fetch from DB with new category
     });
 });
 
@@ -307,7 +340,7 @@ document.querySelectorAll('.sort-tab').forEach(tab => {
         document.querySelectorAll('.sort-tab').forEach(t => t.classList.remove('active'));
         tab.classList.add('active');
         currentSort = tab.dataset.sort;
-        renderCards();
+        fetchAll(); // Re-fetch from DB with new sort
     });
 });
 
@@ -317,8 +350,8 @@ searchInput.addEventListener('input', (e) => {
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(() => {
         searchQuery = e.target.value.trim();
-        renderCards();
-    }, 250);
+        fetchAll(); // Re-fetch from DB with search query
+    }, 400);
 });
 
 // Refresh
