@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BCI Tracker — 脑机接口学术与产业追踪</title>
+  <meta name="description"
+    content="Track the latest Brain-Computer Interface research papers from Nature, Science, PubMed, arXiv, and US BCI company news.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 40 40" fill="none">
+            <circle cx="20" cy="20" r="18" stroke="url(#grad)" stroke-width="2" opacity="0.4" />
+            <circle cx="20" cy="20" r="10" stroke="url(#grad)" stroke-width="2" />
+            <circle cx="20" cy="20" r="3" fill="url(#grad)" />
+            <path d="M20 2 L20 8" stroke="url(#grad)" stroke-width="1.5" stroke-linecap="round" />
+            <path d="M20 32 L20 38" stroke="url(#grad)" stroke-width="1.5" stroke-linecap="round" />
+            <path d="M2 20 L8 20" stroke="url(#grad)" stroke-width="1.5" stroke-linecap="round" />
+            <path d="M32 20 L38 20" stroke="url(#grad)" stroke-width="1.5" stroke-linecap="round" />
+            <path d="M7.2 7.2 L11.4 11.4" stroke="url(#grad)" stroke-width="1.5" stroke-linecap="round" />
+            <path d="M28.6 28.6 L32.8 32.8" stroke="url(#grad)" stroke-width="1.5" stroke-linecap="round" />
+            <path d="M32.8 7.2 L28.6 11.4" stroke="url(#grad)" stroke-width="1.5" stroke-linecap="round" />
+            <path d="M11.4 28.6 L7.2 32.8" stroke="url(#grad)" stroke-width="1.5" stroke-linecap="round" />
+            <defs>
+              <linearGradient id="grad" x1="0" y1="0" x2="40" y2="40">
+                <stop offset="0%" stop-color="#00f0ff" />
+                <stop offset="100%" stop-color="#8b5cf6" />
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <div class="logo-text">
+          <h1>BCI Tracker</h1>
+          <span class="logo-sub">脑机接口 · 学术与产业追踪</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <div class="search-box">
+          <svg class="search-icon" viewBox="0 0 20 20" fill="currentColor" width="16" height="16">
+            <path fill-rule="evenodd"
+              d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" />
+          </svg>
+          <input type="text" id="searchInput" placeholder="搜索论文、新闻..." autocomplete="off">
+        </div>
+        <button class="btn-refresh" id="refreshBtn" title="刷新数据">
+          <svg viewBox="0 0 20 20" fill="currentColor" width="18" height="18">
+            <path fill-rule="evenodd"
+              d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Stats Bar -->
+  <section class="stats-bar">
+    <div class="stat-card">
+      <span class="stat-number" id="statTotal">—</span>
+      <span class="stat-label">总条目</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-number" id="statJournal">—</span>
+      <span class="stat-label">期刊论文</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-number" id="statPreprint">—</span>
+      <span class="stat-label">预印本</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-number" id="statNews">—</span>
+      <span class="stat-label">产业新闻</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-number" id="statUpdated">—</span>
+      <span class="stat-label">更新时间</span>
+    </div>
+  </section>
+
+  <!-- Filter Tabs -->
+  <section class="filter-bar">
+    <div class="filter-tabs">
+      <button class="filter-tab active" data-filter="all">全部</button>
+      <button class="filter-tab" data-filter="journal">期刊论文</button>
+      <button class="filter-tab" data-filter="preprint">预印本</button>
+      <button class="filter-tab" data-filter="news">产业动态</button>
+    </div>
+    <div class="sort-tabs">
+      <span class="sort-label">排序：</span>
+      <button class="sort-tab active" data-sort="importance">重要性</button>
+      <button class="sort-tab" data-sort="date">时间</button>
+    </div>
+    <div class="source-filters" id="sourceFilters"></div>
+    <div class="auto-refresh-indicator">
+      <span class="pulse-dot"></span>
+      <span id="refreshCountdown">下次刷新：2:00:00</span>
+    </div>
+  </section>
+
+  <!-- Content Grid -->
+  <main class="content">
+    <div class="card-grid" id="cardGrid">
+      <!-- Cards injected by JS -->
+    </div>
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <p>正在从全球数据源获取最新内容…</p>
+    </div>
+    <div class="empty-state" id="emptyState" style="display:none;">
+      <svg viewBox="0 0 80 80" fill="none" width="80" height="80">
+        <circle cx="40" cy="40" r="36" stroke="#334155" stroke-width="2" />
+        <path d="M28 35 Q40 50 52 35" stroke="#64748b" stroke-width="2" fill="none" />
+        <circle cx="30" cy="30" r="3" fill="#64748b" />
+        <circle cx="50" cy="30" r="3" fill="#64748b" />
+      </svg>
+      <p>暂无匹配内容</p>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>数据来源：PubMed · arXiv · Nature · Science · Google News &nbsp;|&nbsp; BCI Tracker v1.0</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+
+</html>
