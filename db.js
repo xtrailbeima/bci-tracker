@@ -30,6 +30,14 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_articles_provider ON articles(provider);
   CREATE INDEX IF NOT EXISTS idx_articles_date     ON articles(date DESC);
   CREATE INDEX IF NOT EXISTS idx_articles_importance ON articles(importance DESC);
+
+  CREATE TABLE IF NOT EXISTS subscribers (
+    id        INTEGER PRIMARY KEY AUTOINCREMENT,
+    email     TEXT UNIQUE NOT NULL,
+    name      TEXT DEFAULT '',
+    active    INTEGER DEFAULT 1,
+    createdAt TEXT DEFAULT (datetime('now'))
+  );
 `);
 
 // ─── Prepared Statements ──────────────────────────────────
@@ -75,7 +83,7 @@ function upsertMany(items) {
     tx(items);
 }
 
-function searchArticles({ query, category, source, sort, page, limit } = {}) {
+function searchArticles({ query, category, source, sort, page, limit, dateFrom, dateTo } = {}) {
     const conditions = [];
     const params = {};
 
@@ -92,6 +100,16 @@ function searchArticles({ query, category, source, sort, page, limit } = {}) {
     if (query) {
         conditions.push('(title LIKE @q OR titleZh LIKE @q OR abstract LIKE @q OR authors LIKE @q)');
         params.q = `%${query}%`;
+    }
+
+    if (dateFrom) {
+        conditions.push('date >= @dateFrom');
+        params.dateFrom = dateFrom;
+    }
+
+    if (dateTo) {
+        conditions.push('date <= @dateTo');
+        params.dateTo = dateTo;
     }
 
     const where = conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : '';
@@ -125,4 +143,71 @@ function getAllSources() {
         .map(r => r.provider);
 }
 
-module.exports = { upsertArticle, upsertMany, searchArticles, getStats, getAllSources };
+// ─── Trending Keywords ────────────────────────────────────
+
+const BCI_KEYWORDS = [
+    'brain-computer interface', 'BCI', 'neural interface', 'neuroprosthesis', 'EEG',
+    'intracortical', 'neurostimulation', 'neuromodulation', 'brain-machine interface',
+    'neural decoding', 'spike sorting', 'motor imagery', 'P300', 'SSVEP',
+    'deep brain stimulation', 'DBS', 'electrocorticography', 'ECoG', 'fNIRS',
+    'Neuralink', 'Synchron', 'Blackrock', 'Paradromics', 'FDA', 'clinical trial',
+    'speech decoding', 'handwriting', 'spinal cord', 'paralysis', 'prosthetic',
+    'invasive', 'non-invasive', 'implant', 'electrode', 'neural network',
+    'machine learning', 'deep learning', 'signal processing', 'real-time',
+    'closed-loop', 'brain-spine', 'optogenetics', 'neuroplasticity', 'rehabilitation'
+];
+
+function getTrendingKeywords({ dateFrom, dateTo, limit: topN } = {}) {
+    const conditions = [];
+    const params = {};
+    if (dateFrom) { conditions.push('date >= @dateFrom'); params.dateFrom = dateFrom; }
+    if (dateTo) { conditions.push('date <= @dateTo'); params.dateTo = dateTo; }
+    const where = conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : '';
+
+    const rows = db.prepare(`SELECT title, abstract FROM articles ${where}`).all(params);
+
+    const counts = {};
+    for (const kw of BCI_KEYWORDS) counts[kw] = 0;
+
+    for (const row of rows) {
+        const text = `${row.title} ${row.abstract}`.toLowerCase();
+        for (const kw of BCI_KEYWORDS) {
+            if (text.includes(kw.toLowerCase())) counts[kw]++;
+        }
+    }
+
+    return Object.entries(counts)
+        .filter(([, c]) => c > 0)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, topN || 15)
+        .map(([keyword, count]) => ({ keyword, count }));
+}
+
+// ─── Subscribers ──────────────────────────────────────────
+
+function addSubscriber(email, name) {
+    return db.prepare(
+        'INSERT INTO subscribers (email, name) VALUES (@email, @name) ON CONFLICT(email) DO UPDATE SET name = excluded.name, active = 1'
+    ).run({ email, name: name || '' });
+}
+
+function removeSubscriber(email) {
+    return db.prepare('UPDATE subscribers SET active = 0 WHERE email = @email').run({ email });
+}
+
+function getActiveSubscribers() {
+    return db.prepare('SELECT * FROM subscribers WHERE active = 1 ORDER BY createdAt').all();
+}
+
+function getArticlesSince(hoursAgo) {
+    const since = new Date(Date.now() - hoursAgo * 3600000).toISOString();
+    return db.prepare(
+        'SELECT * FROM articles WHERE fetchedAt >= @since ORDER BY importance DESC'
+    ).all({ since });
+}
+
+module.exports = {
+    upsertArticle, upsertMany, searchArticles, getStats, getAllSources,
+    getTrendingKeywords,
+    addSubscriber, removeSubscriber, getActiveSubscribers, getArticlesSince
+};

@@ -7,6 +7,7 @@ let currentSort = 'importance'; // 'importance' or 'date'
 let currentPage = 1;
 let hasMore = false;
 let totalItems = 0;
+let activeTimeRange = 'all'; // 'all', 'week', 'month', 'quarter', 'year'
 
 // Auto-refresh every 2 hours (7200000 ms)
 const REFRESH_INTERVAL = 2 * 60 * 60 * 1000;
@@ -26,6 +27,20 @@ const statPreprint = document.getElementById('statPreprint');
 const statNews = document.getElementById('statNews');
 const statUpdated = document.getElementById('statUpdated');
 const refreshCountdown = document.getElementById('refreshCountdown');
+const trendingPanel = document.getElementById('trendingPanel');
+const trendingTags = document.getElementById('trendingTags');
+
+// ── Time Range Helpers ────────────────────────────────
+function getDateRange(range) {
+    const now = new Date();
+    switch (range) {
+        case 'week': return new Date(now - 7 * 86400000).toISOString();
+        case 'month': return new Date(now - 30 * 86400000).toISOString();
+        case 'quarter': return new Date(now - 90 * 86400000).toISOString();
+        case 'year': return new Date(now - 365 * 86400000).toISOString();
+        default: return undefined;
+    }
+}
 
 // ── Fetch Data ────────────────────────────────────────
 async function fetchAll(append = false) {
@@ -53,12 +68,15 @@ async function fetchAll(append = false) {
         if (searchQuery) {
             params.set('q', searchQuery);
         }
+        const dateFrom = getDateRange(activeTimeRange);
+        if (dateFrom) {
+            params.set('from', dateFrom);
+        }
 
         const res = await fetch(`/api/all?${params}`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
 
-        // Handle both new format { items, total, hasMore } and old array format
         if (Array.isArray(data)) {
             allItems = data;
             totalItems = data.length;
@@ -75,6 +93,7 @@ async function fetchAll(append = false) {
 
         await updateStats();
         await buildSourceTags();
+        await fetchTrending();
         renderCards();
 
         // Reset auto-refresh timer
@@ -90,6 +109,36 @@ async function fetchAll(append = false) {
     } finally {
         loading.classList.add('hidden');
         refreshBtn.classList.remove('spinning');
+    }
+}
+
+// ── Trending Keywords ─────────────────────────────────
+async function fetchTrending() {
+    try {
+        const period = activeTimeRange !== 'all' ? activeTimeRange : '';
+        const url = period ? `/api/trending?period=${period}` : '/api/trending';
+        const res = await fetch(url);
+        const keywords = res.ok ? await res.json() : [];
+
+        if (keywords.length > 0) {
+            trendingPanel.style.display = 'block';
+            trendingTags.innerHTML = keywords.map(k =>
+                `<button class="trending-tag" data-kw="${k.keyword}">${k.keyword}<span class="tag-count">${k.count}</span></button>`
+            ).join('');
+
+            // Click trending keyword to search
+            trendingTags.querySelectorAll('.trending-tag').forEach(tag => {
+                tag.addEventListener('click', () => {
+                    searchInput.value = tag.dataset.kw;
+                    searchQuery = tag.dataset.kw;
+                    fetchAll();
+                });
+            });
+        } else {
+            trendingPanel.style.display = 'none';
+        }
+    } catch (e) {
+        trendingPanel.style.display = 'none';
     }
 }
 
@@ -123,10 +172,8 @@ async function updateStats() {
             animateNumber(statNews, stats.news);
         }
     } catch (e) {
-        // Fallback: use local data
         animateNumber(statTotal, allItems.length);
     }
-
     const now = new Date();
     statUpdated.textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
 }
@@ -136,7 +183,6 @@ function animateNumber(el, target) {
     const start = parseInt(el.textContent) || 0;
     const diff = target - start;
     const startTime = performance.now();
-
     function step(time) {
         const progress = Math.min((time - startTime) / duration, 1);
         const eased = 1 - Math.pow(1 - progress, 3);
@@ -155,7 +201,6 @@ async function buildSourceTags() {
         const res = await fetch(`/api/sources${params}`);
         const sources = res.ok ? await res.json() : [];
 
-        // Clear activeSource if it's not available in the new category
         if (activeSource && !sources.includes(activeSource)) {
             activeSource = null;
         }
@@ -175,7 +220,7 @@ async function buildSourceTags() {
                     activeSource = btn.dataset.source;
                     btn.classList.add('active');
                 }
-                fetchAll(); // Re-fetch from DB with new source filter
+                fetchAll();
             });
         });
     } catch (e) {
@@ -191,16 +236,9 @@ function renderCards() {
         removeLoadMore();
         return;
     }
-
     emptyState.style.display = 'none';
     cardGrid.innerHTML = allItems.map(item => createCard(item)).join('');
-
-    // Add "Load More" button if there's more data
-    if (hasMore) {
-        addLoadMore();
-    } else {
-        removeLoadMore();
-    }
+    if (hasMore) { addLoadMore(); } else { removeLoadMore(); }
 }
 
 function addLoadMore() {
@@ -209,10 +247,7 @@ function addLoadMore() {
     btn.id = 'loadMoreBtn';
     btn.className = 'load-more-btn';
     btn.textContent = `加载更多 (已显示 ${allItems.length} / ${totalItems})`;
-    btn.addEventListener('click', () => {
-        currentPage++;
-        fetchAll(true);
-    });
+    btn.addEventListener('click', () => { currentPage++; fetchAll(true); });
     cardGrid.parentElement.appendChild(btn);
 }
 
@@ -222,30 +257,14 @@ function removeLoadMore() {
 }
 
 function createCard(item) {
-    const badgeClass = {
-        journal: 'badge-journal',
-        preprint: 'badge-preprint',
-        news: 'badge-news'
-    }[item.category] || 'badge-journal';
-
-    const badgeLabel = {
-        journal: '期刊',
-        preprint: '预印本',
-        news: '新闻'
-    }[item.category] || '其他';
-
+    const badgeClass = { journal: 'badge-journal', preprint: 'badge-preprint', news: 'badge-news' }[item.category] || 'badge-journal';
+    const badgeLabel = { journal: '期刊', preprint: '预印本', news: '新闻' }[item.category] || '其他';
     const dotClass = getDotClass(item.provider);
     const dateStr = formatDate(item.date);
-
-    // Importance
     const impLevel = item.importanceLevel || 'low';
     const impScore = item.importance || 0;
     const impLabel = { critical: '🔴 关键', high: '🟡 重要', medium: '🔵 一般', low: '⚪ 参考' }[impLevel] || '参考';
-
-    // Chinese translation
-    const titleZhHtml = item.titleZh
-        ? `<p class="card-title-zh">${escapeHtml(item.titleZh)}</p>`
-        : '';
+    const titleZhHtml = item.titleZh ? `<p class="card-title-zh">${escapeHtml(item.titleZh)}</p>` : '';
 
     return `
     <article class="card" onclick="window.open('${escapeHtml(item.url)}', '_blank')">
@@ -287,23 +306,17 @@ function formatDate(dateStr) {
     if (!dateStr) return '';
     try {
         const d = new Date(dateStr);
-        if (isNaN(d)) {
-            return dateStr.slice(0, 20);
-        }
+        if (isNaN(d)) return dateStr.slice(0, 20);
         const now = new Date();
         const diff = now - d;
         const hours = Math.floor(diff / 3600000);
         const days = Math.floor(diff / 86400000);
-
         if (hours < 1) return '刚刚';
         if (hours < 24) return `${hours} 小时前`;
         if (days < 7) return `${days} 天前`;
         if (days < 60) return `${Math.floor(days / 7)} 周前`;
-
         return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-    } catch {
-        return dateStr.slice(0, 20);
-    }
+    } catch { return dateStr.slice(0, 20); }
 }
 
 function truncateAuthors(str) {
@@ -315,22 +328,28 @@ function truncateAuthors(str) {
 
 function escapeHtml(str) {
     if (!str) return '';
-    return str
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
 }
 
 // ── Events ────────────────────────────────────────────
-// Filter tabs
+
+// Filter tabs (category)
 document.querySelectorAll('.filter-tab').forEach(tab => {
     tab.addEventListener('click', () => {
         document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
         tab.classList.add('active');
         activeCategory = tab.dataset.filter;
-        fetchAll(); // Re-fetch from DB with new category
+        fetchAll();
+    });
+});
+
+// Time range tabs
+document.querySelectorAll('.time-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        document.querySelectorAll('.time-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        activeTimeRange = tab.dataset.range;
+        fetchAll();
     });
 });
 
@@ -340,7 +359,7 @@ document.querySelectorAll('.sort-tab').forEach(tab => {
         document.querySelectorAll('.sort-tab').forEach(t => t.classList.remove('active'));
         tab.classList.add('active');
         currentSort = tab.dataset.sort;
-        fetchAll(); // Re-fetch from DB with new sort
+        fetchAll();
     });
 });
 
@@ -350,12 +369,48 @@ searchInput.addEventListener('input', (e) => {
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(() => {
         searchQuery = e.target.value.trim();
-        fetchAll(); // Re-fetch from DB with search query
+        fetchAll();
     }, 400);
 });
 
 // Refresh
 refreshBtn.addEventListener('click', fetchAll);
+
+// Subscribe form
+const subscribeForm = document.getElementById('subscribeForm');
+const subscribeMsg = document.getElementById('subscribeMsg');
+
+if (subscribeForm) {
+    subscribeForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('subEmail').value.trim();
+        const name = document.getElementById('subName').value.trim();
+        if (!email) return;
+
+        subscribeMsg.className = 'subscribe-msg';
+        subscribeMsg.textContent = '正在提交...';
+
+        try {
+            const res = await fetch('/api/subscribe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, name })
+            });
+            const data = await res.json();
+            if (data.success) {
+                subscribeMsg.className = 'subscribe-msg success';
+                subscribeMsg.textContent = '✅ 订阅成功！每日简报将发送到 ' + email;
+                subscribeForm.reset();
+            } else {
+                subscribeMsg.className = 'subscribe-msg error';
+                subscribeMsg.textContent = '❌ ' + (data.error || '订阅失败');
+            }
+        } catch (err) {
+            subscribeMsg.className = 'subscribe-msg error';
+            subscribeMsg.textContent = '❌ 网络错误，请稍后重试';
+        }
+    });
+}
 
 // ── Init ──────────────────────────────────────────────
 fetchAll();

@@ -87,13 +87,20 @@
     </div>
   </section>
 
-  <!-- Filter Tabs -->
   <section class="filter-bar">
     <div class="filter-tabs">
       <button class="filter-tab active" data-filter="all">全部</button>
       <button class="filter-tab" data-filter="journal">期刊论文</button>
       <button class="filter-tab" data-filter="preprint">预印本</button>
       <button class="filter-tab" data-filter="news">产业动态</button>
+    </div>
+    <div class="time-range-tabs">
+      <span class="sort-label">时间：</span>
+      <button class="time-tab active" data-range="all">全部</button>
+      <button class="time-tab" data-range="week">本周</button>
+      <button class="time-tab" data-range="month">本月</button>
+      <button class="time-tab" data-range="quarter">本季</button>
+      <button class="time-tab" data-range="year">本年</button>
     </div>
     <div class="sort-tabs">
       <span class="sort-label">排序：</span>
@@ -105,6 +112,14 @@
       <span class="pulse-dot"></span>
       <span id="refreshCountdown">下次刷新：2:00:00</span>
     </div>
+  </section>
+
+  <!-- Trending Keywords Panel -->
+  <section class="trending-panel" id="trendingPanel" style="display:none;">
+    <div class="trending-header">
+      <h3>🔥 热门关键词 <span class="trending-subtitle">Trending Keywords</span></h3>
+    </div>
+    <div class="trending-tags" id="trendingTags"></div>
   </section>
 
   <!-- Content Grid -->
@@ -127,9 +142,25 @@
     </div>
   </main>
 
+  <!-- Subscribe Section -->
+  <section class="subscribe-section">
+    <div class="subscribe-inner">
+      <div class="subscribe-text">
+        <h3>📧 订阅每日简报 <span style="color:#888;font-weight:400;font-size:14px;">Daily Briefing</span></h3>
+        <p>每天早上 8:00 自动推送 BCI 领域中英文摘要到你的邮箱</p>
+      </div>
+      <form class="subscribe-form" id="subscribeForm">
+        <input type="text" id="subName" placeholder="姓名 (可选)" autocomplete="name">
+        <input type="email" id="subEmail" placeholder="your@gmail.com" required autocomplete="email">
+        <button type="submit" class="subscribe-btn">订阅</button>
+      </form>
+      <div class="subscribe-msg" id="subscribeMsg"></div>
+    </div>
+  </section>
+
   <!-- Footer -->
   <footer class="footer">
-    <p>数据来源：PubMed · arXiv · Nature · Science · Google News &nbsp;|&nbsp; BCI Tracker v1.0</p>
+    <p>数据来源：PubMed · arXiv · Nature · Science · Google News &nbsp;|&nbsp; BCI Tracker v3.0</p>
   </footer>
 
   <script src="app.js"></script>

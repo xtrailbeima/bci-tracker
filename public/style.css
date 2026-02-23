@@ -724,3 +724,205 @@ body {
 .card:nth-child(10) {
   animation-delay: 0.20s;
 }
+
+/* ── Time Range Tabs ─────────────────────────────────── */
+.time-range-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.time-tab {
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: var(--font-sans);
+}
+
+.time-tab:hover {
+  border-color: var(--accent-green);
+  color: var(--accent-green);
+}
+
+.time-tab.active {
+  border-color: var(--accent-green);
+  color: var(--accent-green);
+  background: rgba(16, 185, 129, 0.1);
+}
+
+/* ── Trending Panel ──────────────────────────────────── */
+.trending-panel {
+  max-width: 1400px;
+  margin: 16px auto 0;
+  padding: 0 32px;
+}
+
+.trending-header h3 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.trending-subtitle {
+  color: var(--text-muted);
+  font-weight: 400;
+  font-size: 12px;
+}
+
+.trending-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.trending-tag {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: var(--font-sans);
+}
+
+.trending-tag:hover {
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+  background: rgba(0, 240, 255, 0.05);
+}
+
+.trending-tag .tag-count {
+  color: var(--accent-cyan);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  margin-left: 4px;
+  opacity: 0.7;
+}
+
+/* ── Subscribe Section ───────────────────────────────── */
+.subscribe-section {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 40px 32px;
+}
+
+.subscribe-inner {
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.05), rgba(139, 92, 246, 0.05));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 32px;
+  text-align: center;
+}
+
+.subscribe-text h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.subscribe-text p {
+  color: var(--text-muted);
+  font-size: 13px;
+  margin-bottom: 20px;
+}
+
+.subscribe-form {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.subscribe-form input {
+  padding: 10px 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: var(--font-sans);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.subscribe-form input:focus {
+  border-color: var(--accent-cyan);
+}
+
+.subscribe-form input[type="text"] {
+  width: 120px;
+}
+
+.subscribe-form input[type="email"] {
+  width: 220px;
+}
+
+.subscribe-form input::placeholder {
+  color: var(--text-muted);
+}
+
+.subscribe-btn {
+  padding: 10px 24px;
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: var(--font-sans);
+}
+
+.subscribe-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0, 245, 212, 0.3);
+}
+
+.subscribe-msg {
+  margin-top: 12px;
+  font-size: 13px;
+  min-height: 20px;
+}
+
+.subscribe-msg.success {
+  color: var(--accent-green);
+}
+
+.subscribe-msg.error {
+  color: var(--accent-rose);
+}
+
+/* ── Load More Button ────────────────────────────────── */
+.load-more-btn {
+  display: block;
+  margin: 32px auto;
+  padding: 12px 40px;
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  letter-spacing: 0.5px;
+}
+
+.load-more-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0, 245, 212, 0.3);
+}

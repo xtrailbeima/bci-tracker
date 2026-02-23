@@ -4,12 +4,14 @@ const { parseStringPromise } = require('xml2js');
 const path = require('path');
 const { translateTitle } = require('./translate');
 const { scoreImportance, getImportanceLevel } = require('./scoring');
-const { upsertMany, searchArticles, getStats, getAllSources } = require('./db');
+const { upsertMany, searchArticles, getStats, getAllSources, getTrendingKeywords, addSubscriber, removeSubscriber, getActiveSubscribers } = require('./db');
+const { sendDailyBriefing } = require('./briefing');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
+app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ─── Helpers ──────────────────────────────────────────────
@@ -419,14 +421,16 @@ async function fetchAndStore() {
 
 app.get('/api/all', (req, res) => {
     try {
-        const { q, category, source, sort, page, limit } = req.query;
+        const { q, category, source, sort, page, limit, from, to } = req.query;
         const result = searchArticles({
             query: q,
             category: category || 'all',
             source,
             sort: sort || 'importance',
             page: parseInt(page) || 1,
-            limit: parseInt(limit) || 50
+            limit: parseInt(limit) || 50,
+            dateFrom: from || undefined,
+            dateTo: to || undefined
         });
         res.json(result);
     } catch (err) {
@@ -461,14 +465,92 @@ app.get('/api/sources', (req, res) => {
     }
 });
 
+// ─── API: Trending ────────────────────────────────────────
+
+app.get('/api/trending', (req, res) => {
+    try {
+        const { period } = req.query; // week, month, quarter, year
+        const now = new Date();
+        let dateFrom;
+        switch (period) {
+            case 'week': dateFrom = new Date(now - 7 * 86400000).toISOString(); break;
+            case 'month': dateFrom = new Date(now - 30 * 86400000).toISOString(); break;
+            case 'quarter': dateFrom = new Date(now - 90 * 86400000).toISOString(); break;
+            case 'year': dateFrom = new Date(now - 365 * 86400000).toISOString(); break;
+            default: dateFrom = undefined;
+        }
+        res.json(getTrendingKeywords({ dateFrom, limit: 15 }));
+    } catch (err) {
+        res.json([]);
+    }
+});
+
+// ─── API: Subscribe ───────────────────────────────────────
+
+app.post('/api/subscribe', (req, res) => {
+    try {
+        const { email, name } = req.body;
+        if (!email || !email.includes('@')) {
+            return res.status(400).json({ error: '请提供有效的邮箱地址' });
+        }
+        addSubscriber(email.trim().toLowerCase(), name || '');
+        res.json({ success: true, message: '订阅成功！' });
+    } catch (err) {
+        console.error('Subscribe error:', err.message);
+        res.status(500).json({ error: '订阅失败' });
+    }
+});
+
+app.post('/api/unsubscribe', (req, res) => {
+    try {
+        const { email } = req.body;
+        if (!email) return res.status(400).json({ error: '请提供邮箱' });
+        removeSubscriber(email.trim().toLowerCase());
+        res.json({ success: true, message: '已退订' });
+    } catch (err) {
+        res.status(500).json({ error: '退订失败' });
+    }
+});
+
+// ─── API: Manual Briefing Trigger ─────────────────────────
+
+app.post('/api/briefing/send', async (req, res) => {
+    try {
+        const result = await sendDailyBriefing();
+        res.json(result);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // ─── Start ────────────────────────────────────────────────
 
 const FETCH_INTERVAL = 2 * 60 * 60 * 1000; // 2 hours
 
+// Daily briefing: schedule for 8:00 AM Beijing time (UTC+8)
+function scheduleDailyBriefing() {
+    const now = new Date();
+    const beijing = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Shanghai' }));
+    const next8am = new Date(beijing);
+    next8am.setHours(8, 0, 0, 0);
+    if (beijing >= next8am) next8am.setDate(next8am.getDate() + 1);
+
+    const msUntil8am = next8am - beijing;
+    console.log(`📧 Daily briefing scheduled in ${Math.round(msUntil8am / 60000)} minutes`);
+
+    setTimeout(() => {
+        sendDailyBriefing();
+        // Then repeat every 24 hours
+        setInterval(sendDailyBriefing, 24 * 60 * 60 * 1000);
+    }, msUntil8am);
+}
+
 app.listen(PORT, () => {
-    console.log(`🧠 BCI Tracker v2.0 running at http://localhost:${PORT}`);
+    console.log(`🧠 BCI Tracker v3.0 running at http://localhost:${PORT}`);
     // Initial fetch after 3 seconds (so server is ready)
     setTimeout(fetchAndStore, 3000);
     // Repeat every 2 hours
     setInterval(fetchAndStore, FETCH_INTERVAL);
+    // Schedule daily briefing
+    scheduleDailyBriefing();
 });
