@@ -106,10 +106,21 @@ function pad(n) { return String(n).padStart(2, '0'); }
 
 // ── Source Tags ───────────────────────────────────────
 function buildSourceTags() {
-    const sources = [...new Set(allItems.map(i => i.provider))].filter(Boolean);
-    sourceFilters.innerHTML = sources.map(s =>
-        `<button class="source-tag" data-source="${s}">${s}</button>`
-    ).join('');
+    let itemsForTags = [...allItems];
+    if (activeCategory !== 'all') {
+        itemsForTags = itemsForTags.filter(i => i.category === activeCategory);
+    }
+    const sources = [...new Set(itemsForTags.map(i => i.provider))].filter(Boolean);
+
+    // Clear activeSource if it's not available in the new category
+    if (activeSource && !sources.includes(activeSource)) {
+        activeSource = null;
+    }
+
+    sourceFilters.innerHTML = sources.map(s => {
+        const isActive = s === activeSource ? 'active' : '';
+        return `<button class="source-tag ${isActive}" data-source="${s}">${s}</button>`;
+    }).join('');
 
     sourceFilters.querySelectorAll('.source-tag').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -285,6 +296,7 @@ document.querySelectorAll('.filter-tab').forEach(tab => {
         document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
         tab.classList.add('active');
         activeCategory = tab.dataset.filter;
+        buildSourceTags(); // Rebuild tags for the new category
         renderCards();
     });
 });
