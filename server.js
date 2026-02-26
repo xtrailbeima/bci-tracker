@@ -316,17 +316,44 @@ app.get('/api/journals', async (req, res) => {
 app.get('/api/news', async (req, res) => {
     try {
         const queries = [
+            // ── 核心追踪公司（用户指定） ──
             'Neuralink brain-computer interface',
-            'Synchron BCI',
-            'Blackrock Neurotech',
-            'Paradromics neural',
+            'Axoft brain implant soft electrode',
+            'Synchron Stentrode BCI',
+            'Paradromics Connexus neural',
+            'Blackrock Neurotech Utah Array',
+            'Merge Labs brain interface Sam Altman',
+            'Nudge brain interface ultrasound',
+            'Forest Neurotech ultrasound brain',
+            'SPIRE Therapeutics Diadem brain',
+
+            // ── 上下游 & 同类型公司 ──
+            'Precision Neuroscience brain cortical',
+            'Science Corporation neural BCI',
+            'Neurosoft Bioelectronics soft electrode',
+            'Emotiv EEG brain-computer',
+            'Neurable brain-computer wearable',
+            'Cognixion brain augmented reality',
+            'g.tec medical neurotechnology BCI',
+            'BrainCo brain-computer interface',
+
+            // ── 行业通用 ──
             'brain-computer interface FDA',
-            '脑机接口 融资',        // Chinese BCI funding
-            '脑虎科技',           // Major CN BCI company
-            '博睿康',             // Major CN BCI company
-            '阶梯星矿',           // Emerging CN BCI company
-            '微灵医疗',           // CN BCI
-            '脑机接口 亿元'       // Chinese BCI massive funding
+            'brain-computer interface funding raised',
+            'neural interface IPO acquisition',
+
+            // ── 中国核心公司 ──
+            '脑虎科技',             // NeuraLace / Brain Tiger - 侵入式柔性
+            '博睿康 脑机接口',       // BrainCo / 强脑科技
+            '强脑科技',             // BrainCo Chinese name
+            '柔灵科技 脑机接口',     // Rouling - 非侵入式
+            '微灵医疗',             // WeiLing - 侵入式
+            '脑陆科技 BCI',         // Brain Land - 非侵入式
+            '阶梯星矿',             // Emerging CN BCI
+            '脑机接口 融资',         // BCI funding
+            '脑机接口 临床试验',     // BCI clinical trials
+            '脑机接口 亿元',         // BCI massive funding
+            '脑机接口 FDA 获批',     // BCI approvals
         ];
 
         const results = await Promise.allSettled(

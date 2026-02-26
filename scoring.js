@@ -45,14 +45,36 @@ const HIGH_VALUE_KEYWORDS = [
     { pattern: /human\s+trial/i, score: 15 },
     { pattern: /restores?\s+(walking|speech|movement|vision|hearing)/i, score: 15 },
 
-    // 核心公司
+    // 核心追踪公司（用户指定 — Tier 1）
     { pattern: /Neuralink/i, score: 18 },
     { pattern: /Synchron/i, score: 15 },
-    { pattern: /Blackrock\s+Neurotech/i, score: 14 },
-    { pattern: /Paradromics/i, score: 14 },
+    { pattern: /Blackrock\s+Neurotech/i, score: 15 },
+    { pattern: /Paradromics/i, score: 15 },
+    { pattern: /Axoft/i, score: 15 },
+    { pattern: /Merge\s+Labs/i, score: 15 },
+    { pattern: /\bNudge\b.*(?:brain|neural|BCI)/i, score: 15 },
+    { pattern: /Forest\s+Neurotech/i, score: 15 },
+    { pattern: /SPIRE\s+Therapeutics/i, score: 15 },
+
+    // 上下游 & 同类型公司（Tier 2）
     { pattern: /Precision\s+Neuroscience/i, score: 13 },
+    { pattern: /Science\s+Corp/i, score: 12 },
+    { pattern: /Neurosoft\s+Bioelectronics/i, score: 12 },
+    { pattern: /\bEmotiv\b/i, score: 10 },
+    { pattern: /\bNeurable\b/i, score: 10 },
+    { pattern: /Cognixion/i, score: 10 },
+    { pattern: /g\.tec/i, score: 10 },
+    { pattern: /BrainCo/i, score: 10 },
     { pattern: /Kernel/i, score: 10 },
     { pattern: /CTRL[-\s]?Labs/i, score: 10 },
+
+    // 中国核心公司
+    { pattern: /脑虎科技/i, score: 15 },
+    { pattern: /博睿康|强脑科技/i, score: 15 },
+    { pattern: /柔灵科技/i, score: 15 },
+    { pattern: /微灵医疗/i, score: 15 },
+    { pattern: /脑陆科技/i, score: 13 },
+    { pattern: /阶梯星矿/i, score: 13 },
 
     // 重大资助与融资 (Highly Prioritized)
     { pattern: /Series\s+[A-Z]/i, score: 25 },
@@ -83,6 +105,11 @@ const HIGH_VALUE_KEYWORDS = [
     { pattern: /graphene|flexible\s+electrode/i, score: 5 },
     { pattern: /optogenetic/i, score: 5 },
     { pattern: /transformer|foundation\s+model/i, score: 4 },
+    { pattern: /ultrasound\s+(neuromod|brain|stimulat|imaging)/i, score: 8 },
+    { pattern: /endovascular\s+(brain|BCI|neural)/i, score: 8 },
+    { pattern: /soft\s+(electrode|implant|cortical)/i, score: 6 },
+    { pattern: /gene\s+therap.*brain/i, score: 6 },
+    { pattern: /focused\s+ultrasound/i, score: 7 },
 ];
 
 /**
