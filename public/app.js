@@ -75,7 +75,15 @@ async function fetchSummary(force = false) {
             <div class="summary-section">
                 <h4 class="summary-section-title">${escapeHtml(section.title)}</h4>
                 <ul class="summary-list">
-                    ${section.items.map(item => `<li>${escapeHtml(item)}</li>`).join('')}
+                    ${section.items.map(item => {
+            // Support both string items and {text, url} objects
+            const text = typeof item === 'string' ? item : (item.text || '');
+            const url = typeof item === 'object' ? (item.url || '') : '';
+            const linkHtml = url
+                ? `<a class="summary-link" href="${escapeHtml(url)}" target="_blank" title="查看信源" onclick="event.stopPropagation()">🔗</a>`
+                : '';
+            return `<li>${escapeHtml(text)} ${linkHtml}</li>`;
+        }).join('')}
                 </ul>
             </div>
         `).join('');

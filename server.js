@@ -582,10 +582,23 @@ let cachedSummary = null;
 let summaryLastGenerated = 0;
 const SUMMARY_CACHE_TTL = 30 * 60 * 1000; // 30 minutes
 
+// Load company profile at startup
+const fs = require('fs');
+const companyProfilePath = require('path').join(__dirname, 'company_profile.md');
+let companyProfile = '';
+try {
+    companyProfile = fs.readFileSync(companyProfilePath, 'utf-8');
+    console.log('📄 Loaded company profile: company_profile.md');
+} catch (e) {
+    console.warn('⚠️ company_profile.md not found, competitive commentary will be skipped');
+}
+
 app.get('/api/summary', async (req, res) => {
     try {
-        // Return cached if fresh
-        if (cachedSummary && (Date.now() - summaryLastGenerated) < SUMMARY_CACHE_TTL) {
+        const forceRefresh = req.query.force === '1';
+
+        // Return cached if fresh (unless force refresh)
+        if (!forceRefresh && cachedSummary && (Date.now() - summaryLastGenerated) < SUMMARY_CACHE_TTL) {
             return res.json(cachedSummary);
         }
 
@@ -594,7 +607,7 @@ app.get('/api/summary', async (req, res) => {
             return res.json({
                 generated: new Date().toISOString(),
                 sections: [
-                    { title: '⚠️ AI 总结未启用', icon: '⚙️', items: ['请设置环境变量 GEMINI_API_KEY 以启用 AI 行业总结功能。', '获取方式：访问 https://aistudio.google.com/apikey'] }
+                    { title: '⚠️ AI 总结未启用', icon: '⚙️', items: [{ text: '请设置环境变量 GEMINI_API_KEY 以启用 AI 行业总结功能。' }, { text: '获取方式：访问 https://aistudio.google.com/apikey', url: 'https://aistudio.google.com/apikey' }] }
                 ]
             });
         }
@@ -603,14 +616,23 @@ app.get('/api/summary', async (req, res) => {
         const recent = searchArticles({ sort: 'importance', limit: 30 });
         const items = recent.items || [];
         if (items.length === 0) {
-            return res.json({ generated: new Date().toISOString(), sections: [{ title: '暂无数据', icon: '📭', items: ['数据库为空，请等待首次数据抓取完成。'] }] });
+            return res.json({ generated: new Date().toISOString(), sections: [{ title: '暂无数据', icon: '📭', items: [{ text: '数据库为空，请等待首次数据抓取完成。' }] }] });
         }
 
-        // Build context for Gemini
-        const context = items.map(it => {
+        // Build context for Gemini — include URLs for source linking
+        const context = items.map((it, idx) => {
             const imp = it.importanceLevel === 'critical' ? '🔴' : it.importanceLevel === 'high' ? '🟡' : '';
-            return `${imp}[${it.category}] ${it.title} | ${it.source} | ${it.date}`;
+            return `[${idx + 1}] ${imp}[${it.category}] ${it.title} | ${it.source} | ${it.date} | URL: ${it.url || 'N/A'}`;
         }).join('\n');
+
+        // Build company context for competitive commentary
+        const companyContext = companyProfile
+            ? `\n\n以下是我们公司（NeuroWorm）的技术简介，请在第一个板块中结合最新行业动态，从 NeuroWorm 的技术优势角度进行竞品对比评论：\n---\n${companyProfile.substring(0, 2000)}\n---`
+            : '';
+
+        const competitiveSection = companyProfile
+            ? `{ "title": "🧠 NeuroWorm 竞品洞察", "icon": "🧠", "items": [{"text": "评论1（从 NeuroWorm 角度分析竞品动态）", "url": "相关信源URL"}, ...] },`
+            : '';
 
         const prompt = `你是一名专业的脑机接口（BCI）行业分析师。请根据以下最新收录的论文和新闻条目，生成一份结构化的行业动态简报。
 
@@ -619,18 +641,21 @@ app.get('/api/summary', async (req, res) => {
 2. 严格按以下 JSON 格式输出，不要输出其他内容：
 {
   "sections": [
-    { "title": "🏢 重点公司动态", "icon": "🏢", "items": ["动态1", "动态2", ...] },
-    { "title": "💰 融资与投资", "icon": "💰", "items": ["事件1", "事件2", ...] },
-    { "title": "🔬 技术突破", "icon": "🔬", "items": ["突破1", "突破2", ...] },
-    { "title": "📊 行业趋势", "icon": "📊", "items": ["趋势1", "趋势2", ...] }
+    ${competitiveSection}
+    { "title": "🏢 重点公司动态", "icon": "🏢", "items": [{"text": "动态描述", "url": "来源URL"}, ...] },
+    { "title": "💰 融资与投资", "icon": "💰", "items": [{"text": "事件描述", "url": "来源URL"}, ...] },
+    { "title": "🔬 技术突破", "icon": "🔬", "items": [{"text": "突破描述", "url": "来源URL"}, ...] },
+    { "title": "📊 行业趋势", "icon": "📊", "items": [{"text": "趋势描述", "url": "来源URL"}, ...] }
   ]
 }
-3. 每个 section 的 items 数组包含 2-5 条简明扼要的总结（每条不超过 80 字）
-4. 如果某个板块没有相关内容，items 里写一条"暂无最新动态"
-5. 只输出 JSON，不要包含 markdown 代码块标记
+3. 每个 item 是一个对象，包含 "text"（总结文字，不超过80字）和 "url"（对应的信源链接，必须从下方条目的URL中选取最相关的一个）
+4. 每个 section 包含 2-5 条 items
+5. 如果某个板块没有相关内容，items 里放一条 {"text": "暂无最新动态", "url": ""}
+6. 只输出 JSON，不要包含 markdown 代码块标记
+${companyProfile ? '7. 第一个板块（NeuroWorm 竞品洞察）应从 NeuroWorm 柔性蠕动动态电极的技术优势视角，评论竞品公司的最新动态和行业发展对 NeuroWorm 的机遇与挑战' : ''}
 
-以下是最新收录的条目：
-${context}`;
+以下是最新收录的条目（含编号和URL）：
+${context}${companyContext}`;
 
         const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
         const geminiRes = await fetch(geminiUrl, {
@@ -640,7 +665,7 @@ ${context}`;
                 contents: [{ parts: [{ text: prompt }] }],
                 generationConfig: {
                     temperature: 0.3,
-                    maxOutputTokens: 2048,
+                    maxOutputTokens: 4096,
                     thinkingConfig: { thinkingBudget: 0 }
                 }
             })
