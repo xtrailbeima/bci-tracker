@@ -386,27 +386,34 @@ body {
   margin-top: 4px;
 }
 
-.summary-refresh-btn {
+.summary-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.summary-refresh-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  width: 100%;
-  padding: 10px;
-  background: transparent;
-  border: 1px dashed var(--border);
-  border-radius: var(--radius);
-  color: var(--text-muted);
-  font-size: 12px;
-  font-family: var(--font-sans);
-  cursor: pointer;
   transition: all 0.2s;
 }
 
-.summary-refresh-btn:hover {
+.summary-refresh-icon:hover {
   border-color: var(--accent-cyan);
   color: var(--accent-cyan);
-  background: rgba(0, 240, 255, 0.03);
+  background: rgba(0, 240, 255, 0.05);
+}
+
+.summary-refresh-icon:active svg {
+  animation: spin 0.6s linear;
 }
 
 /* ── Feed Panel ──────────────────────────────────────── */
