@@ -320,12 +320,24 @@ app.get('/api/news', async (req, res) => {
             'Synchron BCI',
             'Blackrock Neurotech',
             'Paradromics neural',
-            'brain-computer interface FDA'
+            'brain-computer interface FDA',
+            '脑机接口 融资',        // Chinese BCI funding
+            '脑虎科技',           // Major CN BCI company
+            '博睿康',             // Major CN BCI company
+            '阶梯星矿',           // Emerging CN BCI company
+            '微灵医疗',           // CN BCI
+            '脑机接口 亿元'       // Chinese BCI massive funding
         ];
 
         const results = await Promise.allSettled(
             queries.map(async (q, qi) => {
-                const feedUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(q)}&hl=en-US&gl=US&ceid=US:en`;
+                // Determine locale parameters based on query language
+                const isChinese = /[\u4e00-\u9fa5]/.test(q);
+                const localeParams = isChinese
+                    ? 'hl=zh-CN&gl=CN&ceid=CN:zh-Hans'
+                    : 'hl=en-US&gl=US&ceid=US:en';
+
+                const feedUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(q)}&${localeParams}`;
                 try {
                     const xml = await fetchText(feedUrl);
                     const parsed = await parseStringPromise(xml, { explicitArray: false });

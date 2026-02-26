@@ -54,10 +54,19 @@ const HIGH_VALUE_KEYWORDS = [
     { pattern: /Kernel/i, score: 10 },
     { pattern: /CTRL[-\s]?Labs/i, score: 10 },
 
-    // 重大资助
+    // 重大资助与融资 (Highly Prioritized)
+    { pattern: /Series\s+[A-Z]/i, score: 25 },
+    { pattern: /seed\s+round/i, score: 25 },
+    { pattern: /funding|financing/i, score: 20 },
+    { pattern: /valuation/i, score: 15 },
+    { pattern: /raised\s+\$/i, score: 20 },
+    { pattern: /\$\d+\s*[MB]/i, score: 20 }, // 大额美元融资
     { pattern: /DARPA/i, score: 12 },
     { pattern: /NIH/i, score: 8 },
-    { pattern: /\$\d+\s*[MB]/i, score: 10 }, // 大额融资
+    { pattern: /融资|获投/i, score: 25 }, // 中文核心动作
+    { pattern: /天使轮|A轮|B轮|C轮|D轮/i, score: 25 }, // 中文轮次
+    { pattern: /估值/i, score: 15 },
+    { pattern: /亿元|千万|亿美元/i, score: 20 }, // 中文金额
 
     // 技术方向
     { pattern: /wireless/i, score: 5 },
