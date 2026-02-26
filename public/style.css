@@ -374,6 +374,21 @@ body {
   border-left: 2px solid rgba(139, 92, 246, 0.25);
 }
 
+/* Importance score at end of summary items */
+.summary-score {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--accent-cyan);
+  background: rgba(0, 240, 255, 0.08);
+  border: 1px solid rgba(0, 240, 255, 0.15);
+  border-radius: 8px;
+  padding: 1px 6px;
+  margin-left: 4px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
 .summary-loading {
   display: flex;
   align-items: center;

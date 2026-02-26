@@ -681,15 +681,36 @@ ${context}${companyContext}`;
         const geminiData = await geminiRes.json();
         const rawText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || '';
 
-        // Extract and repair JSON
+        // Extract and repair JSON — robust against Gemini output quirks
         let cleaned = rawText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
         const jsonStart = cleaned.indexOf('{');
         const jsonEnd = cleaned.lastIndexOf('}');
         if (jsonStart === -1 || jsonEnd === -1) throw new Error('No JSON in AI response');
         cleaned = cleaned.substring(jsonStart, jsonEnd + 1);
-        // Fix common JSON issues: trailing commas before ] or }
-        cleaned = cleaned.replace(/,\s*([}\]])/g, '$1');
-        const parsed = JSON.parse(cleaned);
+
+        // Aggressive JSON repair
+        cleaned = cleaned
+            .replace(/,\s*([}\]])/g, '$1')           // trailing commas
+            .replace(/[\x00-\x1F\x7F]/g, ' ')        // control characters
+            .replace(/\n/g, ' ')                       // newlines inside strings
+            .replace(/\t/g, ' ')                       // tabs
+            .replace(/\s{2,}/g, ' ');                  // collapse whitespace
+
+        let parsed;
+        try {
+            parsed = JSON.parse(cleaned);
+        } catch (parseErr) {
+            // Second attempt: try to extract just the sections array
+            console.warn('AI Summary: first JSON parse failed, trying repair...', parseErr.message);
+            const sectionsMatch = cleaned.match(/"sections"\s*:\s*(\[[\s\S]*\])/);
+            if (sectionsMatch) {
+                let sectionsStr = sectionsMatch[1];
+                sectionsStr = sectionsStr.replace(/,\s*([}\]])/g, '$1');
+                parsed = { sections: JSON.parse(sectionsStr) };
+            } else {
+                throw parseErr;
+            }
+        }
 
         cachedSummary = {
             generated: new Date().toISOString(),

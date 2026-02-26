@@ -5,7 +5,9 @@
     "main": "server.js",
     "scripts": {
         "start": "node server.js",
-        "dev": "node server.js"
+        "dev": "node server.js",
+        "test": "node test/smoke.js",
+        "verify": "node -c server.js && node -c public/app.js && node test/smoke.js"
     },
     "dependencies": {
         "better-sqlite3": "^12.6.2",
