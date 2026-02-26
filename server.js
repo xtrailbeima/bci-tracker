@@ -632,13 +632,17 @@ app.get('/api/summary', async (req, res) => {
 以下是最新收录的条目：
 ${context}`;
 
-        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
         const geminiRes = await fetch(geminiUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: { temperature: 0.3, maxOutputTokens: 2048 }
+                generationConfig: {
+                    temperature: 0.3,
+                    maxOutputTokens: 2048,
+                    thinkingConfig: { thinkingBudget: 0 }
+                }
             })
         });
 
@@ -649,9 +653,12 @@ ${context}`;
         const geminiData = await geminiRes.json();
         const text = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || '';
 
-        // Parse JSON from response (handle potential markdown wrapping)
-        const jsonMatch = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-        const parsed = JSON.parse(jsonMatch);
+        // Extract JSON from response (handle markdown wrapping)
+        const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        const jsonStart = cleaned.indexOf('{');
+        const jsonEnd = cleaned.lastIndexOf('}');
+        if (jsonStart === -1 || jsonEnd === -1) throw new Error('No JSON in AI response');
+        const parsed = JSON.parse(cleaned.substring(jsonStart, jsonEnd + 1));
 
         cachedSummary = {
             generated: new Date().toISOString(),
