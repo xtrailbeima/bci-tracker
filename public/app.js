@@ -9,8 +9,8 @@ let hasMore = false;
 let totalItems = 0;
 let activeTimeRange = 'all'; // 'all', 'week', 'month', 'quarter', 'year'
 
-// Auto-refresh every 2 hours (7200000 ms)
-const REFRESH_INTERVAL = 2 * 60 * 60 * 1000;
+// Auto-refresh every 30 minutes (1800000 ms)
+const REFRESH_INTERVAL = 30 * 60 * 1000;
 let nextRefreshTime = Date.now() + REFRESH_INTERVAL;
 let countdownInterval = null;
 
@@ -29,6 +29,9 @@ const statUpdated = document.getElementById('statUpdated');
 const refreshCountdown = document.getElementById('refreshCountdown');
 const trendingPanel = document.getElementById('trendingPanel');
 const trendingTags = document.getElementById('trendingTags');
+const summaryContent = document.getElementById('summaryContent');
+const summaryTime = document.getElementById('summaryTime');
+const summaryRefreshBtn = document.getElementById('summaryRefreshBtn');
 
 // ── Time Range Helpers ────────────────────────────────
 function getDateRange(range) {
@@ -40,6 +43,60 @@ function getDateRange(range) {
         case 'year': return new Date(now - 365 * 86400000).toISOString();
         default: return undefined;
     }
+}
+
+// ── AI Summary ────────────────────────────────────────
+async function fetchSummary(force = false) {
+    if (!summaryContent) return;
+
+    summaryContent.innerHTML = `
+        <div class="summary-loading">
+            <div class="spinner-sm"></div>
+            <span>正在分析行业动态...</span>
+        </div>`;
+
+    try {
+        const url = force ? '/api/summary?force=1' : '/api/summary';
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+
+        if (summaryTime && data.generated) {
+            const t = new Date(data.generated);
+            summaryTime.textContent = `${pad(t.getHours())}:${pad(t.getMinutes())} 生成`;
+        }
+
+        if (!data.sections || data.sections.length === 0) {
+            summaryContent.innerHTML = '<p class="summary-empty">暂无分析数据</p>';
+            return;
+        }
+
+        summaryContent.innerHTML = data.sections.map(section => `
+            <div class="summary-section">
+                <h4 class="summary-section-title">${escapeHtml(section.title)}</h4>
+                <ul class="summary-list">
+                    ${section.items.map(item => `<li>${escapeHtml(item)}</li>`).join('')}
+                </ul>
+            </div>
+        `).join('');
+
+        // Add fade-in animation
+        summaryContent.querySelectorAll('.summary-section').forEach((el, i) => {
+            el.style.animationDelay = `${i * 0.1}s`;
+        });
+    } catch (err) {
+        console.error('Summary error:', err);
+        summaryContent.innerHTML = `
+            <div class="summary-error">
+                <p>⚠️ AI 分析加载失败</p>
+                <p class="summary-error-detail">${escapeHtml(err.message)}</p>
+            </div>`;
+    }
+}
+
+// Summary refresh button
+if (summaryRefreshBtn) {
+    summaryRefreshBtn.addEventListener('click', () => fetchSummary(true));
 }
 
 // ── Fetch Data ────────────────────────────────────────
@@ -149,6 +206,7 @@ function startCountdown() {
         const remaining = nextRefreshTime - Date.now();
         if (remaining <= 0) {
             fetchAll();
+            fetchSummary();
             return;
         }
         const h = Math.floor(remaining / 3600000);
@@ -374,7 +432,10 @@ searchInput.addEventListener('input', (e) => {
 });
 
 // Refresh
-refreshBtn.addEventListener('click', fetchAll);
+refreshBtn.addEventListener('click', () => {
+    fetchAll();
+    fetchSummary(true);
+});
 
 // Subscribe form
 const subscribeForm = document.getElementById('subscribeForm');
@@ -414,3 +475,5 @@ if (subscribeForm) {
 
 // ── Init ──────────────────────────────────────────────
 fetchAll();
+// Load AI summary after a short delay (let data fetch first)
+setTimeout(() => fetchSummary(), 5000);

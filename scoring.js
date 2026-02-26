@@ -76,6 +76,22 @@ const HIGH_VALUE_KEYWORDS = [
     { pattern: /脑陆科技/i, score: 13 },
     { pattern: /阶梯星矿/i, score: 13 },
 
+    // 重点投资机构
+    { pattern: /Founders\s+Fund/i, score: 15 },
+    { pattern: /ARCH\s+Ventures/i, score: 15 },
+    { pattern: /Khosla\s+Ventures/i, score: 15 },
+    { pattern: /ARK\s+Invest/i, score: 14 },
+    { pattern: /Sequoia\s+Capital/i, score: 13 },
+    { pattern: /Lux\s+Capital/i, score: 13 },
+    { pattern: /Bezos\s+Expeditions/i, score: 12 },
+    { pattern: /Thrive\s+Capital/i, score: 10 },
+    { pattern: /Coatue/i, score: 10 },
+    { pattern: /\b8VC\b/i, score: 10 },
+    { pattern: /Double\s+Point\s+Ventures/i, score: 10 },
+    { pattern: /DFJ\s+Growth/i, score: 10 },
+    { pattern: /G42/i, score: 10 },
+    { pattern: /QIA|Qatar\s+Investment/i, score: 10 },
+
     // 重大资助与融资 (Highly Prioritized)
     { pattern: /Series\s+[A-Z]/i, score: 25 },
     { pattern: /seed\s+round/i, score: 25 },

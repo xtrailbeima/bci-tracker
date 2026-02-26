@@ -337,6 +337,20 @@ app.get('/api/news', async (req, res) => {
             'g.tec medical neurotechnology BCI',
             'BrainCo brain-computer interface',
 
+            // ── 重点投资机构 ──
+            'Founders Fund brain-computer',
+            'ARCH Ventures neurotechnology',
+            'Khosla Ventures brain neural',
+            'ARK Invest Neuralink BCI',
+            'Sequoia Capital brain neural',
+            'Lux Capital neuroscience',
+            'Bezos Expeditions brain',
+            'Thrive Capital neural',
+            'Coatue brain-computer',
+            '8VC neural interface',
+            'Double Point Ventures BCI',
+            'QIA brain-computer neural',
+
             // ── 行业通用 ──
             'brain-computer interface FDA',
             'brain-computer interface funding raised',
@@ -562,9 +576,105 @@ app.post('/api/briefing/send', async (req, res) => {
     }
 });
 
+// ─── API: AI Summary (Gemini) ─────────────────────────────
+
+let cachedSummary = null;
+let summaryLastGenerated = 0;
+const SUMMARY_CACHE_TTL = 30 * 60 * 1000; // 30 minutes
+
+app.get('/api/summary', async (req, res) => {
+    try {
+        // Return cached if fresh
+        if (cachedSummary && (Date.now() - summaryLastGenerated) < SUMMARY_CACHE_TTL) {
+            return res.json(cachedSummary);
+        }
+
+        const apiKey = process.env.GEMINI_API_KEY;
+        if (!apiKey) {
+            return res.json({
+                generated: new Date().toISOString(),
+                sections: [
+                    { title: '⚠️ AI 总结未启用', icon: '⚙️', items: ['请设置环境变量 GEMINI_API_KEY 以启用 AI 行业总结功能。', '获取方式：访问 https://aistudio.google.com/apikey'] }
+                ]
+            });
+        }
+
+        // Get recent high-importance items from DB
+        const recent = searchArticles({ sort: 'importance', limit: 30 });
+        const items = recent.items || [];
+        if (items.length === 0) {
+            return res.json({ generated: new Date().toISOString(), sections: [{ title: '暂无数据', icon: '📭', items: ['数据库为空，请等待首次数据抓取完成。'] }] });
+        }
+
+        // Build context for Gemini
+        const context = items.map(it => {
+            const imp = it.importanceLevel === 'critical' ? '🔴' : it.importanceLevel === 'high' ? '🟡' : '';
+            return `${imp}[${it.category}] ${it.title} | ${it.source} | ${it.date}`;
+        }).join('\n');
+
+        const prompt = `你是一名专业的脑机接口（BCI）行业分析师。请根据以下最新收录的论文和新闻条目，生成一份结构化的行业动态简报。
+
+要求：
+1. 用中文回复
+2. 严格按以下 JSON 格式输出，不要输出其他内容：
+{
+  "sections": [
+    { "title": "🏢 重点公司动态", "icon": "🏢", "items": ["动态1", "动态2", ...] },
+    { "title": "💰 融资与投资", "icon": "💰", "items": ["事件1", "事件2", ...] },
+    { "title": "🔬 技术突破", "icon": "🔬", "items": ["突破1", "突破2", ...] },
+    { "title": "📊 行业趋势", "icon": "📊", "items": ["趋势1", "趋势2", ...] }
+  ]
+}
+3. 每个 section 的 items 数组包含 2-5 条简明扼要的总结（每条不超过 80 字）
+4. 如果某个板块没有相关内容，items 里写一条"暂无最新动态"
+5. 只输出 JSON，不要包含 markdown 代码块标记
+
+以下是最新收录的条目：
+${context}`;
+
+        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+        const geminiRes = await fetch(geminiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: { temperature: 0.3, maxOutputTokens: 2048 }
+            })
+        });
+
+        if (!geminiRes.ok) {
+            throw new Error(`Gemini API error: ${geminiRes.status}`);
+        }
+
+        const geminiData = await geminiRes.json();
+        const text = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+        // Parse JSON from response (handle potential markdown wrapping)
+        const jsonMatch = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        const parsed = JSON.parse(jsonMatch);
+
+        cachedSummary = {
+            generated: new Date().toISOString(),
+            sections: parsed.sections || []
+        };
+        summaryLastGenerated = Date.now();
+
+        res.json(cachedSummary);
+    } catch (err) {
+        console.error('AI Summary error:', err.message);
+        // Return fallback summary
+        res.json({
+            generated: new Date().toISOString(),
+            sections: [
+                { title: '🏢 重点公司动态', icon: '🏢', items: ['AI 总结生成失败，请稍后重试。错误：' + err.message] }
+            ]
+        });
+    }
+});
+
 // ─── Start ────────────────────────────────────────────────
 
-const FETCH_INTERVAL = 2 * 60 * 60 * 1000; // 2 hours
+const FETCH_INTERVAL = 30 * 60 * 1000; // 30 minutes
 
 // Daily briefing: schedule for 8:00 AM Beijing time (UTC+8)
 function scheduleDailyBriefing() {
@@ -585,10 +695,10 @@ function scheduleDailyBriefing() {
 }
 
 app.listen(PORT, () => {
-    console.log(`🧠 BCI Tracker v3.0 running at http://localhost:${PORT}`);
+    console.log(`🧠 BCI Tracker v4.0 running at http://localhost:${PORT}`);
     // Initial fetch after 3 seconds (so server is ready)
     setTimeout(fetchAndStore, 3000);
-    // Repeat every 2 hours
+    // Repeat every 30 minutes
     setInterval(fetchAndStore, FETCH_INTERVAL);
     // Schedule daily briefing
     scheduleDailyBriefing();

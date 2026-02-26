@@ -4,9 +4,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BCI Tracker — 脑机接口学术与产业追踪</title>
+  <title>BCI Tracker — 脑机接口行业动态看板</title>
   <meta name="description"
-    content="Track the latest Brain-Computer Interface research papers from Nature, Science, PubMed, arXiv, and US BCI company news.">
+    content="Track BCI research papers, company news, investor activity, and AI-powered industry summaries in real-time.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap"
@@ -42,7 +42,7 @@
         </div>
         <div class="logo-text">
           <h1>BCI Tracker</h1>
-          <span class="logo-sub">脑机接口 · 学术与产业追踪</span>
+          <span class="logo-sub">脑机接口 · 行业动态看板 v4.0</span>
         </div>
       </div>
       <div class="header-actions">
@@ -51,7 +51,7 @@
             <path fill-rule="evenodd"
               d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" />
           </svg>
-          <input type="text" id="searchInput" placeholder="搜索论文、新闻..." autocomplete="off">
+          <input type="text" id="searchInput" placeholder="搜索论文、新闻、公司..." autocomplete="off">
         </div>
         <button class="btn-refresh" id="refreshBtn" title="刷新数据">
           <svg viewBox="0 0 20 20" fill="currentColor" width="18" height="18">
@@ -87,60 +87,91 @@
     </div>
   </section>
 
-  <section class="filter-bar">
-    <div class="filter-tabs">
-      <button class="filter-tab active" data-filter="all">全部</button>
-      <button class="filter-tab" data-filter="journal">期刊论文</button>
-      <button class="filter-tab" data-filter="preprint">预印本</button>
-      <button class="filter-tab" data-filter="news">产业动态</button>
-    </div>
-    <div class="time-range-tabs">
-      <span class="sort-label">时间：</span>
-      <button class="time-tab active" data-range="all">全部</button>
-      <button class="time-tab" data-range="week">本周</button>
-      <button class="time-tab" data-range="month">本月</button>
-      <button class="time-tab" data-range="quarter">本季</button>
-      <button class="time-tab" data-range="year">本年</button>
-    </div>
-    <div class="sort-tabs">
-      <span class="sort-label">排序：</span>
-      <button class="sort-tab active" data-sort="importance">重要性</button>
-      <button class="sort-tab" data-sort="date">时间</button>
-    </div>
-    <div class="source-filters" id="sourceFilters"></div>
-    <div class="auto-refresh-indicator">
-      <span class="pulse-dot"></span>
-      <span id="refreshCountdown">下次刷新：2:00:00</span>
-    </div>
-  </section>
+  <!-- Dashboard Layout -->
+  <div class="dashboard">
+    <!-- Left Panel: AI Summary -->
+    <aside class="summary-panel" id="summaryPanel">
+      <div class="summary-header">
+        <h2>🤖 AI 行业简报</h2>
+        <div class="summary-meta">
+          <span class="pulse-dot"></span>
+          <span id="summaryTime">加载中...</span>
+        </div>
+      </div>
+      <div class="summary-content" id="summaryContent">
+        <div class="summary-loading">
+          <div class="spinner-sm"></div>
+          <span>正在生成行业分析...</span>
+        </div>
+      </div>
+      <button class="summary-refresh-btn" id="summaryRefreshBtn" title="重新生成">
+        <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14">
+          <path fill-rule="evenodd"
+            d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" />
+        </svg>
+        重新生成
+      </button>
+    </aside>
 
-  <!-- Trending Keywords Panel -->
-  <section class="trending-panel" id="trendingPanel" style="display:none;">
-    <div class="trending-header">
-      <h3>🔥 热门关键词 <span class="trending-subtitle">Trending Keywords</span></h3>
-    </div>
-    <div class="trending-tags" id="trendingTags"></div>
-  </section>
+    <!-- Right Panel: Feed -->
+    <main class="feed-panel">
+      <!-- Filter Bar -->
+      <section class="filter-bar">
+        <div class="filter-tabs">
+          <button class="filter-tab active" data-filter="all">全部</button>
+          <button class="filter-tab" data-filter="journal">期刊论文</button>
+          <button class="filter-tab" data-filter="preprint">预印本</button>
+          <button class="filter-tab" data-filter="news">产业动态</button>
+        </div>
+        <div class="time-range-tabs">
+          <span class="sort-label">时间：</span>
+          <button class="time-tab active" data-range="all">全部</button>
+          <button class="time-tab" data-range="week">本周</button>
+          <button class="time-tab" data-range="month">本月</button>
+          <button class="time-tab" data-range="quarter">本季</button>
+          <button class="time-tab" data-range="year">本年</button>
+        </div>
+        <div class="sort-tabs">
+          <span class="sort-label">排序：</span>
+          <button class="sort-tab active" data-sort="importance">重要性</button>
+          <button class="sort-tab" data-sort="date">时间</button>
+        </div>
+        <div class="source-filters" id="sourceFilters"></div>
+        <div class="auto-refresh-indicator">
+          <span class="pulse-dot"></span>
+          <span id="refreshCountdown">下次刷新：0:30:00</span>
+        </div>
+      </section>
 
-  <!-- Content Grid -->
-  <main class="content">
-    <div class="card-grid" id="cardGrid">
-      <!-- Cards injected by JS -->
-    </div>
-    <div class="loading" id="loading">
-      <div class="spinner"></div>
-      <p>正在从全球数据源获取最新内容…</p>
-    </div>
-    <div class="empty-state" id="emptyState" style="display:none;">
-      <svg viewBox="0 0 80 80" fill="none" width="80" height="80">
-        <circle cx="40" cy="40" r="36" stroke="#334155" stroke-width="2" />
-        <path d="M28 35 Q40 50 52 35" stroke="#64748b" stroke-width="2" fill="none" />
-        <circle cx="30" cy="30" r="3" fill="#64748b" />
-        <circle cx="50" cy="30" r="3" fill="#64748b" />
-      </svg>
-      <p>暂无匹配内容</p>
-    </div>
-  </main>
+      <!-- Trending Keywords Panel -->
+      <section class="trending-panel" id="trendingPanel" style="display:none;">
+        <div class="trending-header">
+          <h3>🔥 热门关键词 <span class="trending-subtitle">Trending Keywords</span></h3>
+        </div>
+        <div class="trending-tags" id="trendingTags"></div>
+      </section>
+
+      <!-- Content Grid -->
+      <section class="content">
+        <div class="card-grid" id="cardGrid">
+          <!-- Cards injected by JS -->
+        </div>
+        <div class="loading" id="loading">
+          <div class="spinner"></div>
+          <p>正在从全球数据源获取最新内容…</p>
+        </div>
+        <div class="empty-state" id="emptyState" style="display:none;">
+          <svg viewBox="0 0 80 80" fill="none" width="80" height="80">
+            <circle cx="40" cy="40" r="36" stroke="#334155" stroke-width="2" />
+            <path d="M28 35 Q40 50 52 35" stroke="#64748b" stroke-width="2" fill="none" />
+            <circle cx="30" cy="30" r="3" fill="#64748b" />
+            <circle cx="50" cy="30" r="3" fill="#64748b" />
+          </svg>
+          <p>暂无匹配内容</p>
+        </div>
+      </section>
+    </main>
+  </div>
 
   <!-- Subscribe Section -->
   <section class="subscribe-section">
@@ -160,7 +191,7 @@
 
   <!-- Footer -->
   <footer class="footer">
-    <p>数据来源：PubMed · arXiv · Nature · Science · Google News &nbsp;|&nbsp; BCI Tracker v3.0</p>
+    <p>数据来源：PubMed · arXiv · Nature · Science · Google News · Gemini AI &nbsp;|&nbsp; BCI Tracker v4.0</p>
   </footer>
 
   <script src="app.js"></script>
