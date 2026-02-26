@@ -619,10 +619,10 @@ app.get('/api/summary', async (req, res) => {
             return res.json({ generated: new Date().toISOString(), sections: [{ title: '暂无数据', icon: '📭', items: [{ text: '数据库为空，请等待首次数据抓取完成。' }] }] });
         }
 
-        // Build context for Gemini — include URLs for source linking
+        // Build context for Gemini — include URLs and actual importance scores
         const context = items.map((it, idx) => {
-            const imp = it.importanceLevel === 'critical' ? '🔴' : it.importanceLevel === 'high' ? '🟡' : '';
-            return `[${idx + 1}] ${imp}[${it.category}] ${it.title} | ${it.source} | ${it.date} | URL: ${it.url || 'N/A'}`;
+            const score = it.importance || 0;
+            return `[${idx + 1}] [分数:${score}] [${it.category}] ${it.title} | ${it.source} | ${it.date} | URL: ${it.url || 'N/A'}`;
         }).join('\n');
 
         // Build company context for competitive commentary
@@ -631,7 +631,7 @@ app.get('/api/summary', async (req, res) => {
             : '';
 
         const competitiveSection = companyProfile
-            ? `{ "title": "NeuroWorm 竞品洞察", "icon": "🧠", "items": [{"text": "...", "url": "...", "importance": "insight"}, ...] },`
+            ? `{ "title": "NeuroWorm 竞品洞察", "icon": "🧠", "items": [{"text": "...", "url": "...", "importance": 80}, ...] },`
             : '';
 
         const prompt = `你是BCI行业分析师兼NeuroWorm战略顾问。根据以下数据生成行业简报。
@@ -640,19 +640,21 @@ app.get('/api/summary', async (req, res) => {
 {
   "sections": [
     ${competitiveSection}
-    { "title": "重点公司动态", "icon": "🏢", "items": [{"text": "...", "url": "...", "importance": "high"}, ...] },
-    { "title": "融资与投资", "icon": "💰", "items": [{"text": "...", "url": "...", "importance": "medium"}, ...] },
-    { "title": "技术突破", "icon": "🔬", "items": [{"text": "...", "url": "...", "importance": "high"}, ...] },
-    { "title": "行业趋势", "icon": "📊", "items": [{"text": "...", "url": "...", "importance": "medium"}, ...] }
+    { "title": "重点公司动态", "icon": "🏢", "items": [{"text": "...", "url": "...", "importance": 0}, ...] },
+    { "title": "融资与投资", "icon": "💰", "items": [{"text": "...", "url": "...", "importance": 0}, ...] },
+    { "title": "技术突破", "icon": "🔬", "items": [{"text": "...", "url": "...", "importance": 0}, ...] },
+    { "title": "行业趋势", "icon": "📊", "items": [{"text": "...", "url": "...", "importance": 0}, ...] }
   ]
 }
 
 规则：
 - 每个item有text、url、importance三个字段
-- importance值为: critical/high/medium/low
+- importance是0-100的数字，必须直接使用每条数据前面[分数:XX]中提供的分数，不要自己编造
+- 如果一条总结综合了多条数据，取其中最高的分数
 - url从下方条目URL中选取
 - 每个section写3-5条，text不超100字
-${companyProfile ? `- 竞品洞察的text格式: 先引述行业动态，再给出NeuroWorm视角分析（柔性材料、磁场导航、60通道、43周稳定、深部微血管），importance固定为insight
+${companyProfile ? `- 竞品洞察的importance统一设为80
+- 竞品洞察的text格式: 先引述行业动态，再给出NeuroWorm视角分析（柔性材料、磁场导航、60通道、43周稳定、深部微血管）
 - 竞品洞察是给CEO的战略简报` : ''}
 
 条目数据：

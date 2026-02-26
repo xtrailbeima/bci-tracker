@@ -81,9 +81,11 @@ async function fetchSummary(force = false) {
                         const url = item.url || '';
                         const imp = item.importance || '';
                         const linkHtml = url ? `<a class="summary-link" href="${escapeHtml(url)}" target="_blank" title="查看信源">🔗</a>` : '';
-                        const impLabel = { critical: '🔴', high: '🟡', medium: '🔵', low: '⚪', insight: '🧠' };
-                        const impHtml = imp ? `<span class="summary-imp imp-${escapeHtml(imp)}">${impLabel[imp] || ''}</span> ` : '';
-                        return `<li>${impHtml}${escapeHtml(text)} ${linkHtml}</li>`;
+                        const score = typeof item.importance === 'number' ? item.importance : 0;
+                        const level = score >= 80 ? 'critical' : score >= 60 ? 'high' : score >= 40 ? 'medium' : 'low';
+                        const levelLabel = { critical: '🔴 关键', high: '🟡 重要', medium: '🔵 一般', low: '⚪ 参考' }[level];
+                        const badgeHtml = score ? `<span class="card-importance importance-${level}">${levelLabel} ${score}</span>` : '';
+                        return `<li>${escapeHtml(text)} ${linkHtml} ${badgeHtml}</li>`;
                     }).join('')}
                 </ul>
             </div>
