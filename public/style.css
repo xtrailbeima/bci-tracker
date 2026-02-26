@@ -347,6 +347,33 @@ body {
   background-clip: text;
 }
 
+/* Competitive insight: quote + comment */
+.insight-item {
+  padding-left: 0 !important;
+}
+
+.insight-item::before {
+  display: none !important;
+}
+
+.insight-quote {
+  font-size: 13px;
+  color: var(--accent-cyan);
+  opacity: 0.85;
+  line-height: 1.6;
+  margin-bottom: 6px;
+  padding-left: 10px;
+  border-left: 2px solid rgba(0, 240, 255, 0.3);
+}
+
+.insight-comment {
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--text-secondary);
+  padding-left: 10px;
+  border-left: 2px solid rgba(139, 92, 246, 0.25);
+}
+
 .summary-loading {
   display: flex;
   align-items: center;

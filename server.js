@@ -580,7 +580,7 @@ app.post('/api/briefing/send', async (req, res) => {
 
 let cachedSummary = null;
 let summaryLastGenerated = 0;
-const SUMMARY_CACHE_TTL = 30 * 60 * 1000; // 30 minutes
+const SUMMARY_CACHE_TTL = 45 * 60 * 1000; // 45 minutes (~32 auto-calls/day, leaving room for manual refreshes under 50/day limit)
 
 // Load company profile at startup
 const fs = require('fs');
@@ -631,30 +631,31 @@ app.get('/api/summary', async (req, res) => {
             : '';
 
         const competitiveSection = companyProfile
-            ? `{ "title": "🧠 NeuroWorm 竞品洞察", "icon": "🧠", "items": [{"text": "评论1（从 NeuroWorm 角度分析竞品动态）", "url": "相关信源URL"}, ...] },`
+            ? `{ "title": "NeuroWorm 竞品洞察", "icon": "🧠", "items": [{"text": "...", "url": "...", "importance": "insight"}, ...] },`
             : '';
 
-        const prompt = `你是一名专业的脑机接口（BCI）行业分析师。请根据以下最新收录的论文和新闻条目，生成一份结构化的行业动态简报。
+        const prompt = `你是BCI行业分析师兼NeuroWorm战略顾问。根据以下数据生成行业简报。
 
-要求：
-1. 用中文回复
-2. 严格按以下 JSON 格式输出，不要输出其他内容：
+输出严格的JSON，不要有任何其他文字：
 {
   "sections": [
     ${competitiveSection}
-    { "title": "🏢 重点公司动态", "icon": "🏢", "items": [{"text": "动态描述", "url": "来源URL"}, ...] },
-    { "title": "💰 融资与投资", "icon": "💰", "items": [{"text": "事件描述", "url": "来源URL"}, ...] },
-    { "title": "🔬 技术突破", "icon": "🔬", "items": [{"text": "突破描述", "url": "来源URL"}, ...] },
-    { "title": "📊 行业趋势", "icon": "📊", "items": [{"text": "趋势描述", "url": "来源URL"}, ...] }
+    { "title": "重点公司动态", "icon": "🏢", "items": [{"text": "...", "url": "...", "importance": "high"}, ...] },
+    { "title": "融资与投资", "icon": "💰", "items": [{"text": "...", "url": "...", "importance": "medium"}, ...] },
+    { "title": "技术突破", "icon": "🔬", "items": [{"text": "...", "url": "...", "importance": "high"}, ...] },
+    { "title": "行业趋势", "icon": "📊", "items": [{"text": "...", "url": "...", "importance": "medium"}, ...] }
   ]
 }
-3. 每个 item 是一个对象，包含 "text"（总结文字，不超过80字）和 "url"（对应的信源链接，必须从下方条目的URL中选取最相关的一个）
-4. 每个 section 包含 2-5 条 items
-5. 如果某个板块没有相关内容，items 里放一条 {"text": "暂无最新动态", "url": ""}
-6. 只输出 JSON，不要包含 markdown 代码块标记
-${companyProfile ? '7. 第一个板块（NeuroWorm 竞品洞察）应从 NeuroWorm 柔性蠕动动态电极的技术优势视角，评论竞品公司的最新动态和行业发展对 NeuroWorm 的机遇与挑战' : ''}
 
-以下是最新收录的条目（含编号和URL）：
+规则：
+- 每个item有text、url、importance三个字段
+- importance值为: critical/high/medium/low
+- url从下方条目URL中选取
+- 每个section写3-5条，text不超100字
+${companyProfile ? `- 竞品洞察的text格式: 先引述行业动态，再给出NeuroWorm视角分析（柔性材料、磁场导航、60通道、43周稳定、深部微血管），importance固定为insight
+- 竞品洞察是给CEO的战略简报` : ''}
+
+条目数据：
 ${context}${companyContext}`;
 
         const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
@@ -676,14 +677,17 @@ ${context}${companyContext}`;
         }
 
         const geminiData = await geminiRes.json();
-        const text = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        const rawText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || '';
 
-        // Extract JSON from response (handle markdown wrapping)
-        const cleaned = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        // Extract and repair JSON
+        let cleaned = rawText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
         const jsonStart = cleaned.indexOf('{');
         const jsonEnd = cleaned.lastIndexOf('}');
         if (jsonStart === -1 || jsonEnd === -1) throw new Error('No JSON in AI response');
-        const parsed = JSON.parse(cleaned.substring(jsonStart, jsonEnd + 1));
+        cleaned = cleaned.substring(jsonStart, jsonEnd + 1);
+        // Fix common JSON issues: trailing commas before ] or }
+        cleaned = cleaned.replace(/,\s*([}\]])/g, '$1');
+        const parsed = JSON.parse(cleaned);
 
         cachedSummary = {
             generated: new Date().toISOString(),

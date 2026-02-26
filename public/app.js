@@ -10,7 +10,7 @@ let totalItems = 0;
 let activeTimeRange = 'all'; // 'all', 'week', 'month', 'quarter', 'year'
 
 // Auto-refresh every 30 minutes (1800000 ms)
-const REFRESH_INTERVAL = 30 * 60 * 1000;
+const REFRESH_INTERVAL = 45 * 60 * 1000; // 45 min — keeps daily Gemini API calls under 50
 let nextRefreshTime = Date.now() + REFRESH_INTERVAL;
 let countdownInterval = null;
 
@@ -73,17 +73,18 @@ async function fetchSummary(force = false) {
 
         summaryContent.innerHTML = data.sections.map(section => `
             <div class="summary-section">
-                <h4 class="summary-section-title">${escapeHtml(section.title)}</h4>
+                <h4 class="summary-section-title">${escapeHtml(section.icon || '')} ${escapeHtml(section.title)}</h4>
                 <ul class="summary-list">
                     ${section.items.map(item => {
-            // Support both string items and {text, url} objects
-            const text = typeof item === 'string' ? item : (item.text || '');
-            const url = typeof item === 'object' ? (item.url || '') : '';
-            const linkHtml = url
-                ? `<a class="summary-link" href="${escapeHtml(url)}" target="_blank" title="查看信源" onclick="event.stopPropagation()">🔗</a>`
-                : '';
-            return `<li>${escapeHtml(text)} ${linkHtml}</li>`;
-        }).join('')}
+                        if (typeof item === 'string') return `<li>${escapeHtml(item)}</li>`;
+                        const text = item.text || '';
+                        const url = item.url || '';
+                        const imp = item.importance || '';
+                        const linkHtml = url ? `<a class="summary-link" href="${escapeHtml(url)}" target="_blank" title="查看信源">🔗</a>` : '';
+                        const impLabel = { critical: '🔴', high: '🟡', medium: '🔵', low: '⚪', insight: '🧠' };
+                        const impHtml = imp ? `<span class="summary-imp imp-${escapeHtml(imp)}">${impLabel[imp] || ''}</span> ` : '';
+                        return `<li>${impHtml}${escapeHtml(text)} ${linkHtml}</li>`;
+                    }).join('')}
                 </ul>
             </div>
         `).join('');
