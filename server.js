@@ -4,7 +4,7 @@ const { parseStringPromise } = require('xml2js');
 const path = require('path');
 const { translateTitle } = require('./translate');
 const { scoreImportance, getImportanceLevel } = require('./scoring');
-const { upsertMany, searchArticles, getStats, getAllSources, getTrendingKeywords, addSubscriber, removeSubscriber, getActiveSubscribers } = require('./db');
+const { upsertMany, searchArticles, getStats, getAllSources, getTrendingKeywords, addSubscriber, removeSubscriber, getActiveSubscribers, getCollections, getCollectionItems, addToCollection, removeFromCollection, createCollection, deleteCollection, autoAssignCollections } = require('./db');
 const { sendDailyBriefing } = require('./briefing');
 
 const app = express();
@@ -459,6 +459,7 @@ async function fetchAndStore() {
         ].map(enrichItem);
 
         upsertMany(all);
+        autoAssignCollections(all);
         const stats = getStats();
         console.log(`✅ Stored ${all.length} items (DB total: ${stats.total})`);
     } catch (err) {
@@ -499,6 +500,68 @@ app.get('/api/stats', (req, res) => {
         res.json(getStats());
     } catch (err) {
         res.json({ total: 0, journals: 0, preprints: 0, news: 0 });
+    }
+});
+
+// ─── API: Collections ─────────────────────────────────────
+
+app.get('/api/collections', (req, res) => {
+    try {
+        res.json(getCollections());
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/api/collections/:id', (req, res) => {
+    try {
+        const { page, limit } = req.query;
+        const data = getCollectionItems(parseInt(req.params.id), {
+            page: parseInt(page) || 1,
+            limit: parseInt(limit) || 50
+        });
+        res.json(data);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/collections', express.json(), (req, res) => {
+    try {
+        const { name, icon } = req.body;
+        if (!name) return res.status(400).json({ error: 'name required' });
+        const result = createCollection(name, icon);
+        res.json({ id: result.lastInsertRowid, name, icon });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/collections/:id/add', express.json(), (req, res) => {
+    try {
+        const { articleId } = req.body;
+        addToCollection(parseInt(req.params.id), articleId, 'manual');
+        res.json({ ok: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.delete('/api/collections/:collectionId/items/:articleId', (req, res) => {
+    try {
+        removeFromCollection(parseInt(req.params.collectionId), parseInt(req.params.articleId));
+        res.json({ ok: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.delete('/api/collections/:id', (req, res) => {
+    try {
+        deleteCollection(parseInt(req.params.id));
+        res.json({ ok: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 });
 

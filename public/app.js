@@ -76,17 +76,17 @@ async function fetchSummary(force = false) {
                 <h4 class="summary-section-title">${escapeHtml(section.icon || '')} ${escapeHtml(section.title)}</h4>
                 <ul class="summary-list">
                     ${section.items.map(item => {
-                        if (typeof item === 'string') return `<li>${escapeHtml(item)}</li>`;
-                        const text = item.text || '';
-                        const url = item.url || '';
-                        const imp = item.importance || '';
-                        const linkHtml = url ? `<a class="summary-link" href="${escapeHtml(url)}" target="_blank" title="查看信源">🔗</a>` : '';
-                        const score = typeof item.importance === 'number' ? item.importance : 0;
-                        const level = score >= 80 ? 'critical' : score >= 60 ? 'high' : score >= 40 ? 'medium' : 'low';
-                        const levelLabel = { critical: '🔴 关键', high: '🟡 重要', medium: '🔵 一般', low: '⚪ 参考' }[level];
-                        const badgeHtml = score ? `<span class="card-importance importance-${level}">${levelLabel} ${score}</span>` : '';
-                        return `<li>${escapeHtml(text)} ${linkHtml} ${badgeHtml}</li>`;
-                    }).join('')}
+            if (typeof item === 'string') return `<li>${escapeHtml(item)}</li>`;
+            const text = item.text || '';
+            const url = item.url || '';
+            const imp = item.importance || '';
+            const linkHtml = url ? `<a class="summary-link" href="${escapeHtml(url)}" target="_blank" title="查看信源">🔗</a>` : '';
+            const score = typeof item.importance === 'number' ? item.importance : 0;
+            const level = score >= 80 ? 'critical' : score >= 60 ? 'high' : score >= 40 ? 'medium' : 'low';
+            const levelLabel = { critical: '🔴 关键', high: '🟡 重要', medium: '🔵 一般', low: '⚪ 参考' }[level];
+            const badgeHtml = score ? `<span class="card-importance importance-${level}">${levelLabel} ${score}</span>` : '';
+            return `<li>${escapeHtml(text)} ${linkHtml} ${badgeHtml}</li>`;
+        }).join('')}
                 </ul>
             </div>
         `).join('');
@@ -483,6 +483,137 @@ if (subscribeForm) {
         }
     });
 }
+
+// ── Collections ──────────────────────────────────────
+
+let collectionsCache = [];
+
+async function fetchCollections() {
+    try {
+        const res = await fetch('/api/collections');
+        collectionsCache = await res.json();
+        renderCollectionsGrid();
+    } catch (err) {
+        console.error('Failed to fetch collections:', err);
+    }
+}
+
+function renderCollectionsGrid() {
+    const grid = document.getElementById('collectionsGrid');
+    const detail = document.getElementById('collectionDetail');
+    if (!grid) return;
+    grid.style.display = 'grid';
+    detail.style.display = 'none';
+
+    grid.innerHTML = collectionsCache.map(c => `
+        <div class="collection-card" onclick="openCollection(${c.id}, '${escapeHtml(c.icon)} ${escapeHtml(c.name)}')">
+            <div class="collection-icon">${escapeHtml(c.icon)}</div>
+            <div class="collection-info">
+                <span class="collection-name">${escapeHtml(c.name)}</span>
+                <span class="collection-count">${c.itemCount} 条内容</span>
+            </div>
+            ${c.isPreset ? '<span class="collection-preset">预设</span>' : `<button class="collection-delete" onclick="event.stopPropagation(); deleteCollectionById(${c.id})" title="删除">✕</button>`}
+        </div>
+    `).join('');
+}
+
+async function openCollection(id, title) {
+    const grid = document.getElementById('collectionsGrid');
+    const detail = document.getElementById('collectionDetail');
+    grid.style.display = 'none';
+    detail.style.display = 'block';
+    document.getElementById('collectionDetailTitle').textContent = title;
+
+    try {
+        const res = await fetch(`/api/collections/${id}`);
+        const data = await res.json();
+        document.getElementById('collectionDetailCount').textContent = `${data.total} 条`;
+        const container = document.getElementById('collectionDetailItems');
+        if (data.items.length === 0) {
+            container.innerHTML = '<div class="empty-collection">暂无内容，系统会自动归集匹配的文章</div>';
+            return;
+        }
+        container.innerHTML = data.items.map(item => {
+            const impLevel = item.importanceLevel || 'low';
+            const impScore = item.importance || 0;
+            const impLabel = { critical: '🔴 严重', high: '🟠 重要', medium: '🟡 一般', low: '⚪ 普通' }[impLevel] || '⚪';
+            return `
+                <a href="${escapeHtml(item.url)}" target="_blank" class="collection-item">
+                    <div class="collection-item-main">
+                        <span class="collection-item-title">${escapeHtml(item.title)}</span>
+                        ${item.titleZh ? `<span class="collection-item-zh">${escapeHtml(item.titleZh)}</span>` : ''}
+                    </div>
+                    <div class="collection-item-meta">
+                        <span class="collection-item-source">${escapeHtml(item.source || item.provider || '')}</span>
+                        <span class="collection-item-date">${item.date || ''}</span>
+                        <span class="card-importance importance-${impLevel}">${impLabel} ${impScore}</span>
+                    </div>
+                </a>
+            `;
+        }).join('');
+    } catch (err) {
+        document.getElementById('collectionDetailItems').innerHTML = '<div class="empty-collection">加载失败</div>';
+    }
+}
+
+async function deleteCollectionById(id) {
+    if (!confirm('确定删除这个专题？')) return;
+    await fetch(`/api/collections/${id}`, { method: 'DELETE' });
+    fetchCollections();
+}
+
+async function showBookmarkDialog(articleId) {
+    if (collectionsCache.length === 0) await fetchCollections();
+    const names = collectionsCache.map((c, i) => `${i + 1}. ${c.icon} ${c.name}`).join('\n');
+    const choice = prompt(`选择专题（输入编号）:\n${names}`);
+    if (!choice) return;
+    const idx = parseInt(choice) - 1;
+    if (idx < 0 || idx >= collectionsCache.length) return alert('无效编号');
+    try {
+        await fetch(`/api/collections/${collectionsCache[idx].id}/add`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ articleId })
+        });
+        alert(`已添加到「${collectionsCache[idx].name}」`);
+    } catch (err) {
+        alert('添加失败');
+    }
+}
+
+// Main tab switching
+document.getElementById('mainTabs')?.addEventListener('click', e => {
+    const tab = e.target.closest('.main-tab');
+    if (!tab) return;
+    document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    const view = tab.dataset.view;
+    document.getElementById('feedView').style.display = view === 'feed' ? '' : 'none';
+    document.getElementById('collectionsView').style.display = view === 'collections' ? '' : 'none';
+    if (view === 'collections') fetchCollections();
+});
+
+// Back button
+document.getElementById('btnBackToCollections')?.addEventListener('click', () => {
+    renderCollectionsGrid();
+});
+
+// Create collection button
+document.getElementById('btnCreateCollection')?.addEventListener('click', async () => {
+    const name = prompt('专题名称：');
+    if (!name) return;
+    const icon = prompt('选择图标（默认 📁）：') || '📁';
+    try {
+        await fetch('/api/collections', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, icon })
+        });
+        fetchCollections();
+    } catch (err) {
+        alert('创建失败: ' + err.message);
+    }
+});
 
 // ── Init ──────────────────────────────────────────────
 fetchAll();

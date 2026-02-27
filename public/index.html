@@ -116,61 +116,87 @@
 
     <!-- Right Panel: Feed -->
     <main class="feed-panel">
-      <!-- Filter Bar -->
-      <section class="filter-bar">
-        <div class="filter-tabs">
-          <button class="filter-tab active" data-filter="all">全部</button>
-          <button class="filter-tab" data-filter="journal">期刊论文</button>
-          <button class="filter-tab" data-filter="preprint">预印本</button>
-          <button class="filter-tab" data-filter="news">产业动态</button>
+      <!-- Top Navigation: Collections Tab -->
+      <div class="main-tabs" id="mainTabs">
+        <button class="main-tab active" data-view="feed">📰 信息流</button>
+        <button class="main-tab" data-view="collections">📁 专题追踪</button>
+      </div>
+
+      <!-- Collections View (hidden by default) -->
+      <section class="collections-view" id="collectionsView" style="display:none;">
+        <div class="collections-header">
+          <h3>📁 专题追踪</h3>
+          <button class="btn-create-collection" id="btnCreateCollection">+ 新建专题</button>
         </div>
-        <div class="time-range-tabs">
-          <span class="sort-label">时间：</span>
-          <button class="time-tab active" data-range="all">全部</button>
-          <button class="time-tab" data-range="week">本周</button>
-          <button class="time-tab" data-range="month">本月</button>
-          <button class="time-tab" data-range="quarter">本季</button>
-          <button class="time-tab" data-range="year">本年</button>
-        </div>
-        <div class="sort-tabs">
-          <span class="sort-label">排序：</span>
-          <button class="sort-tab active" data-sort="importance">重要性</button>
-          <button class="sort-tab" data-sort="date">时间</button>
-        </div>
-        <div class="source-filters" id="sourceFilters"></div>
-        <div class="auto-refresh-indicator">
-          <span class="pulse-dot"></span>
-          <span id="refreshCountdown">下次刷新：0:30:00</span>
+        <div class="collections-grid" id="collectionsGrid"></div>
+        <div class="collection-detail" id="collectionDetail" style="display:none;">
+          <div class="collection-detail-header">
+            <button class="btn-back" id="btnBackToCollections">← 返回</button>
+            <h3 id="collectionDetailTitle"></h3>
+            <span class="collection-detail-count" id="collectionDetailCount"></span>
+          </div>
+          <div class="collection-detail-items" id="collectionDetailItems"></div>
         </div>
       </section>
 
-      <!-- Trending Keywords Panel -->
-      <section class="trending-panel" id="trendingPanel" style="display:none;">
-        <div class="trending-header">
-          <h3>🔥 热门关键词 <span class="trending-subtitle">Trending Keywords</span></h3>
-        </div>
-        <div class="trending-tags" id="trendingTags"></div>
-      </section>
+      <!-- Feed View -->
+      <section class="feed-view" id="feedView">
+        <!-- Filter Bar -->
+        <section class="filter-bar">
+          <div class="filter-tabs">
+            <button class="filter-tab active" data-filter="all">全部</button>
+            <button class="filter-tab" data-filter="journal">期刊论文</button>
+            <button class="filter-tab" data-filter="preprint">预印本</button>
+            <button class="filter-tab" data-filter="news">产业动态</button>
+          </div>
+          <div class="time-range-tabs">
+            <span class="sort-label">时间：</span>
+            <button class="time-tab active" data-range="all">全部</button>
+            <button class="time-tab" data-range="week">本周</button>
+            <button class="time-tab" data-range="month">本月</button>
+            <button class="time-tab" data-range="quarter">本季</button>
+            <button class="time-tab" data-range="year">本年</button>
+          </div>
+          <div class="sort-tabs">
+            <span class="sort-label">排序：</span>
+            <button class="sort-tab active" data-sort="importance">重要性</button>
+            <button class="sort-tab" data-sort="date">时间</button>
+          </div>
+          <div class="source-filters" id="sourceFilters"></div>
+          <div class="auto-refresh-indicator">
+            <span class="pulse-dot"></span>
+            <span id="refreshCountdown">下次刷新：0:30:00</span>
+          </div>
+        </section>
 
-      <!-- Content Grid -->
-      <section class="content">
-        <div class="card-grid" id="cardGrid">
-          <!-- Cards injected by JS -->
-        </div>
-        <div class="loading" id="loading">
-          <div class="spinner"></div>
-          <p>正在从全球数据源获取最新内容…</p>
-        </div>
-        <div class="empty-state" id="emptyState" style="display:none;">
-          <svg viewBox="0 0 80 80" fill="none" width="80" height="80">
-            <circle cx="40" cy="40" r="36" stroke="#334155" stroke-width="2" />
-            <path d="M28 35 Q40 50 52 35" stroke="#64748b" stroke-width="2" fill="none" />
-            <circle cx="30" cy="30" r="3" fill="#64748b" />
-            <circle cx="50" cy="30" r="3" fill="#64748b" />
-          </svg>
-          <p>暂无匹配内容</p>
-        </div>
-      </section>
+        <!-- Trending Keywords Panel -->
+        <section class="trending-panel" id="trendingPanel" style="display:none;">
+          <div class="trending-header">
+            <h3>🔥 热门关键词 <span class="trending-subtitle">Trending Keywords</span></h3>
+          </div>
+          <div class="trending-tags" id="trendingTags"></div>
+        </section>
+
+        <!-- Content Grid -->
+        <section class="content">
+          <div class="card-grid" id="cardGrid">
+            <!-- Cards injected by JS -->
+          </div>
+          <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>正在从全球数据源获取最新内容…</p>
+          </div>
+          <div class="empty-state" id="emptyState" style="display:none;">
+            <svg viewBox="0 0 80 80" fill="none" width="80" height="80">
+              <circle cx="40" cy="40" r="36" stroke="#334155" stroke-width="2" />
+              <path d="M28 35 Q40 50 52 35" stroke="#64748b" stroke-width="2" fill="none" />
+              <circle cx="30" cy="30" r="3" fill="#64748b" />
+              <circle cx="50" cy="30" r="3" fill="#64748b" />
+            </svg>
+            <p>暂无匹配内容</p>
+          </div>
+        </section>
+      </section> <!-- /feed-view -->
     </main>
   </div>
 
