@@ -1209,7 +1209,7 @@ body {
 
 .collection-item-zh {
   font-size: 13px;
-  color: var(--accent);
+  color: var(--text-secondary);
   line-height: 1.4;
 }
 

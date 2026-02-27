@@ -732,6 +732,7 @@ ${context}${companyContext}`;
                 generationConfig: {
                     temperature: 0.3,
                     maxOutputTokens: 4096,
+                    responseMimeType: 'application/json',
                     thinkingConfig: { thinkingBudget: 0 }
                 }
             })
