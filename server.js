@@ -692,20 +692,34 @@ app.get('/api/summary', async (req, res) => {
 
         // 🛡️ API Quota Protection: Prevent frequent manual force-refreshes
         if (Date.now() < aiCooldownUntil) {
-            const minutesLeft = Math.ceil((aiCooldownUntil - Date.now()) / 60000);
-            return res.json({
-                generated: new Date().toISOString(),
-                sections: [
-                    { 
-                        title: '🛡️ API 额度保护机制', 
-                        icon: '⏳', 
-                        items: [{ 
-                            text: `为防止超出 Google 的免费 API 额度导致调用被停用，后台已设置最低请求间隔。请在 ${minutesLeft} 分钟后再次重试刷新。`, 
-                            importance: 90 
-                        }] 
-                    }
-                ]
-            });
+            if (cachedSummary) {
+                // Instead of clearing the screen with an error, return the cached summary!
+                // We inject a small notice into the first section so users know it's cached.
+                const minutesLeft = Math.ceil((aiCooldownUntil - Date.now()) / 60000);
+                const summaryCopy = JSON.parse(JSON.stringify(cachedSummary));
+                if (summaryCopy.sections && summaryCopy.sections.length > 0) {
+                    summaryCopy.sections[0].items.unshift({
+                        text: `【频控提示】因多人同时刷新触发了安全保护，我们为您保留了上一份简报。请在 ${minutesLeft} 分钟后重试。`,
+                        importance: 0
+                    });
+                }
+                return res.json(summaryCopy);
+            } else {
+                const minutesLeft = Math.ceil((aiCooldownUntil - Date.now()) / 60000);
+                return res.json({
+                    generated: new Date().toISOString(),
+                    sections: [
+                        { 
+                            title: '🛡️ API 额度保护机制', 
+                            icon: '⏳', 
+                            items: [{ 
+                                text: `为防止超出 Google 的免费 API 额度导致调用被停用，后台已设置最低请求间隔。请在 ${minutesLeft} 分钟后再次重试刷新。`, 
+                                importance: 90 
+                            }] 
+                        }
+                    ]
+                });
+            }
         }
         
         // Lock the cooldown globally immediately
@@ -769,23 +783,30 @@ ${companyProfile ? `- 竞品洞察的importance统一设为80
 条目数据：
 ${context}${companyContext}`;
 
-        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
-        const geminiRes = await fetch(geminiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: {
-                    temperature: 0.3,
-                    maxOutputTokens: 8192,
-                    responseMimeType: 'application/json',
-                    thinkingConfig: { thinkingBudget: 0 }
-                }
-            })
-        });
+        const baseUrl = (process.env.GEMINI_BASE_URL || 'https://divine-water-7369.njufzcj.workers.dev').replace(/\/$/, '');
+        const geminiUrl = `${baseUrl}/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+        
+        let geminiRes;
+        try {
+            geminiRes = await fetch(geminiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: {
+                        temperature: 0.3,
+                        maxOutputTokens: 8192,
+                        responseMimeType: 'application/json'
+                    }
+                })
+            });
+        } catch (fetchErr) {
+            throw new Error(`网络连接失败 (${baseUrl}): ${fetchErr.message}`);
+        }
 
         if (!geminiRes.ok) {
-            throw new Error(`Gemini API error: ${geminiRes.status}`);
+            const errorText = await geminiRes.text();
+            throw new Error(`Gemini API 错误 ${geminiRes.status}: ${errorText}`);
         }
 
         const geminiData = await geminiRes.json();
@@ -834,11 +855,14 @@ ${context}${companyContext}`;
         res.json(cachedSummary);
     } catch (err) {
         console.error('AI Summary error:', err.message);
+        // Reset cooldown so the user doesn't get locked out for 10 minutes on an error
+        aiCooldownUntil = 0;
+        
         // Return fallback summary
         res.json({
             generated: new Date().toISOString(),
             sections: [
-                { title: '🏢 重点公司动态', icon: '🏢', items: ['AI 总结生成失败，请稍后重试。错误：' + err.message] }
+                { title: '🏢 重点公司动态', icon: '🏢', items: [{text: 'AI 总结生成失败，请稍后重试。错误：' + err.message, importance: 0 }] }
             ]
         });
     }
