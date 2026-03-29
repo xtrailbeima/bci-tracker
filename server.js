@@ -800,10 +800,18 @@ ${context}${companyContext}`;
             
             // SAVE output for debugging
             require('fs').writeFileSync(require('path').join(__dirname, 'failed_summary.json'), rawText, 'utf-8');
-            console.log('Saved raw failed JSON to failed_summary.json for inspection.');
 
             // Fallback: extract JSON if it's wrapped in markdown or has trailing garbage
             let cleaned = rawText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+            
+            // AI models often forget the closing quote on very long URLs.
+            // This regex patches a string that doesn't have a closing quote before a structural newline.
+            cleaned = cleaned.replace(/("url":\s*"[^"\n]+)\n/g, '$1",\n');
+            cleaned = cleaned.replace(/("\w+":\s*"[^"\n]+)(\n\s*(\}|\]))/g, '$1"$2');
+            
+            // Remove illegal control characters inside strings that might still remain (except structural newlines)
+            cleaned = cleaned.replace(/[\u0000-\u0009\u000B-\u001F]+/g, '');
+
             const jsonStart = cleaned.indexOf('{');
             const jsonEnd = cleaned.lastIndexOf('}');
             if (jsonStart !== -1 && jsonEnd !== -1) {

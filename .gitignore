@@ -2,3 +2,7 @@ node_modules/
 .DS_Store
 *.log
 *.db
+*.db-shm
+*.db-wal
+.env
+failed_summary.json
