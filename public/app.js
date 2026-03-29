@@ -91,10 +91,13 @@ async function fetchSummary(force = false) {
             </div>
         `).join('');
 
-        // Add fade-in animation
-        summaryContent.querySelectorAll('.summary-section').forEach((el, i) => {
-            el.style.animationDelay = `${i * 0.1}s`;
-        });
+        // Add fade-in animation (respect reduced motion)
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (!prefersReducedMotion) {
+            summaryContent.querySelectorAll('.summary-section').forEach((el, i) => {
+                el.style.animationDelay = `${i * 0.1}s`;
+            });
+        }
     } catch (err) {
         console.error('Summary error:', err);
         summaryContent.innerHTML = `
@@ -248,14 +251,17 @@ async function updateStats() {
 }
 
 function animateNumber(el, target) {
+    if (typeof target !== 'number' || isNaN(target)) { el.textContent = '—'; return; }
+    target = Math.max(0, Math.round(target));
     const duration = 600;
-    const start = parseInt(el.textContent) || 0;
+    const start = Math.max(0, parseInt(el.textContent.replace(/[^0-9]/g, '')) || 0);
+    if (start === target) { el.textContent = target; return; }
     const diff = target - start;
     const startTime = performance.now();
     function step(time) {
         const progress = Math.min((time - startTime) / duration, 1);
         const eased = 1 - Math.pow(1 - progress, 3);
-        el.textContent = Math.round(start + diff * eased);
+        el.textContent = Math.max(0, Math.round(start + diff * eased));
         if (progress < 1) requestAnimationFrame(step);
     }
     requestAnimationFrame(step);
@@ -336,7 +342,7 @@ function createCard(item) {
     const titleZhHtml = item.titleZh ? `<p class="card-title-zh">${escapeHtml(item.titleZh)}</p>` : '';
 
     return `
-    <article class="card" onclick="window.open('${escapeHtml(item.url)}', '_blank')">
+    <a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer" class="card">
       <div class="card-header">
         <div class="card-header-left">
           <h3 class="card-title">${escapeHtml(item.title)}</h3>
@@ -357,7 +363,7 @@ function createCard(item) {
         <span class="card-source-dot ${dotClass}"></span>
         ${escapeHtml(item.source || item.provider || '')}
       </div>
-    </article>`;
+    </a>`;
 }
 
 function getDotClass(provider) {
@@ -384,7 +390,7 @@ function formatDate(dateStr) {
         if (hours < 24) return `${hours} 小时前`;
         if (days < 7) return `${days} 天前`;
         if (days < 60) return `${Math.floor(days / 7)} 周前`;
-        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+        return new Intl.DateTimeFormat('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
     } catch { return dateStr.slice(0, 20); }
 }
 
@@ -506,14 +512,14 @@ function renderCollectionsGrid() {
     detail.style.display = 'none';
 
     grid.innerHTML = collectionsCache.map(c => `
-        <div class="collection-card" onclick="openCollection(${c.id}, '${escapeHtml(c.icon)} ${escapeHtml(c.name)}')">
+        <button class="collection-card" type="button" onclick="openCollection(${c.id}, '${escapeHtml(c.icon)} ${escapeHtml(c.name)}')">
             <div class="collection-icon">${escapeHtml(c.icon)}</div>
             <div class="collection-info">
                 <span class="collection-name">${escapeHtml(c.name)}</span>
                 <span class="collection-count">${c.itemCount} 条内容</span>
             </div>
-            ${c.isPreset ? '<span class="collection-preset">预设</span>' : `<button class="collection-delete" onclick="event.stopPropagation(); deleteCollectionById(${c.id})" title="删除">✕</button>`}
-        </div>
+            ${c.isPreset ? '<span class="collection-preset">预设</span>' : `<span class="collection-delete" onclick="event.stopPropagation(); deleteCollectionById(${c.id})" role="button" tabindex="0" title="删除" aria-label="删除专题 ${escapeHtml(c.name)}">✕</span>`}
+        </button>
     `).join('');
 }
 

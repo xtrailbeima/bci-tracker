@@ -37,6 +37,7 @@
 
 html {
   scroll-behavior: smooth;
+  color-scheme: dark;
 }
 
 body {
@@ -45,6 +46,37 @@ body {
   color: var(--text-primary);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
+}
+
+/* ── Skip Link & Screen Reader Only ───────────────── */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 16px;
+  padding: 8px 16px;
+  background: var(--accent-cyan);
+  color: var(--bg-primary);
+  border-radius: var(--radius-sm);
+  z-index: 9999;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.skip-link:focus {
+  top: 8px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
 }
 
 /* ── Header ───────────────────────────────────────────── */
@@ -125,14 +157,14 @@ body {
   font-size: 13px;
   font-family: var(--font-sans);
   transition: border-color 0.2s, box-shadow 0.2s;
-  outline: none;
 }
 
 .search-box input::placeholder {
   color: var(--text-muted);
 }
 
-.search-box input:focus {
+.search-box input:focus-visible {
+  outline: none;
   border-color: var(--accent-cyan);
   box-shadow: 0 0 0 3px rgba(0, 240, 255, 0.1);
 }
@@ -148,7 +180,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+  transition: border-color 0.2s, color 0.2s, box-shadow 0.2s;
 }
 
 .btn-refresh:hover {
@@ -445,7 +477,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+  transition: border-color 0.2s, color 0.2s, background-color 0.2s;
 }
 
 .summary-refresh-icon:hover {
@@ -491,7 +523,7 @@ body {
   font-family: var(--font-sans);
   border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: color 0.2s, background-color 0.2s, box-shadow 0.2s;
   white-space: nowrap;
 }
 
@@ -520,7 +552,7 @@ body {
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: border-color 0.2s, color 0.2s, background-color 0.2s;
   font-family: var(--font-sans);
 }
 
@@ -554,7 +586,7 @@ body {
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: border-color 0.2s, color 0.2s, background-color 0.2s;
   font-family: var(--font-sans);
 }
 
@@ -673,10 +705,12 @@ body {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  transition: all 0.25s ease;
+  transition: border-color 0.25s ease, background-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
   cursor: pointer;
   position: relative;
   overflow: hidden;
+  text-decoration: none;
+  color: inherit;
 }
 
 .card::before {
@@ -882,7 +916,7 @@ body {
   font-weight: 500;
   font-family: var(--font-sans);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: border-color 0.2s, color 0.2s;
 }
 
 .load-more-btn:hover {
@@ -938,11 +972,11 @@ body {
   color: var(--text-primary);
   font-size: 13px;
   font-family: var(--font-sans);
-  outline: none;
   transition: border-color 0.2s;
 }
 
-.subscribe-form input:focus {
+.subscribe-form input:focus-visible {
+  outline: none;
   border-color: var(--accent-cyan);
 }
 
@@ -1004,7 +1038,7 @@ body {
   font-weight: 500;
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background-color 0.2s, color 0.2s;
 }
 
 .main-tab.active {
@@ -1042,7 +1076,7 @@ body {
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background 0.2s, transform 0.2s;
 }
 
 .btn-create-collection:hover {
@@ -1065,7 +1099,7 @@ body {
   border: 1px solid var(--glass-border);
   border-radius: 12px;
   cursor: pointer;
-  transition: all 0.25s;
+  transition: background-color 0.25s, border-color 0.25s, transform 0.25s, box-shadow 0.25s;
   position: relative;
 }
 
@@ -1154,7 +1188,7 @@ body {
   border-radius: 6px;
   font-size: 13px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: color 0.2s, border-color 0.2s;
 }
 
 .btn-back:hover {
@@ -1192,7 +1226,7 @@ body {
   border: 1px solid var(--glass-border);
   border-radius: 10px;
   text-decoration: none;
-  transition: all 0.2s;
+  transition: border-color 0.2s, background-color 0.2s;
 }
 
 .collection-item:hover {
@@ -1250,7 +1284,7 @@ body {
   align-items: center;
   justify-content: center;
   opacity: 0;
-  transition: all 0.2s;
+  transition: opacity 0.2s, color 0.2s, border-color 0.2s, background-color 0.2s;
 }
 
 .news-card:hover .card-bookmark {
@@ -1338,7 +1372,7 @@ body {
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: border-color 0.2s, color 0.2s, background-color 0.2s;
   font-family: var(--font-sans);
 }
 
@@ -1386,7 +1420,7 @@ body {
   background: var(--bg-card);
   color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: border-color 0.2s, color 0.2s, background-color 0.2s;
   font-family: var(--font-sans);
 }
 
@@ -1465,5 +1499,18 @@ body {
 
   .filter-bar {
     gap: 8px;
+  }
+}
+
+/* ── Reduced Motion ────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

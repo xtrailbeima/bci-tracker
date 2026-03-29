@@ -4,10 +4,10 @@
     "description": "Brain-Computer Interface academic paper and news tracker",
     "main": "server.js",
     "scripts": {
-        "start": "node server.js",
-        "dev": "node server.js",
-        "test": "node test/smoke.js",
-        "verify": "node -c server.js && node -c public/app.js && node test/smoke.js"
+        "start": "node --env-file=.env server.js",
+        "dev": "node --env-file=.env server.js",
+        "test": "node --env-file=.env test/smoke.js",
+        "verify": "node -c server.js && node -c public/app.js && node --env-file=.env test/smoke.js"
     },
     "dependencies": {
         "better-sqlite3": "^12.6.2",

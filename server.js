@@ -12,6 +12,28 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
+
+// ─── TEAM AUTHENTICATION MIDDLEWARE ───────────────────────
+function teamAuth(req, res, next) {
+    const authHeader = req.headers.authorization || '';
+    const b64auth = authHeader.split(' ')[1] || '';
+    const [login, password] = Buffer.from(b64auth, 'base64').toString().split(':');
+
+    // Use environment variables or default to standard team credentials
+    const expectedUser = process.env.TEAM_USER || 'bciteam';
+    const expectedPass = process.env.TEAM_PASS || 'bci2026';
+
+    if (login === expectedUser && password === expectedPass) {
+        return next();
+    }
+    
+    // Auth failed
+    res.set('WWW-Authenticate', 'Basic realm="BCI Tracker Team Private Access"');
+    res.status(401).send('Authentication required. Internal Team Use Only.');
+}
+
+// 🔐 Apply authentication to all routes (serving frontend and APIs)
+app.use(teamAuth);
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ─── Helpers ──────────────────────────────────────────────
@@ -643,7 +665,10 @@ app.post('/api/briefing/send', async (req, res) => {
 
 let cachedSummary = null;
 let summaryLastGenerated = 0;
-const SUMMARY_CACHE_TTL = 45 * 60 * 1000; // 45 minutes (~32 auto-calls/day, leaving room for manual refreshes under 50/day limit)
+const SUMMARY_CACHE_TTL = 45 * 60 * 1000; // 45 minutes
+
+let aiCooldownUntil = 0;
+const API_COOLDOWN_MS = 10 * 60 * 1000; // 10 minutes global cooldown between API calls
 
 // Load company profile at startup
 const fs = require('fs');
@@ -665,12 +690,33 @@ app.get('/api/summary', async (req, res) => {
             return res.json(cachedSummary);
         }
 
+        // 🛡️ API Quota Protection: Prevent frequent manual force-refreshes
+        if (Date.now() < aiCooldownUntil) {
+            const minutesLeft = Math.ceil((aiCooldownUntil - Date.now()) / 60000);
+            return res.json({
+                generated: new Date().toISOString(),
+                sections: [
+                    { 
+                        title: '🛡️ API 额度保护机制', 
+                        icon: '⏳', 
+                        items: [{ 
+                            text: `为防止超出 Google 的免费 API 额度导致调用被停用，后台已设置最低请求间隔。请在 ${minutesLeft} 分钟后再次重试刷新。`, 
+                            importance: 90 
+                        }] 
+                    }
+                ]
+            });
+        }
+        
+        // Lock the cooldown globally immediately
+        aiCooldownUntil = Date.now() + API_COOLDOWN_MS;
+
         const apiKey = process.env.GEMINI_API_KEY;
         if (!apiKey) {
             return res.json({
                 generated: new Date().toISOString(),
                 sections: [
-                    { title: '⚠️ AI 总结未启用', icon: '⚙️', items: [{ text: '请设置环境变量 GEMINI_API_KEY 以启用 AI 行业总结功能。' }, { text: '获取方式：访问 https://aistudio.google.com/apikey', url: 'https://aistudio.google.com/apikey' }] }
+                    { title: '⚠️ AI 总结未启用', icon: '⚙️', items: [{ text: '请设置环境变量 GEMINI_API_KEY 以启用 AI 行业总结功能。', importance: 10 }, { text: '获取方式：访问 https://aistudio.google.com/apikey', url: 'https://aistudio.google.com/apikey', importance: 30 }] }
                 ]
             });
         }
@@ -731,7 +777,7 @@ ${context}${companyContext}`;
                 contents: [{ parts: [{ text: prompt }] }],
                 generationConfig: {
                     temperature: 0.3,
-                    maxOutputTokens: 4096,
+                    maxOutputTokens: 8192,
                     responseMimeType: 'application/json',
                     thinkingConfig: { thinkingBudget: 0 }
                 }
@@ -744,35 +790,30 @@ ${context}${companyContext}`;
 
         const geminiData = await geminiRes.json();
         const rawText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || '';
-
-        // Extract and repair JSON — robust against Gemini output quirks
-        let cleaned = rawText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-        const jsonStart = cleaned.indexOf('{');
-        const jsonEnd = cleaned.lastIndexOf('}');
-        if (jsonStart === -1 || jsonEnd === -1) throw new Error('No JSON in AI response');
-        cleaned = cleaned.substring(jsonStart, jsonEnd + 1);
-
-        // Aggressive JSON repair
-        cleaned = cleaned
-            .replace(/,\s*([}\]])/g, '$1')           // trailing commas
-            .replace(/[\x00-\x1F\x7F]/g, ' ')        // control characters
-            .replace(/\n/g, ' ')                       // newlines inside strings
-            .replace(/\t/g, ' ')                       // tabs
-            .replace(/\s{2,}/g, ' ');                  // collapse whitespace
-
+        
         let parsed;
         try {
-            parsed = JSON.parse(cleaned);
-        } catch (parseErr) {
-            // Second attempt: try to extract just the sections array
-            console.warn('AI Summary: first JSON parse failed, trying repair...', parseErr.message);
-            const sectionsMatch = cleaned.match(/"sections"\s*:\s*(\[[\s\S]*\])/);
-            if (sectionsMatch) {
-                let sectionsStr = sectionsMatch[1];
-                sectionsStr = sectionsStr.replace(/,\s*([}\]])/g, '$1');
-                parsed = { sections: JSON.parse(sectionsStr) };
-            } else {
-                throw parseErr;
+            // Because responseMimeType is 'application/json', rawText should be valid JSON
+            parsed = JSON.parse(rawText);
+        } catch (initialErr) {
+            console.warn('AI Summary: strict JSON parse failed, attempting repair...', initialErr.message);
+            
+            // SAVE output for debugging
+            require('fs').writeFileSync(require('path').join(__dirname, 'failed_summary.json'), rawText, 'utf-8');
+            console.log('Saved raw failed JSON to failed_summary.json for inspection.');
+
+            // Fallback: extract JSON if it's wrapped in markdown or has trailing garbage
+            let cleaned = rawText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+            const jsonStart = cleaned.indexOf('{');
+            const jsonEnd = cleaned.lastIndexOf('}');
+            if (jsonStart !== -1 && jsonEnd !== -1) {
+                cleaned = cleaned.substring(jsonStart, jsonEnd + 1);
+            }
+            try {
+                parsed = JSON.parse(cleaned);
+            } catch (repairErr) {
+                console.error('Failed to parse repaired JSON:', repairErr.message);
+                throw repairErr;
             }
         }
 
