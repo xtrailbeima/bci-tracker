@@ -13,27 +13,7 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-// ─── TEAM AUTHENTICATION MIDDLEWARE ───────────────────────
-function teamAuth(req, res, next) {
-    const authHeader = req.headers.authorization || '';
-    const b64auth = authHeader.split(' ')[1] || '';
-    const [login, password] = Buffer.from(b64auth, 'base64').toString().split(':');
-
-    // Use environment variables or default to standard team credentials
-    const expectedUser = process.env.TEAM_USER || 'bciteam';
-    const expectedPass = process.env.TEAM_PASS || 'bci2026';
-
-    if (login === expectedUser && password === expectedPass) {
-        return next();
-    }
-    
-    // Auth failed
-    res.set('WWW-Authenticate', 'Basic realm="BCI Tracker Team Private Access"');
-    res.status(401).send('Authentication required. Internal Team Use Only.');
-}
-
-// 🔐 Apply authentication to all routes (serving frontend and APIs)
-app.use(teamAuth);
+// Public access — no authentication required
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ─── Helpers ──────────────────────────────────────────────
@@ -713,7 +693,7 @@ app.get('/api/summary', async (req, res) => {
                             title: '🛡️ API 额度保护机制', 
                             icon: '⏳', 
                             items: [{ 
-                                text: `为防止超出 Google 的免费 API 额度导致调用被停用，后台已设置最低请求间隔。请在 ${minutesLeft} 分钟后再次重试刷新。`, 
+                                text: `AI 摘要服务正在冷却中，请在 ${minutesLeft} 分钟后再次刷新。`, 
                                 importance: 90 
                             }] 
                         }
@@ -725,12 +705,12 @@ app.get('/api/summary', async (req, res) => {
         // Lock the cooldown globally immediately
         aiCooldownUntil = Date.now() + API_COOLDOWN_MS;
 
-        const apiKey = process.env.GEMINI_API_KEY;
+        const apiKey = process.env.HUNYUAN_API_KEY || process.env.GEMINI_API_KEY;
         if (!apiKey) {
             return res.json({
                 generated: new Date().toISOString(),
                 sections: [
-                    { title: '⚠️ AI 总结未启用', icon: '⚙️', items: [{ text: '请设置环境变量 GEMINI_API_KEY 以启用 AI 行业总结功能。', importance: 10 }, { text: '获取方式：访问 https://aistudio.google.com/apikey', url: 'https://aistudio.google.com/apikey', importance: 30 }] }
+                    { title: '⚠️ AI 总结未启用', icon: '⚙️', items: [{ text: '请设置环境变量 HUNYUAN_API_KEY 以启用 AI 行业总结功能。', importance: 10 }] }
                 ]
             });
         }
@@ -783,34 +763,34 @@ ${companyProfile ? `- 竞品洞察的importance统一设为80
 条目数据：
 ${context}${companyContext}`;
 
-        const baseUrl = (process.env.GEMINI_BASE_URL || 'https://divine-water-7369.njufzcj.workers.dev').replace(/\/$/, '');
-        const geminiUrl = `${baseUrl}/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+        const hunyuanUrl = 'https://hunyuan.cloud.tencent.com/openai/v1/chat/completions';
         
-        let geminiRes;
+        let aiRes;
         try {
-            geminiRes = await fetch(geminiUrl, {
+            aiRes = await fetch(hunyuanUrl, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
                 body: JSON.stringify({
-                    contents: [{ parts: [{ text: prompt }] }],
-                    generationConfig: {
-                        temperature: 0.3,
-                        maxOutputTokens: 8192,
-                        responseMimeType: 'application/json'
-                    }
+                    model: 'hunyuan-turbo',
+                    messages: [{ role: 'user', content: prompt }],
+                    temperature: 0.3,
+                    max_tokens: 4096
                 })
             });
         } catch (fetchErr) {
-            throw new Error(`网络连接失败 (${baseUrl}): ${fetchErr.message}`);
+            throw new Error(`网络连接失败 (Hunyuan): ${fetchErr.message}`);
         }
 
-        if (!geminiRes.ok) {
-            const errorText = await geminiRes.text();
-            throw new Error(`Gemini API 错误 ${geminiRes.status}: ${errorText}`);
+        if (!aiRes.ok) {
+            const errorText = await aiRes.text();
+            throw new Error(`Hunyuan API 错误 ${aiRes.status}: ${errorText}`);
         }
 
-        const geminiData = await geminiRes.json();
-        const rawText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        const aiData = await aiRes.json();
+        const rawText = aiData.choices?.[0]?.message?.content || '';
         
         let parsed;
         try {
