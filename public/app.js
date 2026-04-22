@@ -9,8 +9,8 @@ let hasMore = false;
 let totalItems = 0;
 let activeTimeRange = 'all'; // 'all', 'week', 'month', 'quarter', 'year'
 
-// Auto-refresh every 30 minutes (1800000 ms)
-const REFRESH_INTERVAL = 45 * 60 * 1000; // 45 min — keeps daily Gemini API calls under 50
+// Auto-refresh every 45 minutes
+const REFRESH_INTERVAL = 45 * 60 * 1000;
 let nextRefreshTime = Date.now() + REFRESH_INTERVAL;
 let countdownInterval = null;
 
@@ -29,9 +29,7 @@ const statUpdated = document.getElementById('statUpdated');
 const refreshCountdown = document.getElementById('refreshCountdown');
 const trendingPanel = document.getElementById('trendingPanel');
 const trendingTags = document.getElementById('trendingTags');
-const summaryContent = document.getElementById('summaryContent');
-const summaryTime = document.getElementById('summaryTime');
-const summaryRefreshBtn = document.getElementById('summaryRefreshBtn');
+
 
 // ── Time Range Helpers ────────────────────────────────
 function getDateRange(range) {
@@ -45,80 +43,12 @@ function getDateRange(range) {
     }
 }
 
-// ── AI Summary ────────────────────────────────────────
-async function fetchSummary(force = false) {
-    if (!summaryContent) return;
-
-    summaryContent.innerHTML = `
-        <div class="summary-loading">
-            <div class="spinner-sm"></div>
-            <span>正在分析行业动态...</span>
-        </div>`;
-
-    try {
-        const url = force ? '/api/summary?force=1' : '/api/summary';
-        const res = await fetch(url);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-
-        if (summaryTime && data.generated) {
-            const t = new Date(data.generated);
-            summaryTime.textContent = `${pad(t.getHours())}:${pad(t.getMinutes())} 生成`;
-        }
-
-        if (!data.sections || data.sections.length === 0) {
-            summaryContent.innerHTML = '<p class="summary-empty">暂无分析数据</p>';
-            return;
-        }
-
-        summaryContent.innerHTML = data.sections.map(section => `
-            <div class="summary-section">
-                <h4 class="summary-section-title">${escapeHtml(section.icon || '')} ${escapeHtml(section.title)}</h4>
-                <ul class="summary-list">
-                    ${section.items.map(item => {
-            if (typeof item === 'string') return `<li>${escapeHtml(item)}</li>`;
-            const text = item.text || '';
-            const url = item.url || '';
-            const imp = item.importance || '';
-            const linkHtml = url ? `<a class="summary-link" href="${escapeHtml(url)}" target="_blank" title="查看信源">🔗</a>` : '';
-            const score = typeof item.importance === 'number' ? item.importance : 0;
-            const level = score >= 80 ? 'critical' : score >= 60 ? 'high' : score >= 40 ? 'medium' : 'low';
-            const levelLabel = { critical: '🔴 关键', high: '🟡 重要', medium: '🔵 一般', low: '⚪ 参考' }[level];
-            const badgeHtml = score ? `<span class="card-importance importance-${level}">${levelLabel} ${score}</span>` : '';
-            return `<li>${escapeHtml(text)} ${linkHtml} ${badgeHtml}</li>`;
-        }).join('')}
-                </ul>
-            </div>
-        `).join('');
-
-        // Add fade-in animation (respect reduced motion)
-        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        if (!prefersReducedMotion) {
-            summaryContent.querySelectorAll('.summary-section').forEach((el, i) => {
-                el.style.animationDelay = `${i * 0.1}s`;
-            });
-        }
-    } catch (err) {
-        console.error('Summary error:', err);
-        summaryContent.innerHTML = `
-            <div class="summary-error">
-                <p>⚠️ AI 分析加载失败</p>
-                <p class="summary-error-detail">${escapeHtml(err.message)}</p>
-            </div>`;
-    }
-}
-
-// Summary refresh button
-if (summaryRefreshBtn) {
-    summaryRefreshBtn.addEventListener('click', () => fetchSummary(true));
-}
 
 // ── Fetch Data ────────────────────────────────────────
 async function fetchAll(append = false) {
     if (!append) {
-        loading.classList.remove('hidden');
+        showSkeletons();
         emptyState.style.display = 'none';
-        cardGrid.innerHTML = '';
         currentPage = 1;
         allItems = [];
     }
@@ -220,7 +150,6 @@ function startCountdown() {
         const remaining = nextRefreshTime - Date.now();
         if (remaining <= 0) {
             fetchAll();
-            fetchSummary();
             return;
         }
         const h = Math.floor(remaining / 3600000);
@@ -312,7 +241,27 @@ function renderCards() {
         return;
     }
     emptyState.style.display = 'none';
-    cardGrid.innerHTML = allItems.map(item => createCard(item)).join('');
+
+    // Performance: batch DOM with DocumentFragment
+    const frag = document.createDocumentFragment();
+    allItems.forEach(item => {
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = createCard(item);
+        const card = wrapper.firstElementChild;
+        frag.appendChild(card);
+    });
+    cardGrid.innerHTML = '';
+    cardGrid.appendChild(frag);
+
+    // Card mouse-tracking glow effect (delight)
+    cardGrid.querySelectorAll('.card').forEach(card => {
+        card.addEventListener('mousemove', e => {
+            const rect = card.getBoundingClientRect();
+            card.style.setProperty('--mouse-x', `${e.clientX - rect.left}px`);
+            card.style.setProperty('--mouse-y', `${e.clientY - rect.top}px`);
+        });
+    });
+
     if (hasMore) { addLoadMore(); } else { removeLoadMore(); }
 }
 
@@ -451,7 +400,6 @@ searchInput.addEventListener('input', (e) => {
 // Refresh
 refreshBtn.addEventListener('click', () => {
     fetchAll();
-    fetchSummary(true);
 });
 
 // Subscribe form
@@ -591,8 +539,12 @@ async function showBookmarkDialog(articleId) {
 document.getElementById('mainTabs')?.addEventListener('click', e => {
     const tab = e.target.closest('.main-tab');
     if (!tab) return;
-    document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.main-tab').forEach(t => {
+        t.classList.remove('active');
+        t.setAttribute('aria-selected', 'false');
+    });
     tab.classList.add('active');
+    tab.setAttribute('aria-selected', 'true');
     const view = tab.dataset.view;
     document.getElementById('feedView').style.display = view === 'feed' ? '' : 'none';
     document.getElementById('collectionsView').style.display = view === 'collections' ? '' : 'none';
@@ -621,7 +573,22 @@ document.getElementById('btnCreateCollection')?.addEventListener('click', async 
     }
 });
 
+// ── Skeleton Loading (animate skill) ──────────────────
+function showSkeletons() {
+    const count = 6;
+    cardGrid.innerHTML = Array.from({ length: count }, (_, i) => `
+        <div class="card skeleton-card" style="animation-delay: ${i * 0.05}s">
+            <div class="skeleton" style="height: 20px; width: 75%; margin-bottom: 8px;"></div>
+            <div class="skeleton" style="height: 14px; width: 90%; margin-bottom: 12px;"></div>
+            <div class="skeleton" style="height: 48px; width: 100%; margin-bottom: 12px;"></div>
+            <div style="display: flex; gap: 8px;">
+                <div class="skeleton" style="height: 12px; width: 80px;"></div>
+                <div class="skeleton" style="height: 12px; width: 60px;"></div>
+            </div>
+        </div>
+    `).join('');
+    loading.classList.add('hidden');
+}
+
 // ── Init ──────────────────────────────────────────────
 fetchAll();
-// Load AI summary after a short delay (let data fetch first)
-setTimeout(() => fetchSummary(), 5000);

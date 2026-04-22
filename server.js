@@ -11,7 +11,45 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '100kb' }));
+
+// ─── Security Headers (security-auditor skill) ──────────────
+app.use((req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+    next();
+});
+
+// ─── Simple Rate Limiter (security-auditor skill) ──────────
+const rateLimitMap = new Map();
+function rateLimit(windowMs = 60000, maxRequests = 30) {
+    return (req, res, next) => {
+        const key = req.ip;
+        const now = Date.now();
+        const record = rateLimitMap.get(key) || { count: 0, resetAt: now + windowMs };
+        if (now > record.resetAt) {
+            record.count = 0;
+            record.resetAt = now + windowMs;
+        }
+        record.count++;
+        rateLimitMap.set(key, record);
+        if (record.count > maxRequests) {
+            return res.status(429).json({ error: 'Too many requests. Please try again later.' });
+        }
+        next();
+    };
+}
+
+// Clean up rate limit map periodically
+setInterval(() => {
+    const now = Date.now();
+    for (const [key, record] of rateLimitMap) {
+        if (now > record.resetAt) rateLimitMap.delete(key);
+    }
+}, 300000);
 
 // Public access — no authentication required
 app.use(express.static(path.join(__dirname, 'public')));
@@ -531,9 +569,12 @@ app.get('/api/collections/:id', (req, res) => {
 app.post('/api/collections', express.json(), (req, res) => {
     try {
         const { name, icon } = req.body;
-        if (!name) return res.status(400).json({ error: 'name required' });
-        const result = createCollection(name, icon);
-        res.json({ id: result.lastInsertRowid, name, icon });
+        if (!name || typeof name !== 'string') return res.status(400).json({ error: 'name required' });
+        // Input validation (security-auditor skill)
+        const safeName = name.slice(0, 50).replace(/[<>"'&]/g, '');
+        const safeIcon = (icon || '📁').slice(0, 4);
+        const result = createCollection(safeName, safeIcon);
+        res.json({ id: result.lastInsertRowid, name: safeName, icon: safeIcon });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -605,13 +646,16 @@ app.get('/api/trending', (req, res) => {
 
 // ─── API: Subscribe ───────────────────────────────────────
 
-app.post('/api/subscribe', (req, res) => {
+app.post('/api/subscribe', rateLimit(60000, 5), (req, res) => {
     try {
         const { email, name } = req.body;
-        if (!email || !email.includes('@')) {
+        // Stricter email validation (security-auditor skill)
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+        if (!email || !emailRegex.test(email) || email.length > 255) {
             return res.status(400).json({ error: '请提供有效的邮箱地址' });
         }
-        addSubscriber(email.trim().toLowerCase(), name || '');
+        const safeName = (name || '').slice(0, 100).replace(/[<>"'&]/g, '');
+        addSubscriber(email.trim().toLowerCase(), safeName);
         res.json({ success: true, message: '订阅成功！' });
     } catch (err) {
         console.error('Subscribe error:', err.message);
@@ -870,8 +914,17 @@ function scheduleDailyBriefing() {
     }, msUntil8am);
 }
 
+// ─── Global Error Handler (refactoring-specialist skill) ──────
+app.use((err, req, res, next) => {
+    console.error('❌ Unhandled error:', err.message);
+    res.status(err.status || 500).json({
+        error: process.env.NODE_ENV === 'production' ? 'Internal server error' : err.message
+    });
+});
+
 app.listen(PORT, () => {
-    console.log(`🧠 BCI Tracker v4.0 running at http://localhost:${PORT}`);
+    console.log(`🧠 BCI Tracker v4.1 running at http://localhost:${PORT}`);
+    console.log(`🛡️ Security headers: ON | Rate limiting: ON`);
     // Initial fetch after 3 seconds (so server is ready)
     setTimeout(fetchAndStore, 3000);
     // Repeat every 30 minutes

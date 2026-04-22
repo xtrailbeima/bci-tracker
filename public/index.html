@@ -3,8 +3,8 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#0a0e1a">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#06080f">
   <meta name="color-scheme" content="dark">
   <title>BCI Tracker — 脑机接口行业动态看板</title>
   <meta name="description"
@@ -19,6 +19,13 @@
 <body>
   <!-- Skip to main content -->
   <a href="#feedView" class="skip-link">跳到主要内容</a>
+
+  <!-- Animated Background Orbs -->
+  <div class="bg-orbs" aria-hidden="true">
+    <div class="bg-orb bg-orb--cyan"></div>
+    <div class="bg-orb bg-orb--purple"></div>
+    <div class="bg-orb bg-orb--pink"></div>
+  </div>
 
   <!-- Header -->
   <header class="header">
@@ -51,7 +58,7 @@
         </div>
       </div>
       <div class="header-actions">
-        <div class="search-box">
+        <div class="search-box" role="search">
           <svg class="search-icon" viewBox="0 0 20 20" fill="currentColor" width="16" height="16" aria-hidden="true">
             <path fill-rule="evenodd"
               d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" />
@@ -70,7 +77,7 @@
   </header>
 
   <!-- Stats Bar -->
-  <section class="stats-bar">
+  <section class="stats-bar" role="region" aria-label="数据统计">
     <div class="stat-card">
       <span class="stat-number" id="statTotal">—</span>
       <span class="stat-label">总条目</span>
@@ -94,38 +101,13 @@
   </section>
 
   <!-- Dashboard Layout -->
-  <div class="dashboard">
-    <!-- Left Panel: AI Summary -->
-    <aside class="summary-panel" id="summaryPanel">
-      <div class="summary-header">
-        <h2>🤖 AI 行业简报</h2>
-        <div class="summary-header-right">
-          <div class="summary-meta">
-            <span class="pulse-dot"></span>
-            <span id="summaryTime">加载中...</span>
-          </div>
-          <button class="summary-refresh-icon" id="summaryRefreshBtn" title="刷新 AI 简报" aria-label="刷新 AI 简报">
-            <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14" aria-hidden="true">
-              <path fill-rule="evenodd"
-                d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" />
-            </svg>
-          </button>
-        </div>
-      </div>
-      <div class="summary-content" id="summaryContent">
-        <div class="summary-loading">
-          <div class="spinner-sm"></div>
-          <span>正在生成行业分析...</span>
-        </div>
-      </div>
-    </aside>
-
-    <!-- Right Panel: Feed -->
+  <div class="dashboard dashboard--full">
+    <!-- Feed Panel (full width) -->
     <main class="feed-panel">
       <!-- Top Navigation: Collections Tab -->
-      <div class="main-tabs" id="mainTabs">
-        <button class="main-tab active" data-view="feed">📰 信息流</button>
-        <button class="main-tab" data-view="collections">📁 专题追踪</button>
+      <div class="main-tabs" id="mainTabs" role="tablist" aria-label="视图切换">
+        <button class="main-tab active" data-view="feed" role="tab" aria-selected="true" id="tab-feed">📰 信息流</button>
+        <button class="main-tab" data-view="collections" role="tab" aria-selected="false" id="tab-collections">📁 专题追踪</button>
       </div>
 
       <!-- Collections View (hidden by default) -->
@@ -226,7 +208,8 @@
 
   <!-- Footer -->
   <footer class="footer">
-    <p>数据来源：PubMed · arXiv · Nature · Science · Google News · Gemini AI &nbsp;|&nbsp; BCI Tracker v4.0</p>
+    <p>数据来源：PubMed · arXiv · Nature · Science · Google News &nbsp;|&nbsp; BCI Tracker v4.0 &nbsp;|&nbsp; 每 30 分钟自动更新</p>
+    <p style="margin-top:4px;opacity:0.6;">Built with ❤️ for the BCI research community</p>
   </footer>
 
   <script src="app.js"></script>
