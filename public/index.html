@@ -107,8 +107,33 @@
       <!-- Top Navigation: Collections Tab -->
       <div class="main-tabs" id="mainTabs" role="tablist" aria-label="视图切换">
         <button class="main-tab active" data-view="feed" role="tab" aria-selected="true" id="tab-feed">📰 信息流</button>
+        <button class="main-tab" data-view="analysis" role="tab" aria-selected="false" id="tab-analysis">🤖 AI 分析</button>
         <button class="main-tab" data-view="collections" role="tab" aria-selected="false" id="tab-collections">📁 专题追踪</button>
       </div>
+
+      <!-- AI Analysis View (Gemini) -->
+      <section class="analysis-view" id="analysisView" style="display:none;">
+        <div class="analysis-header">
+          <div class="analysis-header-left">
+            <h3>🤖 Gemini AI 行业分析</h3>
+            <span class="analysis-model-badge">gemini-3-flash-preview</span>
+          </div>
+          <div class="analysis-header-right">
+            <span class="analysis-timestamp" id="analysisTimestamp"></span>
+            <button class="btn-generate-analysis" id="btnGenerateAnalysis">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14" aria-hidden="true">
+                <path d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" />
+              </svg>
+              生成分析
+            </button>
+          </div>
+        </div>
+        <div class="analysis-loading" id="analysisLoading" style="display:none;">
+          <div class="analysis-spinner"></div>
+          <p>Gemini 正在分析 BCI 行业动态…</p>
+        </div>
+        <div class="analysis-content" id="analysisContent"></div>
+      </section>
 
       <!-- Collections View (hidden by default) -->
       <section class="collections-view" id="collectionsView" style="display:none;">

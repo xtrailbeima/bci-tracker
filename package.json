@@ -10,6 +10,7 @@
         "verify": "node -c server.js && node -c public/app.js && node --env-file=.env test/smoke.js"
     },
     "dependencies": {
+        "@google/genai": "^1.0.0",
         "better-sqlite3": "^12.6.2",
         "cors": "^2.8.5",
         "express": "^4.21.0",

@@ -547,8 +547,10 @@ document.getElementById('mainTabs')?.addEventListener('click', e => {
     tab.setAttribute('aria-selected', 'true');
     const view = tab.dataset.view;
     document.getElementById('feedView').style.display = view === 'feed' ? '' : 'none';
+    document.getElementById('analysisView').style.display = view === 'analysis' ? '' : 'none';
     document.getElementById('collectionsView').style.display = view === 'collections' ? '' : 'none';
     if (view === 'collections') fetchCollections();
+    if (view === 'analysis') fetchAnalysis();
 });
 
 // Back button
@@ -589,6 +591,173 @@ function showSkeletons() {
     `).join('');
     loading.classList.add('hidden');
 }
+
+// ── Gemini AI Analysis ───────────────────────────────
+
+let analysisCache = null;
+
+async function fetchAnalysis(force = false) {
+    const content = document.getElementById('analysisContent');
+    const loading = document.getElementById('analysisLoading');
+    const btn = document.getElementById('btnGenerateAnalysis');
+    const timestamp = document.getElementById('analysisTimestamp');
+
+    // Show cached if available and not forcing
+    if (!force && analysisCache) {
+        renderAnalysis(analysisCache);
+        return;
+    }
+
+    // Show loading
+    loading.style.display = 'flex';
+    content.innerHTML = '';
+    btn.classList.add('loading');
+
+    try {
+        const params = force ? '?force=1' : '';
+        const res = await fetch(`/api/analysis${params}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+
+        analysisCache = data;
+        renderAnalysis(data);
+
+        if (data.generated) {
+            const d = new Date(data.generated);
+            timestamp.textContent = `生成于 ${pad(d.getHours())}:${pad(d.getMinutes())}` +
+                (data.model ? ` · ${data.model}` : '');
+        }
+    } catch (err) {
+        content.innerHTML = `
+            <div class="analysis-section">
+                <div class="analysis-section-title"><span class="analysis-section-icon">⚠️</span> 加载失败</div>
+                <div class="analysis-items">
+                    <div class="analysis-item">
+                        <div class="analysis-item-dot"></div>
+                        <div class="analysis-item-text" style="color: var(--accent-rose);">${escapeHtml(err.message)}</div>
+                    </div>
+                </div>
+            </div>`;
+    } finally {
+        loading.style.display = 'none';
+        btn.classList.remove('loading');
+    }
+}
+
+function renderAnalysis(data) {
+    const content = document.getElementById('analysisContent');
+    if (!data.sections || data.sections.length === 0) {
+        content.innerHTML = '<div class="analysis-section"><div class="analysis-section-title"><span class="analysis-section-icon">📭</span> 暂无分析数据</div></div>';
+        return;
+    }
+
+    content.innerHTML = data.sections.map(section => {
+        const items = (section.items || []).map(item => {
+            const linkHtml = item.url
+                ? `<a href="${escapeHtml(item.url)}" target="_blank" rel="noopener" class="analysis-item-link" title="查看原文">🔗</a>`
+                : '';
+            const scoreHtml = (item.importance && item.importance > 0)
+                ? `<span class="analysis-item-score">${item.importance}</span>`
+                : '';
+            return `
+                <div class="analysis-item">
+                    <div class="analysis-item-dot"></div>
+                    <div class="analysis-item-text">${escapeHtml(item.text || '')}${linkHtml}${scoreHtml}</div>
+                </div>`;
+        }).join('');
+
+        return `
+            <div class="analysis-section">
+                <div class="analysis-section-title">
+                    <span class="analysis-section-icon">${section.icon || '📋'}</span>
+                    ${escapeHtml(section.title || '')}
+                </div>
+                <div class="analysis-items">${items}</div>
+            </div>`;
+    }).join('');
+}
+
+// Single article analysis (modal)
+async function analyzeArticleById(articleId) {
+    // Create overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'analysis-modal-overlay';
+    overlay.innerHTML = `
+        <div class="analysis-modal">
+            <div class="analysis-modal-header">
+                <div class="analysis-modal-title">🤖 AI 深度分析</div>
+                <button class="analysis-modal-close" id="closeAnalysisModal">✕</button>
+            </div>
+            <div class="analysis-modal-body">
+                <div class="analysis-loading" style="display:flex;">
+                    <div class="analysis-spinner"></div>
+                    <p>Gemini 正在分析文章…</p>
+                </div>
+            </div>
+        </div>`;
+
+    document.body.appendChild(overlay);
+
+    // Close handlers
+    overlay.querySelector('#closeAnalysisModal').addEventListener('click', () => overlay.remove());
+    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+
+    try {
+        const res = await fetch(`/api/analysis/${encodeURIComponent(articleId)}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const a = data.analysis;
+
+        const body = overlay.querySelector('.analysis-modal-body');
+        body.innerHTML = `
+            <div class="analysis-modal-field">
+                <span class="analysis-modal-label">核心摘要</span>
+                <div class="analysis-modal-value">${escapeHtml(a.summary || '')}</div>
+            </div>
+            <div class="analysis-modal-field">
+                <span class="analysis-modal-label">关键发现</span>
+                <ul class="analysis-modal-findings">
+                    ${(a.keyFindings || []).map(f => `<li>${escapeHtml(f)}</li>`).join('')}
+                </ul>
+            </div>
+            <div class="analysis-modal-field">
+                <span class="analysis-modal-label">技术分析</span>
+                <div class="analysis-modal-value">${escapeHtml(a.technologyAnalysis || '')}</div>
+            </div>
+            <div class="analysis-modal-field">
+                <span class="analysis-modal-label">市场影响</span>
+                <div class="analysis-modal-value">${escapeHtml(a.marketImpact || '')}</div>
+            </div>
+            <div class="analysis-modal-field">
+                <span class="analysis-modal-label">竞争洞察</span>
+                <div class="analysis-modal-value">${escapeHtml(a.competitiveInsight || '')}</div>
+            </div>
+            <div class="analysis-modal-field">
+                <span class="analysis-modal-label">相关度</span>
+                <div class="analysis-modal-value">
+                    <span class="analysis-item-score">${a.relevanceScore || 0}</span>
+                </div>
+            </div>
+            ${(a.tags && a.tags.length > 0) ? `
+            <div class="analysis-modal-field">
+                <span class="analysis-modal-label">标签</span>
+                <div class="analysis-modal-tags">
+                    ${a.tags.map(t => `<span class="analysis-modal-tag">${escapeHtml(t)}</span>`).join('')}
+                </div>
+            </div>` : ''}`;
+    } catch (err) {
+        overlay.querySelector('.analysis-modal-body').innerHTML = `
+            <div class="analysis-modal-field">
+                <span class="analysis-modal-label">分析失败</span>
+                <div class="analysis-modal-value" style="color: var(--accent-rose);">${escapeHtml(err.message)}</div>
+            </div>`;
+    }
+}
+
+// Generate analysis button
+document.getElementById('btnGenerateAnalysis')?.addEventListener('click', () => {
+    fetchAnalysis(true);
+});
 
 // ── Init ──────────────────────────────────────────────
 fetchAll();
