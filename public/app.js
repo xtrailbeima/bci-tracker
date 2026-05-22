@@ -291,11 +291,13 @@ function createCard(item) {
     const titleZhHtml = item.titleZh ? `<p class="card-title-zh">${escapeHtml(item.titleZh)}</p>` : '';
 
     return `
-    <a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer" class="card">
+    <div class="card" data-id="${item.id}">
       <div class="card-header">
         <div class="card-header-left">
-          <h3 class="card-title">${escapeHtml(item.title)}</h3>
-          ${titleZhHtml}
+          <a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer" class="card-title-link">
+            <h3 class="card-title">${escapeHtml(item.title)}</h3>
+            ${titleZhHtml}
+          </a>
         </div>
         <div class="card-badges">
           <span class="card-importance importance-${impLevel}" title="重要性评分: ${impScore}">${impLabel} ${impScore}</span>
@@ -308,11 +310,27 @@ function createCard(item) {
         ${item.authors && dateStr ? '<span class="card-meta-dot"></span>' : ''}
         ${dateStr ? `<span class="card-meta-item">${dateStr}</span>` : ''}
       </div>
-      <div class="card-source">
-        <span class="card-source-dot ${dotClass}"></span>
-        ${escapeHtml(item.source || item.provider || '')}
+      <div class="card-bottom">
+        <div class="card-source">
+          <span class="card-source-dot ${dotClass}"></span>
+          ${escapeHtml(item.source || item.provider || '')}
+        </div>
+        <div class="card-actions">
+          <a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer" class="card-action-btn btn-original" title="查看原文">
+            <span class="btn-icon">🌐</span>
+            <span class="btn-text">原文</span>
+          </a>
+          <button class="card-action-btn btn-ai" onclick="analyzeArticleById(${item.id})" title="AI 深度分析">
+            <span class="btn-icon">🤖</span>
+            <span class="btn-text">AI分析</span>
+          </button>
+          <button class="card-action-btn btn-bookmark" onclick="showBookmarkDialog(${item.id})" title="归集到专题">
+            <span class="btn-icon">📁</span>
+            <span class="btn-text">归集</span>
+          </button>
+        </div>
       </div>
-    </a>`;
+    </div>`;
 }
 
 function getDotClass(provider) {
@@ -353,6 +371,80 @@ function truncateAuthors(str) {
 function escapeHtml(str) {
     if (!str) return '';
     return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+}
+
+function showCustomAlert(title, message) {
+    return new Promise(resolve => {
+        const overlay = document.createElement('div');
+        overlay.className = 'custom-modal-overlay';
+        overlay.innerHTML = `
+            <div class="custom-modal" style="max-width: 380px;">
+                <div class="custom-modal-header">
+                    <h3 class="custom-modal-title">${escapeHtml(title)}</h3>
+                    <button class="custom-modal-close" id="closeAlertModal" aria-label="关闭">✕</button>
+                </div>
+                <div class="custom-modal-body" style="font-size: 14px; color: var(--text-secondary); line-height: 1.5; margin: 8px 0;">
+                    ${escapeHtml(message)}
+                </div>
+                <div class="custom-modal-footer">
+                    <button type="button" class="custom-modal-btn" id="btnAlertOk" style="background: var(--gradient-main); border: none; color: #06080f; font-weight: 700;">确定</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        
+        const close = () => {
+            overlay.remove();
+            resolve();
+        };
+        
+        overlay.querySelector('#closeAlertModal').addEventListener('click', close);
+        overlay.querySelector('#btnAlertOk').addEventListener('click', close);
+        overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+        
+        setTimeout(() => {
+            const btn = overlay.querySelector('#btnAlertOk');
+            if (btn) btn.focus();
+        }, 50);
+    });
+}
+
+function showCustomConfirm(title, message) {
+    return new Promise(resolve => {
+        const overlay = document.createElement('div');
+        overlay.className = 'custom-modal-overlay';
+        overlay.innerHTML = `
+            <div class="custom-modal" style="max-width: 380px;">
+                <div class="custom-modal-header">
+                    <h3 class="custom-modal-title">${escapeHtml(title)}</h3>
+                    <button class="custom-modal-close" id="closeConfirmModal" aria-label="关闭">✕</button>
+                </div>
+                <div class="custom-modal-body" style="font-size: 14px; color: var(--text-secondary); line-height: 1.5; margin: 8px 0;">
+                    ${escapeHtml(message)}
+                </div>
+                <div class="custom-modal-footer">
+                    <button type="button" class="custom-modal-btn custom-modal-btn--secondary" id="btnConfirmCancel">取消</button>
+                    <button type="button" class="custom-modal-btn" id="btnConfirmOk" style="background: var(--accent-rose); border: none; color: #fff; font-weight: 700;">确定</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        
+        const close = (result) => {
+            overlay.remove();
+            resolve(result);
+        };
+        
+        overlay.querySelector('#closeConfirmModal').addEventListener('click', () => close(false));
+        overlay.querySelector('#btnConfirmCancel').addEventListener('click', () => close(false));
+        overlay.querySelector('#btnConfirmOk').addEventListener('click', () => close(true));
+        overlay.addEventListener('click', e => { if (e.target === overlay) close(false); });
+        
+        setTimeout(() => {
+            const btn = overlay.querySelector('#btnConfirmCancel');
+            if (btn) btn.focus();
+        }, 50);
+    });
 }
 
 // ── Events ────────────────────────────────────────────
@@ -511,28 +603,98 @@ async function openCollection(id, title) {
 }
 
 async function deleteCollectionById(id) {
-    if (!confirm('确定删除这个专题？')) return;
+    const confirmed = await showCustomConfirm('确定删除专题？', '该操作无法撤销，这将会清空并删除该专题下的所有归集数据。');
+    if (!confirmed) return;
     await fetch(`/api/collections/${id}`, { method: 'DELETE' });
     fetchCollections();
 }
 
 async function showBookmarkDialog(articleId) {
     if (collectionsCache.length === 0) await fetchCollections();
-    const names = collectionsCache.map((c, i) => `${i + 1}. ${c.icon} ${c.name}`).join('\n');
-    const choice = prompt(`选择专题（输入编号）:\n${names}`);
-    if (!choice) return;
-    const idx = parseInt(choice) - 1;
-    if (idx < 0 || idx >= collectionsCache.length) return alert('无效编号');
-    try {
-        await fetch(`/api/collections/${collectionsCache[idx].id}/add`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ articleId })
+
+    // Create the overlay container
+    const overlay = document.createElement('div');
+    overlay.className = 'custom-modal-overlay';
+    
+    // Build the grid list items
+    const itemsHtml = collectionsCache.map(c => `
+        <button class="custom-modal-item" type="button" data-id="${c.id}" data-name="${escapeHtml(c.name)}">
+            <span class="custom-modal-item-icon">${escapeHtml(c.icon)}</span>
+            <div class="custom-modal-item-info">
+                <span class="custom-modal-item-name">${escapeHtml(c.name)}</span>
+                <span class="custom-modal-item-count">${c.itemCount} 条已归集</span>
+            </div>
+        </button>
+    `).join('');
+
+    overlay.innerHTML = `
+        <div class="custom-modal">
+            <div class="custom-modal-header">
+                <h3 class="custom-modal-title">📁 归集到专题</h3>
+                <button class="custom-modal-close" id="closeCustomModal" aria-label="关闭">✕</button>
+            </div>
+            <div class="custom-modal-subtitle">选择要归集此文章的特定行业专题</div>
+            <div class="custom-modal-grid">
+                ${itemsHtml}
+            </div>
+            <div class="custom-modal-footer">
+                <button type="button" class="custom-modal-btn custom-modal-btn--secondary" id="cancelCustomModal">取消</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    const closeModal = () => {
+        overlay.remove();
+    };
+
+    // Close handlers
+    overlay.querySelector('#closeCustomModal').addEventListener('click', closeModal);
+    overlay.querySelector('#cancelCustomModal').addEventListener('click', closeModal);
+    overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+
+    // Item click handlers
+    overlay.querySelectorAll('.custom-modal-item').forEach(itemBtn => {
+        itemBtn.addEventListener('click', async () => {
+            const collectionId = parseInt(itemBtn.dataset.id);
+            const countEl = itemBtn.querySelector('.custom-modal-item-count');
+            const originalCountText = countEl.textContent;
+            
+            itemBtn.style.opacity = '0.7';
+            itemBtn.style.pointerEvents = 'none';
+            countEl.textContent = '正在添加...';
+
+            try {
+                const res = await fetch(`/api/collections/${collectionId}/add`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ articleId })
+                });
+                
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                
+                countEl.textContent = '✅ 已成功归集';
+                countEl.style.color = 'var(--accent-green)';
+                itemBtn.style.borderColor = 'var(--accent-green)';
+                
+                await fetchCollections();
+                setTimeout(closeModal, 600);
+            } catch (err) {
+                console.error('Bookmark error:', err);
+                countEl.textContent = '❌ 添加失败';
+                countEl.style.color = 'var(--accent-rose)';
+                itemBtn.style.borderColor = 'var(--accent-rose)';
+                itemBtn.style.pointerEvents = 'auto';
+                itemBtn.style.opacity = '1';
+                setTimeout(() => {
+                    countEl.textContent = originalCountText;
+                    countEl.style.color = '';
+                    itemBtn.style.borderColor = '';
+                }, 2000);
+            }
         });
-        alert(`已添加到「${collectionsCache[idx].name}」`);
-    } catch (err) {
-        alert('添加失败');
-    }
+    });
 }
 
 // Main tab switching
@@ -558,21 +720,89 @@ document.getElementById('btnBackToCollections')?.addEventListener('click', () =>
     renderCollectionsGrid();
 });
 
-// Create collection button
-document.getElementById('btnCreateCollection')?.addEventListener('click', async () => {
-    const name = prompt('专题名称：');
-    if (!name) return;
-    const icon = prompt('选择图标（默认 📁）：') || '📁';
-    try {
-        await fetch('/api/collections', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, icon })
-        });
-        fetchCollections();
-    } catch (err) {
-        alert('创建失败: ' + err.message);
-    }
+// Create collection button with custom elegant modal
+document.getElementById('btnCreateCollection')?.addEventListener('click', () => {
+    const overlay = document.createElement('div');
+    overlay.className = 'custom-modal-overlay';
+    
+    overlay.innerHTML = `
+        <div class="custom-modal">
+            <div class="custom-modal-header">
+                <h3 class="custom-modal-title">✨ 新建专题</h3>
+                <button class="custom-modal-close" id="closeCreateModal" aria-label="关闭">✕</button>
+            </div>
+            <div class="custom-modal-subtitle">创建一个全新的自定义行业追踪专题</div>
+            
+            <div style="display:flex; flex-direction:column; gap:14px; margin: 8px 0;">
+                <div style="display:flex; flex-direction:column; gap:6px;">
+                    <label style="font-size:12px; font-weight:600; color:var(--text-secondary);">专题名称</label>
+                    <input type="text" id="newCollectionName" placeholder="例如：Synchron 进展、融资事件..." 
+                        style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px; color:var(--text-primary); font-size:14px; outline:none; transition:all 0.2s;" />
+                </div>
+                <div style="display:flex; flex-direction:column; gap:6px;">
+                    <label style="font-size:12px; font-weight:600; color:var(--text-secondary);">选择图标</label>
+                    <input type="text" id="newCollectionIcon" placeholder="例如：📁, 🔬, 💰..." value="📁"
+                        style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px; color:var(--text-primary); font-size:14px; outline:none; transition:all 0.2s;" />
+                </div>
+            </div>
+            
+            <div class="custom-modal-footer">
+                <button type="button" class="custom-modal-btn custom-modal-btn--secondary" id="cancelCreateModal">取消</button>
+                <button type="button" class="custom-modal-btn" id="confirmCreateModal" 
+                    style="background:var(--gradient-main); border:none; color:#06080f; font-weight:700;">创建</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    const closeModal = () => overlay.remove();
+    overlay.querySelector('#closeCreateModal').addEventListener('click', closeModal);
+    overlay.querySelector('#cancelCreateModal').addEventListener('click', closeModal);
+    overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+
+    // Focus first input automatically
+    setTimeout(() => overlay.querySelector('#newCollectionName').focus(), 50);
+
+    const nameInput = overlay.querySelector('#newCollectionName');
+    const iconInput = overlay.querySelector('#newCollectionIcon');
+    const confirmBtn = overlay.querySelector('#confirmCreateModal');
+
+    // Handle focus visual effects
+    [nameInput, iconInput].forEach(inp => {
+        inp.addEventListener('focus', () => { inp.style.borderColor = 'rgba(0, 240, 255, 0.4)'; inp.style.boxShadow = '0 0 8px rgba(0, 240, 255, 0.1)'; });
+        inp.addEventListener('blur', () => { inp.style.borderColor = ''; inp.style.boxShadow = ''; });
+    });
+
+    confirmBtn.addEventListener('click', async () => {
+        const name = nameInput.value.trim();
+        const icon = iconInput.value.trim() || '📁';
+        
+        if (!name) {
+            nameInput.style.borderColor = 'var(--accent-rose)';
+            nameInput.focus();
+            return;
+        }
+
+        confirmBtn.disabled = true;
+        confirmBtn.textContent = '创建中...';
+
+        try {
+            const res = await fetch('/api/collections', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, icon })
+            });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            
+            fetchCollections();
+            closeModal();
+        } catch (err) {
+            await showCustomAlert('创建失败', err.message);
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = '创建';
+        }
+    });
 });
 
 // ── Skeleton Loading (animate skill) ──────────────────

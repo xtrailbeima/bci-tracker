@@ -181,6 +181,12 @@ function getAllSources() {
         .map(r => r.provider);
 }
 
+const getArticleByIdStmt = db.prepare('SELECT * FROM articles WHERE id = ?');
+function getArticleById(id) {
+    return getArticleByIdStmt.get(id);
+}
+
+
 // ─── Trending Keywords ────────────────────────────────────
 
 const BCI_KEYWORDS = [
@@ -319,7 +325,7 @@ function autoAssignCollections(articles) {
 }
 
 module.exports = {
-    upsertArticle, upsertMany, searchArticles, getStats, getAllSources,
+    upsertArticle, upsertMany, searchArticles, getStats, getAllSources, getArticleById,
     getTrendingKeywords,
     addSubscriber, removeSubscriber, getActiveSubscribers, getArticlesSince,
     getCollections, getCollectionItems, addToCollection, removeFromCollection,

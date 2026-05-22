@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 
 const { rateLimit } = require('../middleware/security');
-const { searchArticles, getStats, getAllSources, getTrendingKeywords, addSubscriber, removeSubscriber, getCollections, getCollectionItems, addToCollection, removeFromCollection, createCollection, deleteCollection } = require('../db');
+const { searchArticles, getStats, getAllSources, getArticleById, getTrendingKeywords, addSubscriber, removeSubscriber, getCollections, getCollectionItems, addToCollection, removeFromCollection, createCollection, deleteCollection } = require('../db');
 const { sendDailyBriefing } = require('../briefing');
 const gemini = require('../gemini');
 
@@ -468,10 +468,13 @@ router.get('/analysis/:articleId', rateLimit(60000, 10), async (req, res) => {
             return res.status(503).json({ error: 'Gemini 未配置' });
         }
 
-        const articleId = req.params.articleId;
-        // Find article in DB
-        const result = searchArticles({ query: articleId, limit: 5 });
-        const article = (result.items || []).find(it => it.id === articleId);
+        const articleId = parseInt(req.params.articleId, 10);
+        if (isNaN(articleId)) {
+            return res.status(400).json({ error: '无效的文章 ID' });
+        }
+
+        // Find article in DB using prepared statement
+        const article = getArticleById(articleId);
         if (!article) {
             return res.status(404).json({ error: '文章未找到' });
         }
