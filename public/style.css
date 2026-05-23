@@ -1749,6 +1749,645 @@ button:active:not(:disabled), .card:active {
   padding: var(--space-4) 0;
 }
 
+/* Analysis Sub-Tabs (Glassmorphism) */
+.analysis-tabs {
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  margin-bottom: var(--space-5);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.analysis-tabs::-webkit-scrollbar { display: none; }
+
+.analysis-tab {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 10px 18px;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+  position: relative;
+  flex-shrink: 0;
+}
+.analysis-tab:hover {
+  color: var(--fg);
+  background: rgba(255, 255, 255, 0.05);
+}
+.analysis-tab.active {
+  color: var(--fg);
+  background: rgba(99, 102, 241, 0.12);
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.15);
+}
+.analysis-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent-indigo), transparent);
+  border-radius: 2px;
+}
+.analysis-tab-icon {
+  font-size: 1.1rem;
+}
+.analysis-tab-label {
+  font-weight: 500;
+}
+.analysis-tab-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(168, 85, 247, 0.2));
+  color: var(--accent-indigo);
+  border: 1px solid rgba(99, 102, 241, 0.15);
+}
+.analysis-tab-badge.deepseek {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(52, 211, 153, 0.2));
+  color: var(--accent-emerald);
+  border-color: rgba(16, 185, 129, 0.15);
+}
+
+/* Analysis Panels */
+.analysis-panel {
+  animation: fadeSlideIn 0.3s ease;
+}
+
+/* DeepSeek branded variants */
+.btn-deepseek {
+  background: linear-gradient(135deg, var(--accent-emerald), hsl(160, 60%, 40%)) !important;
+}
+.btn-deepseek:hover {
+  background: linear-gradient(135deg, hsl(160, 70%, 50%), var(--accent-emerald)) !important;
+}
+.deepseek-badge {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(52, 211, 153, 0.1)) !important;
+  color: var(--accent-emerald) !important;
+  border-color: rgba(16, 185, 129, 0.2) !important;
+}
+.deepseek-spinner {
+  border-color: rgba(16, 185, 129, 0.2) !important;
+  border-top-color: var(--accent-emerald) !important;
+}
+
+/* ── Daily Digest Styles ─────────────────────── */
+.daily-content, .weekly-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+/* Headline Card */
+.daily-headline {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(168, 85, 247, 0.05));
+  border: 1px solid rgba(99, 102, 241, 0.15);
+  border-radius: 16px;
+  padding: var(--space-5);
+  position: relative;
+  overflow: hidden;
+}
+.daily-headline::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent-indigo), var(--accent-violet), var(--accent-emerald));
+}
+.daily-headline-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent-indigo);
+  margin-bottom: var(--space-2);
+}
+.daily-headline-text {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--fg);
+  line-height: 1.6;
+}
+
+/* Highlights Timeline */
+.daily-highlights {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.daily-highlights-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--fg);
+  margin-bottom: var(--space-3);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.highlight-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: var(--space-2);
+  transition: all 0.2s ease;
+  animation: fadeSlideIn 0.3s ease both;
+}
+.highlight-item:hover {
+  border-color: var(--accent-indigo);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  transform: translateY(-1px);
+}
+.highlight-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-indigo);
+  flex-shrink: 0;
+  margin-top: 7px;
+  box-shadow: 0 0 8px rgba(99, 102, 241, 0.4);
+}
+.highlight-body {
+  flex: 1;
+  min-width: 0;
+}
+.highlight-text {
+  font-size: 0.9rem;
+  color: var(--fg);
+  line-height: 1.6;
+  margin-bottom: var(--space-2);
+}
+.highlight-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+.highlight-tag {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(99, 102, 241, 0.12);
+  color: var(--accent-indigo);
+  border: 1px solid rgba(99, 102, 241, 0.1);
+}
+.highlight-tag[data-tag="融资"] { background: rgba(245, 158, 11, 0.12); color: var(--accent-amber); border-color: rgba(245, 158, 11, 0.1); }
+.highlight-tag[data-tag="临床"] { background: rgba(16, 185, 129, 0.12); color: var(--accent-emerald); border-color: rgba(16, 185, 129, 0.1); }
+.highlight-tag[data-tag="监管"] { background: rgba(244, 63, 94, 0.12); color: var(--accent-rose); border-color: rgba(244, 63, 94, 0.1); }
+.highlight-tag[data-tag="技术"] { background: rgba(59, 130, 246, 0.12); color: var(--accent-blue); border-color: rgba(59, 130, 246, 0.1); }
+.highlight-tag[data-tag="合作"] { background: rgba(168, 85, 247, 0.12); color: var(--accent-violet); border-color: rgba(168, 85, 247, 0.1); }
+.highlight-score {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--accent-amber);
+}
+.highlight-link {
+  font-size: 0.75rem;
+  color: var(--accent-blue);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.highlight-link:hover { color: var(--accent-indigo); }
+
+/* Sector Cards */
+.daily-sectors {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--space-3);
+}
+.daily-sectors-title {
+  grid-column: 1 / -1;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--fg);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.sector-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: var(--space-4);
+  transition: all 0.25s ease;
+  animation: fadeSlideIn 0.4s ease both;
+}
+.sector-card:hover {
+  border-color: rgba(99, 102, 241, 0.3);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+.sector-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+}
+.sector-card-name {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--fg);
+}
+.sector-signal {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+.sector-signal[data-signal="利好"] { background: rgba(16, 185, 129, 0.12); color: var(--accent-emerald); }
+.sector-signal[data-signal="利空"] { background: rgba(244, 63, 94, 0.12); color: var(--accent-rose); }
+.sector-signal[data-signal="中性"] { background: rgba(148, 163, 184, 0.12); color: var(--muted); }
+.sector-card-summary {
+  font-size: 0.85rem;
+  color: var(--fg-secondary);
+  line-height: 1.6;
+}
+
+/* Investor Takeaway */
+.daily-takeaway {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.06), rgba(16, 185, 129, 0.04));
+  border: 1px solid rgba(245, 158, 11, 0.15);
+  border-radius: 14px;
+  padding: var(--space-5);
+}
+.daily-takeaway-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent-amber);
+  margin-bottom: var(--space-2);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.daily-takeaway-text {
+  font-size: 0.95rem;
+  color: var(--fg);
+  line-height: 1.7;
+}
+
+/* ── Weekly Report Styles ─────────────────────── */
+
+/* Week Overview Banner */
+.weekly-overview {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.08), rgba(99, 102, 241, 0.05), rgba(16, 185, 129, 0.03));
+  border: 1px solid rgba(168, 85, 247, 0.15);
+  border-radius: 16px;
+  padding: var(--space-6);
+  position: relative;
+  overflow: hidden;
+}
+.weekly-overview::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent-violet), var(--accent-indigo), var(--accent-emerald), var(--accent-amber));
+}
+.weekly-overview-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--accent-violet);
+  margin-bottom: var(--space-3);
+}
+.weekly-overview-text {
+  font-size: 1.05rem;
+  color: var(--fg);
+  line-height: 1.75;
+}
+
+/* Milestones */
+.weekly-milestones-title, .weekly-sectors-title, .weekly-funding-title, .weekly-strategy-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--fg);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+.milestone-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  position: relative;
+  padding-left: var(--space-5);
+}
+.milestone-timeline::before {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  background: linear-gradient(to bottom, var(--accent-violet), var(--accent-indigo), rgba(99,102,241,0.1));
+  border-radius: 2px;
+}
+.milestone-item {
+  position: relative;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: var(--space-3) var(--space-4);
+  transition: all 0.2s ease;
+  animation: fadeSlideIn 0.3s ease both;
+}
+.milestone-item::before {
+  content: '';
+  position: absolute;
+  left: calc(-1 * var(--space-5) + 0px);
+  top: 16px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-violet);
+  box-shadow: 0 0 8px rgba(168, 85, 247, 0.5);
+}
+.milestone-item:hover {
+  border-color: var(--accent-violet);
+  transform: translateX(4px);
+}
+.milestone-text {
+  font-size: 0.9rem;
+  color: var(--fg);
+  line-height: 1.5;
+  margin-bottom: var(--space-2);
+}
+.milestone-significance {
+  font-size: 0.82rem;
+  color: var(--fg-secondary);
+  line-height: 1.5;
+  padding-left: var(--space-3);
+  border-left: 2px solid rgba(168, 85, 247, 0.2);
+}
+.milestone-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+.milestone-date {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+.milestone-tag {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: rgba(168, 85, 247, 0.1);
+  color: var(--accent-violet);
+}
+
+/* Weekly Sector Reviews */
+.weekly-sector-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-3);
+}
+.weekly-sector-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: var(--space-4);
+  transition: all 0.25s ease;
+  animation: fadeSlideIn 0.4s ease both;
+}
+.weekly-sector-card:hover {
+  border-color: rgba(168, 85, 247, 0.3);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+.weekly-sector-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-3);
+}
+.weekly-sector-name {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--fg);
+}
+.weekly-trend {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+.weekly-trend[data-trend="上升"] { background: rgba(16, 185, 129, 0.12); color: var(--accent-emerald); }
+.weekly-trend[data-trend="下降"] { background: rgba(244, 63, 94, 0.12); color: var(--accent-rose); }
+.weekly-trend[data-trend="稳定"] { background: rgba(148, 163, 184, 0.12); color: var(--muted); }
+.weekly-sector-highlights {
+  font-size: 0.85rem;
+  color: var(--fg-secondary);
+  line-height: 1.6;
+  margin-bottom: var(--space-3);
+}
+.weekly-sector-outlook {
+  font-size: 0.82rem;
+  color: var(--accent-indigo);
+  line-height: 1.5;
+  padding: var(--space-2) var(--space-3);
+  background: rgba(99, 102, 241, 0.06);
+  border-radius: 8px;
+  border-left: 3px solid var(--accent-indigo);
+}
+
+/* Funding Landscape Dashboard */
+.weekly-funding {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: var(--space-5);
+}
+.weekly-funding-summary {
+  font-size: 0.92rem;
+  color: var(--fg);
+  line-height: 1.65;
+  margin-bottom: var(--space-4);
+}
+.funding-deals {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.funding-deal {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: rgba(245, 158, 11, 0.04);
+  border: 1px solid rgba(245, 158, 11, 0.1);
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+.funding-deal:hover {
+  border-color: rgba(245, 158, 11, 0.25);
+  background: rgba(245, 158, 11, 0.06);
+}
+.funding-deal-company {
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--fg);
+  min-width: 100px;
+}
+.funding-deal-round {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--accent-amber);
+}
+.funding-deal-amount {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--accent-emerald);
+}
+.funding-deal-note {
+  font-size: 0.8rem;
+  color: var(--fg-secondary);
+  flex: 1;
+}
+
+/* Strategic Guide */
+.weekly-strategy {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(245, 158, 11, 0.03));
+  border: 1px solid rgba(16, 185, 129, 0.12);
+  border-radius: 16px;
+  padding: var(--space-5);
+}
+.strategy-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+.strategy-col-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: var(--space-2);
+}
+.strategy-col-title.hot { color: var(--accent-emerald); }
+.strategy-col-title.risk { color: var(--accent-rose); }
+.strategy-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.strategy-list li {
+  font-size: 0.85rem;
+  color: var(--fg-secondary);
+  padding: var(--space-2) var(--space-3);
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.strategy-list li::before {
+  content: '▸';
+  color: var(--accent-indigo);
+  font-weight: bold;
+}
+.strategy-opportunities {
+  padding-top: var(--space-4);
+  border-top: 1px solid rgba(16, 185, 129, 0.1);
+}
+.strategy-opportunities-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--accent-amber);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: var(--space-2);
+}
+.strategy-opportunities-text {
+  font-size: 0.92rem;
+  color: var(--fg);
+  line-height: 1.7;
+}
+
+/* Empty state */
+.summary-empty {
+  text-align: center;
+  padding: var(--space-8) var(--space-4);
+  color: var(--muted);
+}
+.summary-empty-icon {
+  font-size: 3rem;
+  margin-bottom: var(--space-3);
+  opacity: 0.5;
+}
+.summary-empty-text {
+  font-size: 0.95rem;
+}
+
+/* Responsive for sub-tabs */
+@media (max-width: 640px) {
+  .analysis-tabs {
+    gap: var(--space-1);
+    padding: var(--space-1);
+  }
+  .analysis-tab {
+    padding: 8px 12px;
+    font-size: 0.82rem;
+  }
+  .analysis-tab-badge {
+    display: none;
+  }
+  .daily-sectors, .weekly-sector-grid {
+    grid-template-columns: 1fr;
+  }
+  .strategy-columns {
+    grid-template-columns: 1fr;
+  }
+  .funding-deal {
+    flex-wrap: wrap;
+  }
+}
+
 .analysis-header {
   display: flex;
   align-items: center;

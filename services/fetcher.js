@@ -185,6 +185,14 @@ const { translateTitle } = require('../translate');
 const { scoreImportance, getImportanceLevel } = require('../scoring');
 
 function enrichItem(item) {
+    // Cap future dates to today — academic journals often set future issue dates
+    if (item.date) {
+        const parsed = new Date(item.date);
+        if (!isNaN(parsed.getTime()) && parsed > new Date()) {
+            item.date = new Date().toISOString();
+        }
+    }
+
     const titleZh = translateTitle(item.title);
     const importance = scoreImportance(item);
     const importanceLevel = getImportanceLevel(importance);

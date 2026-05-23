@@ -111,28 +111,69 @@
         <button class="main-tab" data-view="collections" role="tab" aria-selected="false" id="tab-collections">📁 专题追踪</button>
       </div>
 
-      <!-- AI Analysis View (Gemini) -->
+      <!-- AI Analysis View (DeepSeek) -->
       <section class="analysis-view" id="analysisView" style="display:none;">
-        <div class="analysis-header">
-          <div class="analysis-header-left">
-            <h3>🤖 Gemini AI 行业分析</h3>
-            <span class="analysis-model-badge">gemini-3-flash-preview</span>
-          </div>
-          <div class="analysis-header-right">
-            <span class="analysis-timestamp" id="analysisTimestamp"></span>
-            <button class="btn-generate-analysis" id="btnGenerateAnalysis">
-              <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14" aria-hidden="true">
-                <path d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" />
-              </svg>
-              生成分析
-            </button>
-          </div>
+        <!-- Sub-tabs for analysis modes -->
+        <div class="analysis-tabs" id="analysisTabs" role="tablist" aria-label="分析模式切换">
+          <button class="analysis-tab active" data-analysis="daily" role="tab" aria-selected="true" id="atab-daily">
+            <span class="analysis-tab-icon">📅</span>
+            <span class="analysis-tab-label">每日行业速递</span>
+            <span class="analysis-tab-badge deepseek">DeepSeek</span>
+          </button>
+          <button class="analysis-tab" data-analysis="weekly" role="tab" aria-selected="false" id="atab-weekly">
+            <span class="analysis-tab-icon">📊</span>
+            <span class="analysis-tab-label">每周行业周报</span>
+            <span class="analysis-tab-badge deepseek">DeepSeek</span>
+          </button>
         </div>
-        <div class="analysis-loading" id="analysisLoading" style="display:none;">
-          <div class="analysis-spinner"></div>
-          <p>Gemini 正在分析 BCI 行业动态…</p>
+
+        <!-- DeepSeek Daily Panel -->
+        <div class="analysis-panel" id="panelDaily">
+          <div class="analysis-header">
+            <div class="analysis-header-left">
+              <h3>📅 每日行业速递</h3>
+              <span class="analysis-model-badge deepseek-badge">DeepSeek-V3</span>
+            </div>
+            <div class="analysis-header-right">
+              <span class="analysis-timestamp" id="dailyTimestamp"></span>
+              <button class="btn-generate-analysis btn-deepseek" id="btnGenerateDaily">
+                <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14" aria-hidden="true">
+                  <path d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" />
+                </svg>
+                生成速递
+              </button>
+            </div>
+          </div>
+          <div class="analysis-loading" id="dailyLoading" style="display:none;">
+            <div class="analysis-spinner deepseek-spinner"></div>
+            <p>DeepSeek 正在生成每日行业速递…</p>
+          </div>
+          <div class="daily-content" id="dailyContent"></div>
         </div>
-        <div class="analysis-content" id="analysisContent"></div>
+
+        <!-- DeepSeek Weekly Panel -->
+        <div class="analysis-panel" id="panelWeekly" style="display:none;">
+          <div class="analysis-header">
+            <div class="analysis-header-left">
+              <h3>📊 每周行业周报</h3>
+              <span class="analysis-model-badge deepseek-badge">DeepSeek-V3</span>
+            </div>
+            <div class="analysis-header-right">
+              <span class="analysis-timestamp" id="weeklyTimestamp"></span>
+              <button class="btn-generate-analysis btn-deepseek" id="btnGenerateWeekly">
+                <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14" aria-hidden="true">
+                  <path d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" />
+                </svg>
+                生成周报
+              </button>
+            </div>
+          </div>
+          <div class="analysis-loading" id="weeklyLoading" style="display:none;">
+            <div class="analysis-spinner deepseek-spinner"></div>
+            <p>DeepSeek 正在生成每周行业周报…</p>
+          </div>
+          <div class="weekly-content" id="weeklyContent"></div>
+        </div>
       </section>
 
       <!-- Collections View (hidden by default) -->

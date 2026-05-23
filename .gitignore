@@ -6,3 +6,4 @@ node_modules/
 *.db-wal
 .env
 failed_summary.json
+failed_gemini_response.json

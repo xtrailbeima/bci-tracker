@@ -121,7 +121,7 @@ async function testAnalysisArticleAPI() {
             const res = await fetch(`${BASE}/api/analysis/${testId}`);
             if (res.status === 503) {
                 const data = await res.json();
-                assert(data.error === 'Gemini 未配置', 'returns 503 with Gemini 未配置 when API key is missing');
+                assert(data.error === true, 'returns 503 when DeepSeek API is not configured');
             } else if (res.ok) {
                 const data = await res.json();
                 assert(data.articleId === testId, `returns analysis with correct articleId (got ${data.articleId}, expected ${testId})`);
@@ -160,8 +160,39 @@ async function testFrontendFields() {
     for (const f of ['importanceLevel', 'importance', 'title', 'url', 'source']) {
         assert(code.includes(f), `app.js uses "${f}"`);
     }
-    assert(code.includes('item.text'), 'app.js handles summary item.text');
+    assert(code.includes('h.text'), 'app.js handles DeepSeek highlight h.text');
     assert(code.includes('item.importance'), 'app.js handles summary item.importance');
+}
+
+async function testDeepSeekDailyAPI() {
+    console.log('\n📅 /api/summary/daily');
+    const res = await fetch(`${BASE}/api/summary/daily`);
+    // Accept both 200 (key configured) and 503 (key not configured)
+    assert(res.status === 200 || res.status === 503, `daily summary returns ${res.status} (200 or 503)`);
+    if (res.status === 200) {
+        const data = await res.json();
+        assert(typeof data === 'object', 'daily summary returns object');
+        assert(typeof data.headline === 'string' || data.headline === undefined, 'headline is string or undefined');
+        assert(Array.isArray(data.highlights) || data.highlights === undefined, 'highlights is array or undefined');
+    } else {
+        const data = await res.json();
+        assert(data.error === true, 'unconfigured returns error: true');
+    }
+}
+
+async function testDeepSeekWeeklyAPI() {
+    console.log('\n📊 /api/summary/weekly');
+    const res = await fetch(`${BASE}/api/summary/weekly`);
+    assert(res.status === 200 || res.status === 503, `weekly summary returns ${res.status} (200 or 503)`);
+    if (res.status === 200) {
+        const data = await res.json();
+        assert(typeof data === 'object', 'weekly summary returns object');
+        assert(typeof data.weekOverview === 'string' || data.weekOverview === undefined, 'weekOverview is string or undefined');
+        assert(Array.isArray(data.milestones) || data.milestones === undefined, 'milestones is array or undefined');
+    } else {
+        const data = await res.json();
+        assert(data.error === true, 'unconfigured returns error: true');
+    }
 }
 
 // ── Runner ──────────────────────────────────────────────
@@ -178,6 +209,8 @@ async function run() {
         await testDateSorting();
         await testScoringConsistency();
         await testFrontendFields();
+        await testDeepSeekDailyAPI();
+        await testDeepSeekWeeklyAPI();
     } catch (err) {
         failed++;
         console.error(`\n💥 Fatal: ${err.message}`);

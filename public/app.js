@@ -722,7 +722,12 @@ document.getElementById('mainTabs')?.addEventListener('click', e => {
     document.getElementById('analysisView').style.display = view === 'analysis' ? '' : 'none';
     document.getElementById('collectionsView').style.display = view === 'collections' ? '' : 'none';
     if (view === 'collections') fetchCollections();
-    if (view === 'analysis') fetchAnalysis();
+    if (view === 'analysis') {
+        const activeSubTab = document.querySelector('.analysis-tab.active');
+        const mode = activeSubTab ? activeSubTab.dataset.analysis : 'daily';
+        if (mode === 'daily') fetchDailySummary();
+        else if (mode === 'weekly') fetchWeeklySummary();
+    }
 });
 
 // Back button
@@ -832,113 +837,27 @@ function showSkeletons() {
     loading.classList.add('hidden');
 }
 
-// ── Gemini AI Analysis ───────────────────────────────
+// ── Single Article Analysis (DeepSeek) ───────────────
 
-let analysisCache = null;
-
-async function fetchAnalysis(force = false) {
-    const content = document.getElementById('analysisContent');
-    const loading = document.getElementById('analysisLoading');
-    const btn = document.getElementById('btnGenerateAnalysis');
-    const timestamp = document.getElementById('analysisTimestamp');
-
-    // Show cached if available and not forcing
-    if (!force && analysisCache) {
-        renderAnalysis(analysisCache);
-        return;
-    }
-
-    // Show loading
-    loading.style.display = 'flex';
-    content.innerHTML = '';
-    btn.classList.add('loading');
-
-    try {
-        const params = force ? '?force=1' : '';
-        const res = await fetch(`/api/analysis${params}`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-
-        analysisCache = data;
-        renderAnalysis(data);
-
-        if (data.generated) {
-            const d = new Date(data.generated);
-            timestamp.textContent = `生成于 ${pad(d.getHours())}:${pad(d.getMinutes())}` +
-                (data.model ? ` · ${data.model}` : '');
-        }
-    } catch (err) {
-        content.innerHTML = `
-            <div class="analysis-section">
-                <div class="analysis-section-title"><span class="analysis-section-icon">⚠️</span> 加载失败</div>
-                <div class="analysis-items">
-                    <div class="analysis-item">
-                        <div class="analysis-item-dot"></div>
-                        <div class="analysis-item-text" style="color: var(--accent-rose);">${escapeHtml(err.message)}</div>
-                    </div>
-                </div>
-            </div>`;
-    } finally {
-        loading.style.display = 'none';
-        btn.classList.remove('loading');
-    }
-}
-
-function renderAnalysis(data) {
-    const content = document.getElementById('analysisContent');
-    if (!data.sections || data.sections.length === 0) {
-        content.innerHTML = '<div class="analysis-section"><div class="analysis-section-title"><span class="analysis-section-icon">📭</span> 暂无分析数据</div></div>';
-        return;
-    }
-
-    content.innerHTML = data.sections.map(section => {
-        const items = (section.items || []).map(item => {
-            const linkHtml = item.url
-                ? `<a href="${escapeHtml(item.url)}" target="_blank" rel="noopener" class="analysis-item-link" title="查看原文">🔗</a>`
-                : '';
-            const scoreHtml = (item.importance && item.importance > 0)
-                ? `<span class="analysis-item-score">${item.importance}</span>`
-                : '';
-            return `
-                <div class="analysis-item">
-                    <div class="analysis-item-dot"></div>
-                    <div class="analysis-item-text">${escapeHtml(item.text || '')}${linkHtml}${scoreHtml}</div>
-                </div>`;
-        }).join('');
-
-        return `
-            <div class="analysis-section">
-                <div class="analysis-section-title">
-                    <span class="analysis-section-icon">${section.icon || '📋'}</span>
-                    ${escapeHtml(section.title || '')}
-                </div>
-                <div class="analysis-items">${items}</div>
-            </div>`;
-    }).join('');
-}
-
-// Single article analysis (modal)
 async function analyzeArticleById(articleId) {
-    // Create overlay
     const overlay = document.createElement('div');
     overlay.className = 'analysis-modal-overlay';
     overlay.innerHTML = `
         <div class="analysis-modal">
             <div class="analysis-modal-header">
-                <div class="analysis-modal-title">🤖 AI 深度分析</div>
+                <div class="analysis-modal-title">🤖 DeepSeek 深度分析</div>
                 <button class="analysis-modal-close" id="closeAnalysisModal">✕</button>
             </div>
             <div class="analysis-modal-body">
                 <div class="analysis-loading" style="display:flex;">
-                    <div class="analysis-spinner"></div>
-                    <p>Gemini 正在分析文章…</p>
+                    <div class="analysis-spinner deepseek-spinner"></div>
+                    <p>DeepSeek 正在分析文章…</p>
                 </div>
             </div>
         </div>`;
 
     document.body.appendChild(overlay);
 
-    // Close handlers
     overlay.querySelector('#closeAnalysisModal').addEventListener('click', () => overlay.remove());
     overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
 
@@ -961,8 +880,8 @@ async function analyzeArticleById(articleId) {
                 </ul>
             </div>
             <div class="analysis-modal-field">
-                <span class="analysis-modal-label">技术分析</span>
-                <div class="analysis-modal-value">${escapeHtml(a.technologyAnalysis || '')}</div>
+                <span class="analysis-modal-label">投资价值分析</span>
+                <div class="analysis-modal-value">${escapeHtml(a.investmentAnalysis || a.technologyAnalysis || '')}</div>
             </div>
             <div class="analysis-modal-field">
                 <span class="analysis-modal-label">市场影响</span>
@@ -973,9 +892,9 @@ async function analyzeArticleById(articleId) {
                 <div class="analysis-modal-value">${escapeHtml(a.competitiveInsight || '')}</div>
             </div>
             <div class="analysis-modal-field">
-                <span class="analysis-modal-label">相关度</span>
+                <span class="analysis-modal-label">投资评分</span>
                 <div class="analysis-modal-value">
-                    <span class="analysis-item-score">${a.relevanceScore || 0}</span>
+                    <span class="analysis-item-score">${a.investmentScore || a.relevanceScore || 0}/10</span>
                 </div>
             </div>
             ${(a.tags && a.tags.length > 0) ? `
@@ -994,10 +913,320 @@ async function analyzeArticleById(articleId) {
     }
 }
 
-// Generate analysis button
-document.getElementById('btnGenerateAnalysis')?.addEventListener('click', () => {
-    fetchAnalysis(true);
+// ── Analysis Sub-Tab Switching ────────────────────────
+
+document.getElementById('analysisTabs')?.addEventListener('click', e => {
+    const tab = e.target.closest('.analysis-tab');
+    if (!tab) return;
+    document.querySelectorAll('.analysis-tab').forEach(t => {
+        t.classList.remove('active');
+        t.setAttribute('aria-selected', 'false');
+    });
+    tab.classList.add('active');
+    tab.setAttribute('aria-selected', 'true');
+
+    const mode = tab.dataset.analysis;
+    document.getElementById('panelDaily').style.display = mode === 'daily' ? '' : 'none';
+    document.getElementById('panelWeekly').style.display = mode === 'weekly' ? '' : 'none';
+
+    if (mode === 'daily') fetchDailySummary();
+    else if (mode === 'weekly') fetchWeeklySummary();
 });
+
+// ── DeepSeek Daily Summary ───────────────────────────
+
+let dailySummaryCache = null;
+
+async function fetchDailySummary(force = false) {
+    const content = document.getElementById('dailyContent');
+    const loading = document.getElementById('dailyLoading');
+    const btn = document.getElementById('btnGenerateDaily');
+    const timestamp = document.getElementById('dailyTimestamp');
+
+    if (!force && dailySummaryCache) {
+        renderDailySummary(dailySummaryCache);
+        return;
+    }
+
+    loading.style.display = 'flex';
+    content.innerHTML = '';
+    btn.classList.add('loading');
+
+    try {
+        const params = force ? '?force=1' : '';
+        const res = await fetch(`/api/summary/daily${params}`);
+        if (!res.ok) {
+            if (res.status === 503) {
+                content.innerHTML = renderSummaryEmpty('🔑', 'DeepSeek API 未配置，请在服务器 .env 中设置 DEEPSEEK_API_KEY');
+                return;
+            }
+            throw new Error(`HTTP ${res.status}`);
+        }
+        const data = await res.json();
+        dailySummaryCache = data;
+        renderDailySummary(data);
+
+        if (data.generated) {
+            const d = new Date(data.generated);
+            timestamp.textContent = `生成于 ${pad(d.getHours())}:${pad(d.getMinutes())}` +
+                (data.model ? ` · ${data.model}` : '');
+        }
+        if (data._cooldownNotice) {
+            timestamp.textContent += ` · ${data._cooldownNotice}`;
+        }
+    } catch (err) {
+        content.innerHTML = renderSummaryEmpty('⚠️', `加载失败：${escapeHtml(err.message)}`);
+    } finally {
+        loading.style.display = 'none';
+        btn.classList.remove('loading');
+    }
+}
+
+function renderDailySummary(data) {
+    const content = document.getElementById('dailyContent');
+    if (!data.headline && (!data.highlights || data.highlights.length === 0)) {
+        content.innerHTML = renderSummaryEmpty('📭', '暂无每日速递数据');
+        return;
+    }
+
+    let html = '';
+
+    // Headline
+    if (data.headline) {
+        html += `
+            <div class="daily-headline">
+                <div class="daily-headline-label">📌 今日核心投资信号</div>
+                <div class="daily-headline-text">${escapeHtml(data.headline)}</div>
+            </div>`;
+    }
+
+    // Highlights
+    if (data.highlights && data.highlights.length > 0) {
+        const items = data.highlights.map((h, i) => {
+            const tagHtml = h.tag ? `<span class="highlight-tag" data-tag="${escapeHtml(h.tag)}">${escapeHtml(h.tag)}</span>` : '';
+            const scoreHtml = h.importance ? `<span class="highlight-score">⭐ ${h.importance}</span>` : '';
+            const linkHtml = h.url ? `<a href="${escapeHtml(h.url)}" target="_blank" rel="noopener" class="highlight-link">查看原文 →</a>` : '';
+            return `
+                <div class="highlight-item" style="animation-delay: ${i * 60}ms">
+                    <div class="highlight-dot"></div>
+                    <div class="highlight-body">
+                        <div class="highlight-text">${escapeHtml(h.text || '')}</div>
+                        <div class="highlight-meta">${tagHtml}${scoreHtml}${linkHtml}</div>
+                    </div>
+                </div>`;
+        }).join('');
+
+        html += `
+            <div class="daily-highlights">
+                <div class="daily-highlights-title">🔍 关键动态追踪</div>
+                ${items}
+            </div>`;
+    }
+
+    // Sectors
+    if (data.sectors && data.sectors.length > 0) {
+        const sectorCards = data.sectors.map((s, i) => `
+            <div class="sector-card" style="animation-delay: ${i * 80}ms">
+                <div class="sector-card-header">
+                    <div class="sector-card-name">${s.icon || '📋'} ${escapeHtml(s.name || '')}</div>
+                    ${s.investmentSignal ? `<span class="sector-signal" data-signal="${escapeHtml(s.investmentSignal)}">${escapeHtml(s.investmentSignal)}</span>` : ''}
+                </div>
+                <div class="sector-card-summary">${escapeHtml(s.summary || '')}</div>
+            </div>`).join('');
+
+        html += `
+            <div class="daily-sectors">
+                <div class="daily-sectors-title">📊 板块深度梳理</div>
+                ${sectorCards}
+            </div>`;
+    }
+
+    // Investor Takeaway
+    if (data.investorTakeaway) {
+        html += `
+            <div class="daily-takeaway">
+                <div class="daily-takeaway-label">💡 天使投资风向标</div>
+                <div class="daily-takeaway-text">${escapeHtml(data.investorTakeaway)}</div>
+            </div>`;
+    }
+
+    content.innerHTML = html;
+}
+
+document.getElementById('btnGenerateDaily')?.addEventListener('click', () => {
+    fetchDailySummary(true);
+});
+
+// ── DeepSeek Weekly Summary ──────────────────────────
+
+let weeklySummaryCache = null;
+
+async function fetchWeeklySummary(force = false) {
+    const content = document.getElementById('weeklyContent');
+    const loading = document.getElementById('weeklyLoading');
+    const btn = document.getElementById('btnGenerateWeekly');
+    const timestamp = document.getElementById('weeklyTimestamp');
+
+    if (!force && weeklySummaryCache) {
+        renderWeeklySummary(weeklySummaryCache);
+        return;
+    }
+
+    loading.style.display = 'flex';
+    content.innerHTML = '';
+    btn.classList.add('loading');
+
+    try {
+        const params = force ? '?force=1' : '';
+        const res = await fetch(`/api/summary/weekly${params}`);
+        if (!res.ok) {
+            if (res.status === 503) {
+                content.innerHTML = renderSummaryEmpty('🔑', 'DeepSeek API 未配置，请在服务器 .env 中设置 DEEPSEEK_API_KEY');
+                return;
+            }
+            throw new Error(`HTTP ${res.status}`);
+        }
+        const data = await res.json();
+        weeklySummaryCache = data;
+        renderWeeklySummary(data);
+
+        if (data.generated) {
+            const d = new Date(data.generated);
+            timestamp.textContent = `生成于 ${pad(d.getHours())}:${pad(d.getMinutes())}` +
+                (data.model ? ` · ${data.model}` : '');
+        }
+        if (data._cooldownNotice) {
+            timestamp.textContent += ` · ${data._cooldownNotice}`;
+        }
+    } catch (err) {
+        content.innerHTML = renderSummaryEmpty('⚠️', `加载失败：${escapeHtml(err.message)}`);
+    } finally {
+        loading.style.display = 'none';
+        btn.classList.remove('loading');
+    }
+}
+
+function renderWeeklySummary(data) {
+    const content = document.getElementById('weeklyContent');
+    if (!data.weekOverview && (!data.milestones || data.milestones.length === 0)) {
+        content.innerHTML = renderSummaryEmpty('📭', '暂无每周周报数据');
+        return;
+    }
+
+    let html = '';
+
+    // Week Overview
+    if (data.weekOverview) {
+        html += `
+            <div class="weekly-overview">
+                <div class="weekly-overview-label">📈 本周宏观投资态势</div>
+                <div class="weekly-overview-text">${escapeHtml(data.weekOverview)}</div>
+            </div>`;
+    }
+
+    // Milestones
+    if (data.milestones && data.milestones.length > 0) {
+        const items = data.milestones.map((m, i) => {
+            const linkHtml = m.url ? `<a href="${escapeHtml(m.url)}" target="_blank" rel="noopener" class="highlight-link">原文 →</a>` : '';
+            return `
+                <div class="milestone-item" style="animation-delay: ${i * 60}ms">
+                    <div class="milestone-text">${escapeHtml(m.text || '')}</div>
+                    ${m.significance ? `<div class="milestone-significance">${escapeHtml(m.significance)}</div>` : ''}
+                    <div class="milestone-meta">
+                        ${m.date ? `<span class="milestone-date">${escapeHtml(m.date)}</span>` : ''}
+                        ${m.tag ? `<span class="milestone-tag">${escapeHtml(m.tag)}</span>` : ''}
+                        ${linkHtml}
+                    </div>
+                </div>`;
+        }).join('');
+
+        html += `
+            <div>
+                <div class="weekly-milestones-title">🏆 本周里程碑大事记</div>
+                <div class="milestone-timeline">${items}</div>
+            </div>`;
+    }
+
+    // Sector Reviews
+    if (data.sectorReviews && data.sectorReviews.length > 0) {
+        const cards = data.sectorReviews.map((s, i) => `
+            <div class="weekly-sector-card" style="animation-delay: ${i * 80}ms">
+                <div class="weekly-sector-header">
+                    <div class="weekly-sector-name">${s.icon || '📋'} ${escapeHtml(s.name || '')}</div>
+                    ${s.weekTrend ? `<span class="weekly-trend" data-trend="${escapeHtml(s.weekTrend)}">${s.weekTrend === '上升' ? '📈' : s.weekTrend === '下降' ? '📉' : '➡️'} ${escapeHtml(s.weekTrend)}</span>` : ''}
+                </div>
+                <div class="weekly-sector-highlights">${escapeHtml(s.highlights || '')}</div>
+                ${s.investmentOutlook ? `<div class="weekly-sector-outlook">${escapeHtml(s.investmentOutlook)}</div>` : ''}
+            </div>`).join('');
+
+        html += `
+            <div>
+                <div class="weekly-sectors-title">🔬 板块周度点评</div>
+                <div class="weekly-sector-grid">${cards}</div>
+            </div>`;
+    }
+
+    // Funding Landscape
+    if (data.fundingLandscape && (data.fundingLandscape.summary || (data.fundingLandscape.deals && data.fundingLandscape.deals.length > 0))) {
+        const deals = (data.fundingLandscape.deals || []).map(d => `
+            <div class="funding-deal">
+                <span class="funding-deal-company">${escapeHtml(d.company || '')}</span>
+                ${d.round ? `<span class="funding-deal-round">${escapeHtml(d.round)}</span>` : ''}
+                ${d.amount ? `<span class="funding-deal-amount">${escapeHtml(d.amount)}</span>` : ''}
+                <span class="funding-deal-note">${escapeHtml(d.significance || '')}</span>
+            </div>`).join('');
+
+        html += `
+            <div class="weekly-funding">
+                <div class="weekly-funding-title">💰 投融资景观盘点</div>
+                ${data.fundingLandscape.summary ? `<div class="weekly-funding-summary">${escapeHtml(data.fundingLandscape.summary)}</div>` : ''}
+                ${deals ? `<div class="funding-deals">${deals}</div>` : ''}
+            </div>`;
+    }
+
+    // Strategic Guide
+    if (data.strategicGuide) {
+        const sg = data.strategicGuide;
+        const hotItems = (sg.hotTracks || []).map(t => `<li>${escapeHtml(t)}</li>`).join('');
+        const riskItems = (sg.risks || []).map(r => `<li>${escapeHtml(r)}</li>`).join('');
+
+        html += `
+            <div class="weekly-strategy">
+                <div class="weekly-strategy-title">🎯 战略捕手指南</div>
+                <div class="strategy-columns">
+                    <div>
+                        <div class="strategy-col-title hot">🟢 值得重仓的赛道</div>
+                        <ul class="strategy-list">${hotItems || '<li>暂无</li>'}</ul>
+                    </div>
+                    <div>
+                        <div class="strategy-col-title risk">🔴 需要警惕的风险</div>
+                        <ul class="strategy-list">${riskItems || '<li>暂无</li>'}</ul>
+                    </div>
+                </div>
+                ${sg.earlyStageOpportunities ? `
+                <div class="strategy-opportunities">
+                    <div class="strategy-opportunities-label">🌱 早期投资机会方向</div>
+                    <div class="strategy-opportunities-text">${escapeHtml(sg.earlyStageOpportunities)}</div>
+                </div>` : ''}
+            </div>`;
+    }
+
+    content.innerHTML = html;
+}
+
+document.getElementById('btnGenerateWeekly')?.addEventListener('click', () => {
+    fetchWeeklySummary(true);
+});
+
+// ── Helper: Empty Summary State ──────────────────────
+
+function renderSummaryEmpty(icon, text) {
+    return `
+        <div class="summary-empty">
+            <div class="summary-empty-icon">${icon}</div>
+            <div class="summary-empty-text">${text}</div>
+        </div>`;
+}
 
 // ── Init ──────────────────────────────────────────────
 fetchAll();

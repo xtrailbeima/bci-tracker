@@ -6,7 +6,7 @@ const path = require('path');
 const { rateLimit } = require('../middleware/security');
 const { searchArticles, getStats, getAllSources, getArticleById, getTrendingKeywords, addSubscriber, removeSubscriber, getCollections, getCollectionItems, addToCollection, removeFromCollection, createCollection, deleteCollection } = require('../db');
 const { sendDailyBriefing } = require('../briefing');
-const gemini = require('../gemini');
+const deepseek = require('../services/deepseek');
 
 // ─── Company Profile ──────────────────────────────────────
 
@@ -393,87 +393,159 @@ ${context}${companyContext}`;
     }
 });
 
-// ─── API: Gemini AI Analysis ──────────────────────────────
+// ─── API: DeepSeek Daily Summary ──────────────────────────
 
-let cachedAnalysis = null;
-let analysisLastGenerated = 0;
-const ANALYSIS_CACHE_TTL = 45 * 60 * 1000; // 45 minutes
+let cachedDailySummary = null;
+let dailySummaryLastGenerated = 0;
+const DAILY_CACHE_TTL = 60 * 60 * 1000; // 1 hour
 
-let analysisAiCooldownUntil = 0;
-const ANALYSIS_COOLDOWN_MS = 10 * 60 * 1000; // 10 minutes
+let dailyCooldownUntil = 0;
+const DAILY_COOLDOWN_MS = 2 * 60 * 1000; // 2 minutes
 
-router.get('/analysis', async (req, res) => {
+router.get('/summary/daily', async (req, res) => {
     try {
         const forceRefresh = req.query.force === '1';
 
         // Return cached if fresh
-        if (!forceRefresh && cachedAnalysis && (Date.now() - analysisLastGenerated) < ANALYSIS_CACHE_TTL) {
-            return res.json(cachedAnalysis);
+        if (!forceRefresh && cachedDailySummary && (Date.now() - dailySummaryLastGenerated) < DAILY_CACHE_TTL) {
+            return res.json(cachedDailySummary);
         }
 
         // Cooldown protection
-        if (Date.now() < analysisAiCooldownUntil) {
-            if (cachedAnalysis) {
-                const minutesLeft = Math.ceil((analysisAiCooldownUntil - Date.now()) / 60000);
-                const copy = JSON.parse(JSON.stringify(cachedAnalysis));
-                if (copy.sections && copy.sections.length > 0) {
-                    copy.sections[0].items.unshift({
-                        text: `【频控提示】Gemini 分析冷却中，已返回缓存结果。请在 ${minutesLeft} 分钟后重试。`,
-                        importance: 0
-                    });
-                }
+        if (Date.now() < dailyCooldownUntil) {
+            if (cachedDailySummary) {
+                const minutesLeft = Math.ceil((dailyCooldownUntil - Date.now()) / 60000);
+                const copy = JSON.parse(JSON.stringify(cachedDailySummary));
+                copy._cooldownNotice = `冷却中，已返回缓存结果。${minutesLeft} 分钟后可刷新。`;
                 return res.json(copy);
             }
-            const minutesLeft = Math.ceil((analysisAiCooldownUntil - Date.now()) / 60000);
-            return res.json({
-                generated: new Date().toISOString(),
-                model: 'gemini-3-flash-preview',
-                sections: [{ title: '🛡️ 冷却中', icon: '⏳', items: [{ text: `Gemini 分析冷却中，请 ${minutesLeft} 分钟后重试。`, importance: 0 }] }]
-            });
+            const minutesLeft = Math.ceil((dailyCooldownUntil - Date.now()) / 60000);
+            return res.json({ error: false, headline: `⏳ 冷却中，请 ${minutesLeft} 分钟后重试`, highlights: [], sectors: [], investorTakeaway: '' });
         }
 
-        if (!gemini.isAvailable()) {
-            return res.json({
-                generated: new Date().toISOString(),
-                model: null,
-                sections: [{ title: '⚠️ Gemini 未配置', icon: '⚙️', items: [{ text: '请设置 GEMINI_API_KEY 环境变量以启用 Gemini AI 分析。', importance: 10 }] }]
-            });
+        if (!deepseek.isAvailable()) {
+            return res.status(503).json({ error: true, message: 'DEEPSEEK_API_KEY 未配置' });
         }
 
         // Lock cooldown
-        analysisAiCooldownUntil = Date.now() + ANALYSIS_COOLDOWN_MS;
+        dailyCooldownUntil = Date.now() + DAILY_COOLDOWN_MS;
 
-        const recent = searchArticles({ sort: 'importance', limit: 30 });
-        const items = recent.items || [];
-        if (items.length === 0) {
-            return res.json({ generated: new Date().toISOString(), model: 'gemini-3-flash-preview', sections: [{ title: '暂无数据', icon: '📭', items: [{ text: '数据库为空，请等待首次数据抓取完成。' }] }] });
+        // Fetch articles from last 24 hours, fallback to latest 20
+        const now = new Date();
+        const dateFrom = new Date(now - 24 * 60 * 60 * 1000).toISOString();
+        let result = searchArticles({ dateFrom, sort: 'importance', limit: 30 });
+        if (!result.items || result.items.length < 5) {
+            result = searchArticles({ sort: 'importance', limit: 20 });
         }
 
-        const result = await gemini.generateIndustrySummary(items, companyProfile);
+        if (!result.items || result.items.length === 0) {
+            return res.json({ headline: '暂无数据', highlights: [], sectors: [], investorTakeaway: '数据库为空，请等待首次数据抓取。' });
+        }
 
-        cachedAnalysis = {
+        const summary = await deepseek.generateDailySummary(result.items);
+
+        cachedDailySummary = {
             generated: new Date().toISOString(),
-            model: 'gemini-3-flash-preview',
-            sections: result.sections || []
+            model: 'deepseek-chat',
+            type: 'daily',
+            ...summary
         };
-        analysisLastGenerated = Date.now();
+        dailySummaryLastGenerated = Date.now();
 
-        res.json(cachedAnalysis);
+        res.json(cachedDailySummary);
     } catch (err) {
-        console.error('Gemini Analysis error:', err.message);
-        analysisAiCooldownUntil = 0; // Reset on error
+        console.error('DeepSeek Daily Summary error:', err.message);
+        dailyCooldownUntil = 0; // Reset on error
         res.json({
             generated: new Date().toISOString(),
-            model: 'gemini-3-flash-preview',
-            sections: [{ title: '❌ 分析失败', icon: '⚠️', items: [{ text: 'Gemini 分析生成失败：' + err.message, importance: 0 }] }]
+            model: 'deepseek-chat',
+            type: 'daily',
+            headline: '❌ 每日速递生成失败',
+            highlights: [{ text: err.message, tag: '错误', importance: 0 }],
+            sectors: [],
+            investorTakeaway: '请稍后重试。'
         });
     }
 });
 
+// ─── API: DeepSeek Weekly Summary ─────────────────────────
+
+let cachedWeeklySummary = null;
+let weeklySummaryLastGenerated = 0;
+const WEEKLY_CACHE_TTL = 4 * 60 * 60 * 1000; // 4 hours
+
+let weeklyCooldownUntil = 0;
+const WEEKLY_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes
+
+router.get('/summary/weekly', async (req, res) => {
+    try {
+        const forceRefresh = req.query.force === '1';
+
+        if (!forceRefresh && cachedWeeklySummary && (Date.now() - weeklySummaryLastGenerated) < WEEKLY_CACHE_TTL) {
+            return res.json(cachedWeeklySummary);
+        }
+
+        if (Date.now() < weeklyCooldownUntil) {
+            if (cachedWeeklySummary) {
+                const minutesLeft = Math.ceil((weeklyCooldownUntil - Date.now()) / 60000);
+                const copy = JSON.parse(JSON.stringify(cachedWeeklySummary));
+                copy._cooldownNotice = `冷却中，已返回缓存结果。${minutesLeft} 分钟后可刷新。`;
+                return res.json(copy);
+            }
+            const minutesLeft = Math.ceil((weeklyCooldownUntil - Date.now()) / 60000);
+            return res.json({ error: false, weekOverview: `⏳ 冷却中，请 ${minutesLeft} 分钟后重试`, milestones: [], sectorReviews: [], fundingLandscape: { summary: '', deals: [] }, strategicGuide: { hotTracks: [], risks: [], earlyStageOpportunities: '' } });
+        }
+
+        if (!deepseek.isAvailable()) {
+            return res.status(503).json({ error: true, message: 'DEEPSEEK_API_KEY 未配置' });
+        }
+
+        weeklyCooldownUntil = Date.now() + WEEKLY_COOLDOWN_MS;
+
+        const now = new Date();
+        const dateFrom = new Date(now - 7 * 24 * 60 * 60 * 1000).toISOString();
+        let result = searchArticles({ dateFrom, sort: 'importance', limit: 60 });
+        if (!result.items || result.items.length < 10) {
+            result = searchArticles({ sort: 'importance', limit: 40 });
+        }
+
+        if (!result.items || result.items.length === 0) {
+            return res.json({ weekOverview: '暂无数据', milestones: [], sectorReviews: [], fundingLandscape: { summary: '', deals: [] }, strategicGuide: { hotTracks: [], risks: [], earlyStageOpportunities: '数据库为空，请等待首次数据抓取。' } });
+        }
+
+        const summary = await deepseek.generateWeeklySummary(result.items);
+
+        cachedWeeklySummary = {
+            generated: new Date().toISOString(),
+            model: 'deepseek-chat',
+            type: 'weekly',
+            ...summary
+        };
+        weeklySummaryLastGenerated = Date.now();
+
+        res.json(cachedWeeklySummary);
+    } catch (err) {
+        console.error('DeepSeek Weekly Summary error:', err.message);
+        weeklyCooldownUntil = 0;
+        res.json({
+            generated: new Date().toISOString(),
+            model: 'deepseek-chat',
+            type: 'weekly',
+            weekOverview: '❌ 每周周报生成失败：' + err.message,
+            milestones: [],
+            sectorReviews: [],
+            fundingLandscape: { summary: '', deals: [] },
+            strategicGuide: { hotTracks: [], risks: [], earlyStageOpportunities: '请稍后重试。' }
+        });
+    }
+});
+
+// ─── DeepSeek Article Analysis ────────────────────────────
+
 router.get('/analysis/:articleId', rateLimit(60000, 10), async (req, res) => {
     try {
-        if (!gemini.isAvailable()) {
-            return res.status(503).json({ error: 'Gemini 未配置' });
+        if (!deepseek.isAvailable()) {
+            return res.status(503).json({ error: true, message: 'DeepSeek API 未配置' });
         }
 
         const articleId = parseInt(req.params.articleId, 10);
@@ -481,20 +553,19 @@ router.get('/analysis/:articleId', rateLimit(60000, 10), async (req, res) => {
             return res.status(400).json({ error: '无效的文章 ID' });
         }
 
-        // Find article in DB using prepared statement
         const article = getArticleById(articleId);
         if (!article) {
             return res.status(404).json({ error: '文章未找到' });
         }
 
-        const analysis = await gemini.analyzeArticle(article, companyProfile);
+        const analysis = await deepseek.analyzeArticle(article);
         res.json({
             articleId,
-            model: 'gemini-3-flash-preview',
+            model: 'deepseek-chat',
             analysis
         });
     } catch (err) {
-        console.error('Gemini Article Analysis error:', err.message);
+        console.error('DeepSeek Article Analysis error:', err.message);
         res.status(500).json({ error: '文章分析失败：' + err.message });
     }
 });
