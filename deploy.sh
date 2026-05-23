@@ -42,15 +42,26 @@ else
 fi
 npm install --production
 
-# 5. 配置环境变量
+# 5. 配置环境变量（交互式输入，不硬编码 Key）
+echo ""
 echo "🔐 [5/6] 配置 API Keys..."
-cat > .env << 'EOF'
-GEMINI_API_KEY=YOUR_GEMINI_KEY
-HUNYUAN_API_KEY=YOUR_HUNYUAN_KEY
+if [ -f .env ]; then
+    echo "  .env 已存在，跳过配置。如需修改请手动编辑: nano /root/bci-tracker/.env"
+else
+    echo "  请输入以下 API Key（直接回车可跳过）："
+    read -p "  DEEPSEEK_API_KEY: " DEEPSEEK_KEY
+    read -p "  GEMINI_API_KEY: " GEMINI_KEY
+    read -p "  HUNYUAN_API_KEY: " HUNYUAN_KEY
+
+    cat > .env << EOF
 PORT=4000
-DEEPSEEK_API_KEY=YOUR_DEEPSEEK_KEY
+DEEPSEEK_API_KEY=${DEEPSEEK_KEY}
+GEMINI_API_KEY=${GEMINI_KEY}
+HUNYUAN_API_KEY=${HUNYUAN_KEY}
 EOF
-chmod 600 .env
+    chmod 600 .env
+    echo "  ✅ .env 已创建（权限 600）"
+fi
 
 # 6. 启动服务 + 开机自启
 echo "🚀 [6/6] 启动服务..."
@@ -59,7 +70,7 @@ pm2 start server.js --name bci-tracker --node-args="--env-file=.env"
 pm2 save
 pm2 startup systemd -u root --hp /root 2>/dev/null || true
 
-# 7. 开放防火墙端口
+# 开放防火墙端口
 if command -v ufw &>/dev/null; then
     ufw allow 4000/tcp 2>/dev/null || true
 fi
@@ -69,11 +80,12 @@ echo ""
 echo "─────────────────────────────────"
 echo "✅ BCI Tracker 部署完成！"
 echo ""
-echo "🌐 访问地址: http://$(curl -s ifconfig.me 2>/dev/null || echo '你的服务器IP'):4000"
+SERVER_IP=$(curl -s ifconfig.me 2>/dev/null || echo '你的服务器IP')
+echo "🌐 访问地址: http://${SERVER_IP}:4000"
 echo "📊 服务状态:"
 pm2 status
 echo ""
 echo "💡 常用命令："
 echo "   pm2 logs bci-tracker    # 查看日志"
 echo "   pm2 restart bci-tracker # 重启服务"
-echo "   pm2 status              # 查看状态"
+echo "   nano /root/bci-tracker/.env  # 编辑 API Keys"
