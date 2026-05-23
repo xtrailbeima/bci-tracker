@@ -135,6 +135,25 @@ async function testAnalysisArticleAPI() {
     }
 }
 
+async function testDateSorting() {
+    console.log('\n📅 Date Sorting Consistency');
+    const data = await fetchJSON('/api/all?sort=date&limit=10');
+    const items = data.items || [];
+    assert(items.length > 0, 'has articles for date sorting test');
+    
+    let lastTime = Infinity;
+    for (const item of items) {
+        if (item.date) {
+            const time = new Date(item.date).getTime();
+            assert(!isNaN(time), `date is valid for item: ${item.title} (${item.date})`);
+            assert(time <= lastTime, `dates are in descending order: ${new Date(item.date).toISOString()} (${time}) <= ${lastTime === Infinity ? 'Infinity' : new Date(lastTime).toISOString()} (${lastTime})`);
+            lastTime = time;
+        }
+    }
+    passed++;
+    console.log('  ✅ dates sorted descending correctly');
+}
+
 async function testFrontendFields() {
     console.log('\n🔗 Frontend field mapping');
     const code = await (await fetch(`${BASE}/app.js`)).text();
@@ -156,6 +175,7 @@ async function run() {
         await testStatsAPI();
         await testSummaryAPI();
         await testAnalysisArticleAPI();
+        await testDateSorting();
         await testScoringConsistency();
         await testFrontendFields();
     } catch (err) {

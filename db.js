@@ -77,6 +77,58 @@ const insertCollection = db.prepare(
 for (const c of PRESET_COLLECTIONS) {
     insertCollection.run({ name: c.name, icon: c.icon, rules: JSON.stringify(c.rules) });
 }
+// ─── Date Normalizer & Migration ───────────────────────────
+
+function normalizeDate(dateStr) {
+    if (!dateStr) return '';
+    let normalized = dateStr.trim();
+    
+    // Convert "+0000" or similar to standard GMT offset format
+    if (normalized.endsWith(' +0000') || normalized.endsWith(' +00:00')) {
+        normalized = normalized.replace(/\s\+00:?00$/, ' GMT');
+    } else if (/\s[+-]\d{4}$/.test(normalized)) {
+        normalized = normalized.replace(/\s([+-])(\d{2})(\d{2})$/, ' GMT$1$2:$3');
+    }
+    
+    try {
+        const d = new Date(normalized);
+        if (!isNaN(d.getTime())) {
+            return d.toISOString();
+        }
+    } catch (e) {
+        // Fallback below
+    }
+    
+    // Parse formats like "Wed, 5 Nov 2025 00:00:00 +0000" if standard constructor failed
+    try {
+        let cleaned = normalized.replace(/\s\+[0-9a-zA-Z\s]+$/, '').trim();
+        const d = new Date(cleaned);
+        if (!isNaN(d.getTime())) {
+            return d.toISOString();
+        }
+    } catch (e) {}
+
+    return dateStr;
+}
+
+// Migrate existing dates in the database to standardized ISO-8601 strings
+try {
+    const allArticles = db.prepare('SELECT id, date FROM articles').all();
+    const updateDateStmt = db.prepare('UPDATE articles SET date = ? WHERE id = ?');
+    const migrationTx = db.transaction((rows) => {
+        for (const row of rows) {
+            if (row.date) {
+                const standardized = normalizeDate(row.date);
+                if (standardized && standardized !== row.date) {
+                    updateDateStmt.run(standardized, row.id);
+                }
+            }
+        }
+    });
+    migrationTx(allArticles);
+} catch (err) {
+    console.warn('⚠️ Failed to migrate existing article dates:', err.message);
+}
 
 // ─── Prepared Statements ──────────────────────────────────
 
@@ -103,7 +155,7 @@ function upsertArticle(item) {
         titleZh: item.titleZh || '',
         authors: item.authors || '',
         source: item.source || '',
-        date: item.date || '',
+        date: normalizeDate(item.date || ''),
         abstract: item.abstract || '',
         category: item.category || '',
         provider: item.provider || '',

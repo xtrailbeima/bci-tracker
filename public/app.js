@@ -351,6 +351,16 @@ function formatDate(dateStr) {
         if (isNaN(d)) return dateStr.slice(0, 20);
         const now = new Date();
         const diff = now - d;
+        
+        // Handle future dates (e.g. database has 2026/2027 and client is in 2024/2025/etc.),
+        // or small timezone/clock differences (less than 1 hour).
+        if (diff < 0) {
+            if (Math.abs(diff) < 3600000) {
+                return '刚刚';
+            }
+            return new Intl.DateTimeFormat('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' }).format(d);
+        }
+        
         const hours = Math.floor(diff / 3600000);
         const days = Math.floor(diff / 86400000);
         if (hours < 1) return '刚刚';

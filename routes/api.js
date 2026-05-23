@@ -304,6 +304,8 @@ ${context}${companyContext}`;
 
         const hunyuanUrl = 'https://hunyuan.cloud.tencent.com/openai/v1/chat/completions';
         
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
         let aiRes;
         try {
             aiRes = await fetch(hunyuanUrl, {
@@ -317,10 +319,16 @@ ${context}${companyContext}`;
                     messages: [{ role: 'user', content: prompt }],
                     temperature: 0.3,
                     max_tokens: 4096
-                })
+                }),
+                signal: controller.signal
             });
         } catch (fetchErr) {
+            if (fetchErr.name === 'AbortError') {
+                throw new Error('网络连接超时 (Hunyuan API 响应超时)');
+            }
             throw new Error(`网络连接失败 (Hunyuan): ${fetchErr.message}`);
+        } finally {
+            clearTimeout(timeoutId);
         }
 
         if (!aiRes.ok) {
