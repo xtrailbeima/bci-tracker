@@ -20,6 +20,7 @@ app.use('/api', require('./routes/pubmed'));
 app.use('/api', require('./routes/arxiv'));
 app.use('/api', require('./routes/journals'));
 app.use('/api', require('./routes/news'));
+app.use('/api', require('./routes/youtube'));
 app.use('/api', require('./routes/api'));
 
 // ─── Error Handler (must be last) ────────────────────────
@@ -50,9 +51,9 @@ function scheduleDailyBriefing() {
 // ─── Start ───────────────────────────────────────────────
 
 app.listen(PORT, () => {
-    console.log(`🧠 BCI Tracker v4.2 running at http://localhost:${PORT}`);
+    console.log(`🧠 BCI Tracker v5.0 running at http://localhost:${PORT}`);
     console.log(`🛡️ Security headers: ON | Rate limiting: ON`);
-    console.log(`📦 Modules: middleware/security, services/fetcher, routes/{pubmed,arxiv,journals,news,api}`);
+    console.log(`📦 Modules: middleware/security, services/{fetcher,import,youtube}, routes/{pubmed,arxiv,journals,news,youtube,api}`);
     // Initial fetch after 3 seconds (so server is ready)
     setTimeout(() => fetchAndStore(PORT), 3000);
     // Repeat every 30 minutes

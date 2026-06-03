@@ -66,6 +66,9 @@
           <label for="searchInput" class="sr-only">搜索</label>
           <input type="text" id="searchInput" placeholder="搜索论文、新闻、公司…" autocomplete="off">
         </div>
+        <button class="btn-import" id="importBtn" title="导入文章" aria-label="导入文章">
+          <span style="font-size:14px;">📥</span> 导入
+        </button>
         <button class="btn-refresh" id="refreshBtn" title="刷新数据" aria-label="刷新数据">
           <svg viewBox="0 0 20 20" fill="currentColor" width="18" height="18" aria-hidden="true">
             <path fill-rule="evenodd"
@@ -202,6 +205,7 @@
             <button class="filter-tab" data-filter="journal">期刊论文</button>
             <button class="filter-tab" data-filter="preprint">预印本</button>
             <button class="filter-tab" data-filter="news">产业动态</button>
+            <button class="filter-tab" data-filter="video">🎬 视频</button>
           </div>
           <div class="time-range-tabs">
             <span class="sort-label">时间：</span>
@@ -274,7 +278,7 @@
 
   <!-- Footer -->
   <footer class="footer">
-    <p>数据来源：PubMed · arXiv · Nature · Science · Google News &nbsp;|&nbsp; BCI Tracker v4.0 &nbsp;|&nbsp; 每 30 分钟自动更新</p>
+    <p>数据来源：PubMed · arXiv · Nature · Science · Google News · YouTube &nbsp;|&nbsp; BCI Tracker v5.0 &nbsp;|&nbsp; 每 30 分钟自动更新</p>
     <p style="margin-top:4px;opacity:0.6;">Built with ❤️ for the BCI research community</p>
   </footer>
 

@@ -4,9 +4,11 @@ const fs = require('fs');
 const path = require('path');
 
 const { rateLimit } = require('../middleware/security');
-const { searchArticles, getStats, getAllSources, getArticleById, getTrendingKeywords, addSubscriber, removeSubscriber, getCollections, getCollectionItems, addToCollection, removeFromCollection, createCollection, deleteCollection } = require('../db');
+const { searchArticles, getStats, getAllSources, getArticleById, getTrendingKeywords, addSubscriber, removeSubscriber, getCollections, getCollectionItems, addToCollection, removeFromCollection, createCollection, deleteCollection, upsertArticle, autoAssignCollections } = require('../db');
 const { sendDailyBriefing } = require('../briefing');
 const deepseek = require('../services/deepseek');
+const { extractArticleFromURL } = require('../services/import');
+const { enrichItem } = require('../services/fetcher');
 
 // ─── Company Profile ──────────────────────────────────────
 
@@ -567,6 +569,55 @@ router.get('/analysis/:articleId', rateLimit(60000, 10), async (req, res) => {
     } catch (err) {
         console.error('DeepSeek Article Analysis error:', err.message);
         res.status(500).json({ error: '文章分析失败：' + err.message });
+    }
+});
+
+// ─── API: Import Article from URL ─────────────────────
+
+router.post('/import', rateLimit(60000, 10), async (req, res) => {
+    try {
+        const { url } = req.body;
+
+        // Validate input
+        if (!url || typeof url !== 'string') {
+            return res.status(400).json({ error: '请提供文章 URL' });
+        }
+
+        const trimmedUrl = url.trim();
+        if (trimmedUrl.length > 2048) {
+            return res.status(400).json({ error: 'URL 过长' });
+        }
+
+        // Extract article content from URL
+        const rawArticle = await extractArticleFromURL(trimmedUrl);
+
+        // Enrich: translate title + calculate importance score
+        const enriched = enrichItem(rawArticle);
+
+        // Store in database
+        upsertArticle(enriched);
+
+        // Auto-assign to collections
+        autoAssignCollections([enriched]);
+
+        console.log(`📥 Imported: ${enriched.title} (${enriched.provider}, score: ${enriched.importance})`);
+
+        res.json({
+            success: true,
+            article: {
+                url: enriched.url,
+                title: enriched.title,
+                titleZh: enriched.titleZh,
+                source: enriched.source,
+                provider: enriched.provider,
+                category: enriched.category,
+                importance: enriched.importance,
+                importanceLevel: enriched.importanceLevel,
+            }
+        });
+    } catch (err) {
+        console.error('Import error:', err.message);
+        res.status(400).json({ error: err.message });
     }
 });
 

@@ -213,11 +213,12 @@ async function fetchAndStore(PORT) {
 
     try {
         const baseUrl = `http://localhost:${PORT}`;
-        const [pubmed, arxiv, journals, news] = await Promise.allSettled([
+        const [pubmed, arxiv, journals, news, youtube] = await Promise.allSettled([
             fetchJSON(`${baseUrl}/api/pubmed`),
             fetchJSON(`${baseUrl}/api/arxiv`),
             fetchJSON(`${baseUrl}/api/journals`),
             fetchJSON(`${baseUrl}/api/news`),
+            fetchJSON(`${baseUrl}/api/youtube`),
         ]);
 
         const all = [
@@ -225,6 +226,7 @@ async function fetchAndStore(PORT) {
             ...(arxiv.status === 'fulfilled' ? arxiv.value : []),
             ...(journals.status === 'fulfilled' ? journals.value : []),
             ...(news.status === 'fulfilled' ? news.value : []),
+            ...(youtube.status === 'fulfilled' ? youtube.value : []),
         ].map(enrichItem);
 
         upsertMany(all);

@@ -281,8 +281,8 @@ function removeLoadMore() {
 }
 
 function createCard(item) {
-    const badgeClass = { journal: 'badge-journal', preprint: 'badge-preprint', news: 'badge-news' }[item.category] || 'badge-journal';
-    const badgeLabel = { journal: '期刊', preprint: '预印本', news: '新闻' }[item.category] || '其他';
+    const badgeClass = { journal: 'badge-journal', preprint: 'badge-preprint', news: 'badge-news', video: 'badge-video' }[item.category] || 'badge-journal';
+    const badgeLabel = { journal: '期刊', preprint: '预印本', news: '新闻', video: '视频' }[item.category] || '其他';
     const dotClass = getDotClass(item.provider);
     const dateStr = formatDate(item.date);
     const impLevel = item.importanceLevel || 'low';
@@ -341,6 +341,9 @@ function getDotClass(provider) {
     if (p.includes('nature')) return 'dot-nature';
     if (p.includes('science') || p.includes('neuron')) return 'dot-science';
     if (p.includes('news')) return 'dot-news';
+    if (p.includes('youtube')) return 'dot-youtube';
+    if (p.includes('wechat') || p.includes('weixin')) return 'dot-wechat';
+    if (p.includes('twitter') || p.includes('x/twitter')) return 'dot-twitter';
     return 'dot-default';
 }
 
@@ -503,6 +506,110 @@ searchInput.addEventListener('input', (e) => {
 refreshBtn.addEventListener('click', () => {
     fetchAll();
 });
+
+// Import button
+const importBtn = document.getElementById('importBtn');
+if (importBtn) {
+    importBtn.addEventListener('click', showImportDialog);
+}
+
+// ── Import Dialog ────────────────────────────────────
+
+function showImportDialog() {
+    const overlay = document.createElement('div');
+    overlay.className = 'custom-modal-overlay';
+    overlay.innerHTML = `
+        <div class="custom-modal">
+            <div class="custom-modal-header">
+                <h3 class="custom-modal-title">📥 导入文章</h3>
+                <button class="custom-modal-close" id="closeImportModal" aria-label="关闭">✕</button>
+            </div>
+            <div class="custom-modal-subtitle">粘贴任意 URL（微信公众号、网页、Twitter/X、YouTube...）自动提取内容入库</div>
+            
+            <div style="display:flex; flex-direction:column; gap:14px; margin: 8px 0;">
+                <div style="display:flex; flex-direction:column; gap:6px;">
+                    <label style="font-size:12px; font-weight:600; color:var(--text-secondary);">文章 URL</label>
+                    <input type="url" id="importUrlInput" placeholder="https://mp.weixin.qq.com/s/..." 
+                        style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px; color:var(--text-primary); font-size:14px; outline:none; transition:all 0.2s;" />
+                </div>
+                <div id="importStatus" style="display:none; font-size:13px; padding:8px 12px; border-radius:var(--radius-sm);"></div>
+            </div>
+            
+            <div class="custom-modal-footer">
+                <button type="button" class="custom-modal-btn custom-modal-btn--secondary" id="cancelImportModal">取消</button>
+                <button type="button" class="custom-modal-btn" id="confirmImportModal" 
+                    style="background:var(--gradient-main); border:none; color:#06080f; font-weight:700;">📥 导入</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    const closeModal = () => overlay.remove();
+    overlay.querySelector('#closeImportModal').addEventListener('click', closeModal);
+    overlay.querySelector('#cancelImportModal').addEventListener('click', closeModal);
+    overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+
+    const urlInput = overlay.querySelector('#importUrlInput');
+    const confirmBtn = overlay.querySelector('#confirmImportModal');
+    const statusDiv = overlay.querySelector('#importStatus');
+
+    // Focus input
+    setTimeout(() => urlInput.focus(), 50);
+
+    // Focus styling
+    urlInput.addEventListener('focus', () => { urlInput.style.borderColor = 'rgba(0, 240, 255, 0.4)'; urlInput.style.boxShadow = '0 0 8px rgba(0, 240, 255, 0.1)'; });
+    urlInput.addEventListener('blur', () => { urlInput.style.borderColor = ''; urlInput.style.boxShadow = ''; });
+
+    // Enter key to submit
+    urlInput.addEventListener('keydown', e => { if (e.key === 'Enter') confirmBtn.click(); });
+
+    confirmBtn.addEventListener('click', async () => {
+        const url = urlInput.value.trim();
+        if (!url) {
+            urlInput.style.borderColor = 'var(--accent-rose)';
+            urlInput.focus();
+            return;
+        }
+
+        confirmBtn.disabled = true;
+        confirmBtn.textContent = '正在导入...';
+        statusDiv.style.display = 'block';
+        statusDiv.style.background = 'rgba(0, 240, 255, 0.05)';
+        statusDiv.style.color = 'var(--text-secondary)';
+        statusDiv.textContent = '✨ 正在获取并解析页面内容…';
+
+        try {
+            const res = await fetch('/api/import', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url })
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+                statusDiv.style.background = 'rgba(16, 185, 129, 0.1)';
+                statusDiv.style.color = 'var(--accent-green)';
+                statusDiv.innerHTML = `✅ 导入成功！<br>标题：${escapeHtml(data.article.title)}<br>来源：${escapeHtml(data.article.provider)} | 重要性：${data.article.importance}`;
+                
+                // Refresh the feed
+                setTimeout(() => {
+                    closeModal();
+                    fetchAll();
+                }, 1500);
+            } else {
+                throw new Error(data.error || '导入失败');
+            }
+        } catch (err) {
+            statusDiv.style.background = 'rgba(239, 68, 68, 0.1)';
+            statusDiv.style.color = 'var(--accent-rose)';
+            statusDiv.textContent = `❌ ${err.message}`;
+            confirmBtn.disabled = false;
+            confirmBtn.textContent = '📥 导入';
+        }
+    });
+}
 
 // Subscribe form
 const subscribeForm = document.getElementById('subscribeForm');

@@ -298,6 +298,32 @@ body::before {
   animation: spin 0.8s linear infinite;
 }
 
+/* ── Import Button ────────────────────────────────────── */
+.btn-import {
+  height: 40px;
+  padding: 0 14px;
+  border-radius: var(--radius);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  font-family: var(--font-sans);
+  transition: border-color 0.2s, color 0.2s, box-shadow 0.2s, background 0.2s;
+  white-space: nowrap;
+}
+
+.btn-import:hover {
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+  box-shadow: var(--shadow-glow);
+  background: rgba(0, 229, 255, 0.05);
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
@@ -935,6 +961,12 @@ body::before {
   border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
+.badge-video {
+  background: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
 .card-title {
   font-size: 15px;
   font-weight: 600;
@@ -1014,6 +1046,18 @@ body::before {
 
 .dot-news {
   background: var(--accent-green);
+}
+
+.dot-youtube {
+  background: #f87171;
+}
+
+.dot-wechat {
+  background: #22c55e;
+}
+
+.dot-twitter {
+  background: #38bdf8;
 }
 
 .dot-default {

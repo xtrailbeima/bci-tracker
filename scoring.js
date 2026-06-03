@@ -23,6 +23,7 @@ const SOURCE_SCORES = {
     'PubMed': 70,
     'arXiv': 60,
     'Google News': 50,
+    'YouTube': 45,
 };
 
 // ── 高价值关键词（出现即加分）─────────────────────
