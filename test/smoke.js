@@ -43,6 +43,12 @@ async function testNewsAPI() {
         assert(['critical','high','medium','low'].includes(item.importanceLevel), `importanceLevel valid (got ${item.importanceLevel})`);
         assert(typeof item.source === 'string', 'item.source exists');
         assert(typeof item.category === 'string', 'item.category exists');
+        assert(['full_text','metadata_only','paywalled','failed'].includes(item.accessStatus), `accessStatus valid (got ${item.accessStatus})`);
+        assert(typeof item.contentQuality === 'number' && item.contentQuality >= 0 && item.contentQuality <= 100, `contentQuality 0-100 (got ${item.contentQuality})`);
+        assert(['official','journal','preprint','media','social','unknown'].includes(item.sourceReliability), `sourceReliability valid (got ${item.sourceReliability})`);
+        assert(['api','rss','html','manual_import','demo'].includes(item.extractionMethod), `extractionMethod valid (got ${item.extractionMethod})`);
+        assert(['success','partial','failed'].includes(item.lastFetchStatus), `lastFetchStatus valid (got ${item.lastFetchStatus})`);
+        assert(typeof item.lastFetchError === 'string', 'lastFetchError exists');
     }
 }
 
@@ -57,6 +63,20 @@ async function testStatsAPI() {
     console.log('\n📊 /api/stats');
     const data = await fetchJSON('/api/stats');
     assert(typeof data.total === 'number', `total is number (got ${data.total})`);
+}
+
+async function testSourceHealthAPI() {
+    console.log('\n🩺 /api/source-health');
+    const data = await fetchJSON('/api/source-health');
+    assert(Array.isArray(data), 'source health returns array');
+    for (const source of data) {
+        assert(typeof source.source === 'string' && source.source.length > 0, 'source has name');
+        assert(['success','partial','failed'].includes(source.status), `source status valid (got ${source.status})`);
+        assert(typeof source.itemCount === 'number' && source.itemCount >= 0, `source itemCount valid (got ${source.itemCount})`);
+        assert(typeof source.lastRunAt === 'string', 'source has lastRunAt');
+        assert(typeof source.lastSuccessAt === 'string', 'source has lastSuccessAt');
+        assert(typeof source.error === 'string', 'source has error');
+    }
 }
 
 async function testSummaryAPI() {
@@ -204,6 +224,7 @@ async function run() {
         await testNewsAPI();
         await testSearchAPI();
         await testStatsAPI();
+        await testSourceHealthAPI();
         await testSummaryAPI();
         await testAnalysisArticleAPI();
         await testDateSorting();

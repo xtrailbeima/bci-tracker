@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 
 const { rateLimit } = require('../middleware/security');
-const { searchArticles, getStats, getAllSources, getArticleById, getTrendingKeywords, addSubscriber, removeSubscriber, getCollections, getCollectionItems, addToCollection, removeFromCollection, createCollection, deleteCollection, upsertArticle, autoAssignCollections } = require('../db');
+const { searchArticles, getStats, getAllSources, getArticleById, getTrendingKeywords, getSourceHealth, addSubscriber, removeSubscriber, getCollections, getCollectionItems, addToCollection, removeFromCollection, createCollection, deleteCollection, upsertArticle, autoAssignCollections } = require('../db');
 const { sendDailyBriefing } = require('../briefing');
 const deepseek = require('../services/deepseek');
 const { extractArticleFromURL } = require('../services/import');
@@ -50,6 +50,14 @@ router.get('/stats', (req, res) => {
         res.json(getStats());
     } catch (err) {
         res.json({ total: 0, journals: 0, preprints: 0, news: 0 });
+    }
+});
+
+router.get('/source-health', (req, res) => {
+    try {
+        res.json(getSourceHealth());
+    } catch (err) {
+        res.json([]);
     }
 });
 

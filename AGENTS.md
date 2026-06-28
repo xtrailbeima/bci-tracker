@@ -92,7 +92,7 @@ chore: 构建、依赖等杂项
 
 ### 7. 部署验证 → `ao-shipping-and-launch`
 - 部署前必须通过：`npm run verify`
-- 部署命令：`ssh root@111.229.73.49 "cd /root/bci-tracker && git pull && npm install && pm2 restart bci-tracker"`
+- 部署命令：`ssh ubuntu@111.229.73.49 "cd ~/bci-tracker && git pull && npm install && pm2 restart bci-tracker"`
 
 ## 验证清单 (每次改动后执行)
 

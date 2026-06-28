@@ -1,0 +1,1286 @@
+{
+  "generatedAt": "2026-06-28T10:17:13.475Z",
+  "source": {
+    "table": "articles",
+    "count": 50,
+    "from": null,
+    "to": null,
+    "minImportance": 0
+  },
+  "events": [
+    {
+      "id": "evt-article-18413-47873ae827",
+      "date": "2026-02-28",
+      "track": "industry",
+      "eventType": "financing",
+      "title": "脑机接口企业术理创新完成数亿元C轮融资，道禾资本参投 - 新浪财经",
+      "summary": "脑机接口企业术理创新完成数亿元C轮融资，道禾资本参投 新浪财经",
+      "companies": [
+        "术理创新"
+      ],
+      "technologyRoutes": [],
+      "indications": [],
+      "investmentSignal": "positive",
+      "importanceScore": 68,
+      "confidence": 0.51,
+      "sources": [
+        {
+          "title": "脑机接口企业术理创新完成数亿元C轮融资，道禾资本参投 - 新浪财经",
+          "url": "https://news.google.com/rss/articles/CBMifEFVX3lxTE5kV3FqWkliN3lfSTJUT0dxYkRzR3lTTkxvYWdwSnQ2UUthYjhETER3TTg1SDBHa21Da1lfanBIaVhCVEMwekdLZFJoUzFfYWRwd3p1VHJDeFJDMVQ0dGVBVEhSclFjYXFtMGhSUFpucGh2UlFnN1RjU255djU?oc=5",
+          "provider": "Google News",
+          "source": "新浪财经",
+          "accessStatus": "metadata_only",
+          "contentQuality": 50
+        }
+      ]
+    },
+    {
+      "id": "evt-article-21894-9fbdb23bd6",
+      "date": "2026-03-28",
+      "track": "industry",
+      "eventType": "financing",
+      "title": "「格式塔科技」获1.5亿元天使轮融资，加速超声波脑机接口临床开发丨早起看早期 - 新浪网",
+      "summary": "「格式塔科技」获1.5亿元天使轮融资，加速超声波脑机接口临床开发丨早起看早期 新浪网",
+      "companies": [
+        "格式塔科技"
+      ],
+      "technologyRoutes": [
+        "ultrasound neuromodulation"
+      ],
+      "indications": [],
+      "investmentSignal": "positive",
+      "importanceScore": 66,
+      "confidence": 0.51,
+      "sources": [
+        {
+          "title": "「格式塔科技」获1.5亿元天使轮融资，加速超声波脑机接口临床开发丨早起看早期 - 新浪网",
+          "url": "https://news.google.com/rss/articles/CBMiigVBVV95cUxNZnlRZmFTUEx0TFUxVE1pc2hnMU9fZW1iS25LUE92ZVFkYVlneHhqcVZtZmIxYXZPVy16TjRBdGtvQTMtSjVSVGI2TFhwYTJiV001NDR3bVpyeG1kMWJTQ2xFTE5leUdBLURhZHZWdjROdVJEd0prSDFnMHI2VHUzZ2dlUEVlQnpneU1VYlh0VUNRc2Z2eG9PRVRWcGNnY0w2WVMzWFdvR05wY1BvTVp3d1ltY1ZuWmRwYVFFOVF3SWdXRjh3NFVMcHJEWlQ0OXF0ZFlITGhpMnBwR1QzU3pMY2JOZzdvalVoX0NWSW9NWVEydjVCRHMtdUUwTnpPN2NkVTdnbjluNVo2V2kxLXRFWWFHT3VWTFFlMEFDQkJ1blFJdGFsRjc3d0l1bEFBSXlKNHFBa0hidkFoQlpWY0hUSkFjUjBHVG9KMmZuTnc2TVJwZ2RORzJtRjgtNmozZW1xTFFIbEYwZEh2SThEcFh4UWVVc2JoSlBXd2hpSHQwQlRrM0JOc2I0eFQ5Z0VTLWVLWFYtU3JEQlJ6M1NqMWRZamk5QVJMaGN4NGRBaWR5cVRRRXE5MUxDaFF6QnUyWnJMRFBKUnN5ajRYVGwwM2hVN2V6TFJPWmNWUTRDaFZiZVdnd0tka3FlVnN6NWdUR2Z2N0tLdHhOZElPbS1JSzdWTVJsODU0UW43THNockt6Q1ZiOExfWi1vMDFrZ2U4bjNHRmNLODR5cjR0WFY2VHJ5WktEU1JlSjRJSU84R0RfQWhWbG5iZWpZZ0F0eGRpOEJRQ0VyZWxXbEdjcDVobTdndFY3dW0tUTFPSWk2TmxtYXJMbEJMclFMV2p2ZE9QRDM0dlBHa2RYR1o0Zw?oc=5",
+          "provider": "Google News",
+          "source": "新浪网",
+          "accessStatus": "metadata_only",
+          "contentQuality": 50
+        }
+      ]
+    },
+    {
+      "id": "evt-article-18414-a5d0602b18",
+      "date": "2026-02-28",
+      "track": "industry",
+      "eventType": "financing",
+      "title": "脑机接口企业术理创新完成数亿元C轮融资 - 投资界",
+      "summary": "脑机接口企业术理创新完成数亿元C轮融资 投资界",
+      "companies": [
+        "术理创新"
+      ],
+      "technologyRoutes": [],
+      "indications": [],
+      "investmentSignal": "positive",
+      "importanceScore": 66,
+      "confidence": 0.51,
+      "sources": [
+        {
+          "title": "脑机接口企业术理创新完成数亿元C轮融资 - 投资界",
+          "url": "https://news.google.com/rss/articles/CBMiVkFVX3lxTFBjYnZFMnhvelJkaVIxUkx1OUtOei1OeVpQd3gydXo3V0ZTSUJFR0ctSTJuNXI1aUJSVnN2WGFOcGR0WEJHdDNrRjF2SmdqdGUybjRaQVl3?oc=5",
+          "provider": "Google News",
+          "source": "投资界",
+          "accessStatus": "metadata_only",
+          "contentQuality": 50
+        }
+      ]
+    },
+    {
+      "id": "evt-article-794-91bad86d6a",
+      "date": "2026-02-24",
+      "track": "industry",
+      "eventType": "company_update",
+      "title": "Brain Computer Interface (BCI) Market Is Going to Boom |• Neuralink • CTRL-Labs - openPR.com",
+      "summary": "Brain Computer Interface (BCI) Market Is Going to Boom |• Neuralink • CTRL-Labs openPR.com",
+      "companies": [
+        "Neuralink"
+      ],
+      "technologyRoutes": [],
+      "indications": [],
+      "investmentSignal": "neutral",
+      "importanceScore": 65,
+      "confidence": 0.51,
+      "sources": [
+        {
+          "title": "Brain Computer Interface (BCI) Market Is Going to Boom |• Neuralink • CTRL-Labs - openPR.com",
+          "url": "https://news.google.com/rss/articles/CBMikgFBVV95cUxPZlhDanlkY0tTLXJybnB1TmQydGN2RzVETDNLWFdBSWJ0RkJZQVg0SU1NOGxaaHN3cXVQMG5PLVpwLVJ5WDVYdzE0UlV3Z0lCVlRKR2Fmd0dzbi1IbThZTDlBZTBGQW5pTkg3QW9hQXBZNHlDSmF1OHhPNnNiSmMyMWVHRS03SGhDZWtZLVhlbkFTZw?oc=5",
+          "provider": "Google News",
+          "source": "openPR.com",
+          "accessStatus": "metadata_only",
+          "contentQuality": 50
+        }
+      ]
+    },
+    {
+      "id": "evt-article-51595-043a937806",
+      "date": "2026-04-29",
+      "track": "industry",
+      "eventType": "financing",
+      "title": "Axoft Secures $55M Series A to Advance Clinical Trials Globally for its Bio-Inspired, Implantable Brain-Computer Interface - Business Wire",
+      "summary": "Axoft Secures $55M Series A to Advance Clinical Trials Globally for its Bio-Inspired, Implantable Brain-Computer Interface Business Wire",
+      "companies": [
+        "Axoft"
+      ],
+      "technologyRoutes": [
+        "invasive BCI"
+      ],
+      "indications": [
+        "ALS"
+      ],
+      "investmentSignal": "positive",
+      "importanceScore": 64,
+      "confidence": 0.51,
+      "sources": [
+        {
+          "title": "Axoft Secures $55M Series A to Advance Clinical Trials Globally for its Bio-Inspired, Implantable Brain-Computer Interface - Business Wire",
+          "url": "https://news.google.com/rss/articles/CBMijAJBVV95cUxPUnZXem1VbEVFZmQ3YXZDYkJOQmZnVmZmWVNHTzFJLXRqX1NidTRoQmtlc1BBUlI1MWx2VU51N0dNZDNVb0Y1UFJfWmxsTjFnOTBMQjlqQVhYSmVkVG44SXZWcktoZXZCdG1aZkV1c0dRQTlWYzBtY3pyTTV2NWkxSWlHdF84d3NhYi1MU2V5Rmc2VjdBRWhLTm9FVUlJb0k5WlVWa1dFRUdlekFzTW9tOG50VXFPV3UtUWRsMlUweENGR0NKUmNublg4YlRiV09ZbW4tdk5sOGZFVVBMYWFEM0JWaFNBeDRRTjdTVXNjNzdfdXFUSXI2Wm1KMlZTYThLdnBBNGVLWWhnYUFT?oc=5",
+          "provider": "Google News",
+          "source": "Business Wire",
+          "accessStatus": "metadata_only",
+          "contentQuality": 50
+        }
+      ]
+    },
+    {
+      "id": "evt-article-18745-b66b7f3ebc",
+      "date": "2026-03-05",
+      "track": "industry",
+      "eventType": "financing",
+      "title": "Science融资2.3亿美元挑战Neuralink 脑机接口商业化竞赛进入白热化 - 新浪财经",
+      "summary": "Science融资2.3亿美元挑战Neuralink 脑机接口商业化竞赛进入白热化 新浪财经",
+      "companies": [
+        "Neuralink"
+      ],
+      "technologyRoutes": [],
+      "indications": [],
+      "investmentSignal": "positive",
+      "importanceScore": 63,
+      "confidence": 0.51,
+      "sources": [
+        {
+          "title": "Science融资2.3亿美元挑战Neuralink 脑机接口商业化竞赛进入白热化 - 新浪财经",
+          "url": "https://news.google.com/rss/articles/CBMifkFVX3lxTE9DRmJob2xWR1NCVklsR2RzYzZGam9haS1PUWMwVEhkSWg5LXZNTmtacDJqV3hfMDc2RDVjek5ORFJ1QjNOVGliZFRKRWdLZkhqZHoxMkE3VGI3eF9CZm5CYWIxa1NKNTZiMzBFYlhVbGVIRmVfQjh4Ym9EblFEdw?oc=5",
+          "provider": "Google News",
+          "source": "新浪财经",
+          "accessStatus": "metadata_only",
+          "contentQuality": 50
+        }
+      ]
+    },
+    {
+      "id": "evt-article-51333-67ed76e53c",
+      "date": "2026-05-20",
+      "track": "industry",
+      "eventType": "financing",
+      "title": "「格式塔科技」获1.5亿元天使轮融资，加速超声波脑机接口临床开发丨早起看早期 - 新浪网",
+      "summary": "「格式塔科技」获1.5亿元天使轮融资，加速超声波脑机接口临床开发丨早起看早期 新浪网",
+      "companies": [
+        "格式塔科技"
+      ],
+      "technologyRoutes": [
+        "ultrasound neuromodulation"
+      ],
+      "indications": [],
+      "investmentSignal": "positive",
+      "importanceScore": 62,
+      "confidence": 0.51,
+      "sources": [
+        {
+          "title": "「格式塔科技」获1.5亿元天使轮融资，加速超声波脑机接口临床开发丨早起看早期 - 新浪网",
+          "url": "https://news.google.com/rss/articles/CBMiqgRBVV95cUxQS1hncGNueFFKLUxHWDlRT1BhUmk2Q1NUREhXbDctdjc5eDlOOEJqYUtJaUhEaG1tM3ppX093WUhDUExENW9mWl9POGRyUVNSRUxRRG83N0U0TlNVT3RtMEFIcmhWeV9wcnBEOE5sdFdyUGRSN19VcGJOTjRnLTBQZUxNenBaOFJiS3lMNWFyejYxWldkSHlWZDF0U243MzA4d3RoOWtYaXpjMmd3QnRHT3kxZm13Z2czT2FBQnQ4cnY1d1NDNnJ0QXFvTWJIaC0zRkdUSFIyeXJrc2hHS2syUmpkWHRnUmFVdHdpeS1kaWJmUVZfWFdHZmc2VTY2RlZGNUItNUZ3SkNDRVVMWlJsTVM1RWdWMjNrM1YwVy1aTk5LR09PSW41Q2ZQVHJwenRfa1FzN3prcVd6bVgzV1hYTUJnTWVhb1ZYMk4zT3FrNE96Q0hnS0UyU0pXLUUxbWx0SXRid0Fvbm9MNzNBdHR4WlJDdDc0NlZYSldpaExKRzc2ZE9HTHZYSVNZN2RPeXQxbFU0d0JFQUNLVWY0Wks0c1VSdER3b1NWZndJcl8zQU5tRkRJN3RHUTliOWd5dnR0QVlEeG1BNWt1bTh1X1h0cFh1bzdKSHhTVjdGbWRSMW4xRWdJNC13SmIxUTVHSi1CNEVfQlF2Qjl4TEI2bGxFNk1NVllpTXZ1MUdEZ2NHNVlNamZWeVllQlpubFA1bWJOcHB5eFZaQXlGZw?oc=5",
+          "provider": "Google News",
+          "source": "新浪网",
+          "accessStatus": "metadata_only",
+          "contentQuality": 50
+        }
+      ]
+    },
+    {
+      "id": "evt-article-48834-8423d5167b",
+      "date": "2026-05-18",
+      "track": "industry",
+      "eventType": "financing",
+      "title": "脑思科技完成超千万美元天使轮融资，加速侵入式脑机接口和神经基础模型的开发 - 投资界",
+      "summary": "脑思科技完成超千万美元天使轮融资，加速侵入式脑机接口和神经基础模型的开发 投资界",
+      "companies": [],
+      "technologyRoutes": [
+        "invasive BCI"
+      ],
+      "indications": [],
+      "investmentSignal": "positive",
+      "importanceScore": 62,
+      "confidence": 0.51,
+      "sources": [
+        {
+          "title": "脑思科技完成超千万美元天使轮融资，加速侵入式脑机接口和神经基础模型的开发 - 投资界",
+          "url": "https://news.google.com/rss/articles/CBMiVkFVX3lxTFA3TTBnSWNoeGJHbWdfVVdYMDFubXlvTzl4Q1RMUWYxNmF3ZTFtV2FxM3lqUldaMEV0WFhnUzFTdWE1ZlBIV1NjTmxTc3RZWkdjb1pGZ1V3?oc=5",
+          "provider": "Google News",
+          "source": "投资界",
+          "accessStatus": "metadata_only",
+          "contentQuality": 50
+        }
+      ]
+    },
+    {
+      "id": "evt-article-18747-dd9bd015a8",
+      "date": "2026-03-04",
+      "track": "industry",
+      "eventType": "financing",
+      "title": "上海企业完成数千万天使轮融资！加速非侵入脑机接口在神经调控领 - 财经号",
+      "summary": "上海企业完成数千万天使轮融资！加速非侵入脑机接口在神经调控领 财经号",
+      "companies": [],
+      "technologyRoutes": [],
+      "indications": [],
+      "investmentSignal": "positive",
+      "importanceScore": 62,
+      "confidence": 0.51,
+      "sources": [
+        {
+          "title": "上海企业完成数千万天使轮融资！加速非侵入脑机接口在神经调控领 - 财经号",
+          "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTE14V0ppR3k1cmpzck85eldBNEtTWkdmckFseVRvWFRMcGtDdmRRdWx4V3JFcm5wYTJUMmJ2SnlqVDhRMlhqZVJnOXB5QUZZRk8xS3FENFBLNk80ZTViNTBRcV9fcnBoRUk4cEZJ?oc=5",
+          "provider": "Google News",
+          "source": "财经号",
+          "accessStatus": "metadata_only",
+          "contentQuality": 50
+        }
+      ]
+    },
+    {
+      "id": "evt-article-61878-82b9c3f90b",
+      "date": "2026-06-27",
+      "track": "industry",
+      "eventType": "market_news",
+      "title": "NVIDIA Appears in Brain-Computer Interface Stock Lists - Let's Data Science",
+      "summary": "NVIDIA Appears in Brain-Computer Interface Stock Lists Let's Data Science",
+      "companies": [],
+      "technologyRoutes": [],
+      "indications": [],
+      "investmentSignal": "neutral",
+      "importanceScore": 61,
+      "confidence": 0.72,
+      "sources": [
+        {
+          "title": "NVIDIA Appears in Brain-Computer Interface Stock Lists - Let's Data Science",
+          "url": "https://news.google.com/rss/articles/CBMinAFBVV95cUxNdlJGeHJ3UDZrS1RPcGxwOTNva0xOYkc4cjlfOXVmVnBnUWxxNVF3ODZVMkNtRlc0RHZETWdTOWxIUXZqQ2s4bkJuV0tzYXpmZzROMnFoOHBRMnFrTjRVT0lqVXh0R0lpUWlGdXlXdTMwRHlnMklocnQ4UVd3NFZpSDdfSDZQRkE2RGpseHJsZnY2UVRwQkJQVVZUTGQ?oc=5",
+          "provider": "Google News",
+          "source": "Let's Data Science",
+          "accessStatus": "metadata_only",
+          "contentQuality": 60
+        }
+      ]
+    },
+    {
+      "id": "evt-article-18743-2dd61d1f38",
+      "date": "2026-03-07",
+      "track": "industry",
+      "eventType": "financing",
+      "title": "融资超50亿元 脑机接口的“性感”叙事升级 - 富途牛牛",
+      "summary": "融资超50亿元 脑机接口的“性感”叙事升级 富途牛牛",
+      "companies": [],
+      "technologyRoutes": [],
+      "indications": [],
+      "investmentSignal": "positive",
+      "importanceScore": 61,
+      "confidence": 0.51,
+      "sources": [
+        {
+          "title": "融资超50亿元 脑机接口的“性感”叙事升级 - 富途牛牛",
+          "url": "https://news.google.com/rss/articles/CBMingFBVV95cUxPMWVobGZYVGtiWldySlZKazEwUVhEVDQtNEQtRHFIUzllVkRoeUh4d0FWR3QtZEMxNmdiT2phYkxGVWpjdkFwY2lITTMyWElUS1RWMEs2anN0X3VPek56OXlBZGdxS25PNW1NWUxRVnEtbms0TTZEMmtBWXAzUWIzbmp2N0FQd3phbG91RE1zTlRiZXhFdmw3QTZhYlJ3UQ?oc=5",
+          "provider": "Google News",
+          "source": "富途牛牛",
+          "accessStatus": "metadata_only",
+          "contentQuality": 50
+        }
+      ]
+    },
+    {
+      "id": "evt-article-1146-e1185ad727",
+      "date": "2025-11-07",
+      "track": "industry",
+      "eventType": "financing",
+      "title": "Synchron raises US$200 million in Series D financing to advance BCI technology - NeuroNews International",
+      "summary": "Synchron raises US$200 million in Series D financing to advance BCI technology NeuroNews International",
+      "companies": [
+        "Synchron"
+      ],
+      "technologyRoutes": [],
+      "indications": [],
+      "investmentSignal": "positive",
+      "importanceScore": 61,
+      "confidence": 0.72,
+      "sources": [
+        {
+          "title": "Synchron raises US$200 million in Series D financing to advance BCI technology - NeuroNews International",
+          "url": "https://news.google.com/rss/articles/CBMiswFBVV95cUxOZlVJLU51Zi1MSWZtM0poRE9Odi1ibWdHLTRKWWE1NXpYenp0NDhVbEduOFQwRWMzV2NQMHFZbHltUWNWRlFkWGk3Qjk0R3pNN1U0eW1Od0pXV20xUGt0TFJmUHFFQk1sVWU1eFFmOEJhZHhaTUx4ZnhKWlBJMm50YU44ZGMtZWlYWFRQbFE4ZDZUR2RkME9GeEc1T2ZKbVhZWVVxNjloYVJuWWpDZDJnYmp2TQ?oc=5",
+          "provider": "Google News",
+          "source": "NeuroNews International",
+          "accessStatus": "metadata_only",
+          "contentQuality": 60
+        }
+      ]
+    },
+    {
+      "id": "evt-article-48830-a727461398",
+      "date": "2026-05-22",
+      "track": "industry",
+      "eventType": "financing",
+      "title": "神机妙控完成天使轮融资，深耕侵入式脑机接口3.0技术 - 投资界",
+      "summary": "神机妙控完成天使轮融资，深耕侵入式脑机接口3.0技术 投资界",
+      "companies": [],
+      "technologyRoutes": [
+        "invasive BCI"
+      ],
+      "indications": [],
+      "investmentSignal": "positive",
+      "importanceScore": 60,
+      "confidence": 0.51,
+      "sources": [
+        {
+          "title": "神机妙控完成天使轮融资，深耕侵入式脑机接口3.0技术 - 投资界",
+          "url": "https://news.google.com/rss/articles/CBMiVkFVX3lxTFBCd3BWWHI4aV9NbTdzOWVWajdVLUR0WG5WUWk4N28yeGcwV0duQ2JVdUVjek53N0RRZ25zVS1BZkQySm1TOHFUdG5ZOW9qSUZuamRySmx3?oc=5",
+          "provider": "Google News",
+          "source": "投资界",
+          "accessStatus": "metadata_only",
+          "contentQuality": 50
+        }
+      ]
+    },
+    {
+      "id": "evt-article-770-5ce26ab8dd",
+      "date": "2026-02-24",
+      "track": "research",
+      "eventType": "research_publication",
+      "title": "Increasing EEG electrode density improves decoding of visual categories and source localization: an exploratory ultra-high-density EEG study",
+      "summary": "Increasing EEG electrode density improves decoding of visual categories and source localization: an exploratory ultra-high-density EEG study",
+      "companies": [],
+      "technologyRoutes": [
+        "EEG decoding"
+      ],
+      "indications": [],
+      "investmentSignal": "watch",
+      "importanceScore": 60,
+      "confidence": 0.51,
+      "sources": [
+        {
+          "title": "Increasing EEG electrode density improves decoding of visual categories and source localization: an exploratory ultra-high-density EEG study",
+          "url": "https://www.nature.com/articles/s44172-026-00611-w",
+          "provider": "Nature Neuroscience",
+          "source": "Nature Neuroscience",
+          "accessStatus": "metadata_only",
+          "contentQuality": 50
+        }
+      ]
+    },
+    {
+      "id": "evt-article-21624-531af808a6",
+      "date": "2026-03-28",
+      "track": "research",
+      "eventType": "research_publication",
+      "title": "Role of the primate ventral striatum as a neural hub bridging option valuation and action selection",
+      "summary": "Role of the primate ventral striatum as a neural hub bridging option valuation and action selection",
+      "companies": [],
+      "technologyRoutes": [],
+      "indications": [],
+      "investmentSignal": "watch",
+      "importanceScore": 59,
+      "confidence": 0.51,
+      "sources": [
+        {
+          "title": "Role of the primate ventral striatum as a neural hub bridging option valuation and action selection",
+          "url": "https://www.nature.com/articles/s41467-026-70634-6",
+          "provider": "Nature Neuroscience",
+          "source": "Nature Neuroscience",
+          "accessStatus": "metadata_only",
+          "contentQuality": 50
+        }
+      ]
+    },
+    {
+      "id": "evt-article-21630-e1400ab749",
+      "date": "2026-03-28",
+      "track": "research",
+      "eventType": "research_publication",
+      "title": "Enhanced word learning and neural synchrony during children’s storytelling",
+      "summary": "Enhanced word learning and neural synchrony during children’s storytelling",
+      "companies": [
+        "Synchron"
+      ],
+      "technologyRoutes": [],
+      "indications": [],
+      "investmentSignal": "watch",
+      "importanceScore": 59,
+      "confidence": 0.51,
+      "sources": [
+        {
+          "title": "Enhanced word learning and neural synchrony during children’s storytelling",
+          "url": "https://www.nature.com/articles/s41539-026-00417-7",
+          "provider": "Nature Neuroscience",
+          "source": "Nature Neuroscience",
+          "accessStatus": "metadata_only",
+          "contentQuality": 50
+        }
+      ]
+    },
+    {
+      "id": "evt-article-21479-e501a0f4bc",
+      "date": "2025-06-03",
+      "track": "industry",
+      "eventType": "financing",
+      "title": "The brain-tech race is on: Neuralink raised $650M, while rival Paradromics kicks off its first human trial - Cybernews",
+      "summary": "The brain-tech race is on: Neuralink raised $650M, while rival Paradromics kicks off its first human trial Cybernews",
+      "companies": [
+        "Neuralink",
+        "Paradromics"
+      ],
+      "technologyRoutes": [],
+      "indications": [],
+      "investmentSignal": "positive",
+      "importanceScore": 59,
+      "confidence": 0.6,
+      "sources": [
+        {
+          "title": "The brain-tech race is on: Neuralink raised $650M, while rival Paradromics kicks off its first human trial - Cybernews",
+          "url": "https://news.google.com/rss/articles/CBMiuAFBVV95cUxQeWZwM3lwMGE5UmlwSXc0US1aYzN4eUI3SzZzdGRDbV8zeWFabEVpdUhxbWRWR0c0bDlsN29iUGpoS1hGclZ4NWlxTUlEM0VyWDNBa0NtNkNuRTR0T3cxZTVSNDFBMHhZd1RFRHV4Y1Z5dTMzMjUxOEMwVl8zemM2Z0FoSXp3S1pRbmZGOGtkbEswX0JQLXlDUjh0dDZwbTFfZklya2xHeXN3dGVtSmdHRFhRRjdWVE0w?oc=5",
+          "provider": "Google News",
+          "source": "Cybernews",
+          "accessStatus": "metadata_only",
+          "contentQuality": 55
+        }
+      ]
+    },
+    {
+      "id": "evt-article-62088-a05737cc7c",
+      "date": "2026-06-27",
+      "track": "industry",
+      "eventType": "financing",
+      "title": "全区落地61家，融资已超10亿元，“脑智天地”运营一周年，闵行提速布局脑机接口产业 - 新浪财经",
+      "summary": "全区落地61家，融资已超10亿元，“脑智天地”运营一周年，闵行提速布局脑机接口产业 新浪财经",
+      "companies": [
+        "脑智天地"
+      ],
+      "technologyRoutes": [],
+      "indications": [],
+      "investmentSignal": "positive",
+      "importanceScore": 58,
+      "confidence": 0.58,
+      "sources": [
+        {
+          "title": "全区落地61家，融资已超10亿元，“脑智天地”运营一周年，闵行提速布局脑机接口产业 - 新浪财经",
+          "url": "https://news.google.com/rss/articles/CBMieEFVX3lxTFBQeU1hdHcyc0Qxb29GWmMwTE9vbV9jdzZVWS1NaXFUZV9tQk1HanVzVkh4ajR0TzBrYU9EM3h4VUFNamhOOWljYWhhR01nZXlwdG1Od3YtMDdBX2tFaTdCbFJyMV9PWlJXb1RVaU52WmNNMWdUUHBVOQ?oc=5",
+          "provider": "Google News",
+          "source": "新浪财经",
+          "accessStatus": "metadata_only",
+          "contentQuality": 45
+        }
+      ]
+    },
+    {
+      "id": "evt-article-48832-18b7a0bd90",
+      "date": "2026-05-22",
+      "track": "industry",
+      "eventType": "financing",
+      "title": "潜脑科技完成数千万元种子+轮融资 - AgeClub",
+      "summary": "潜脑科技完成数千万元种子+轮融资 AgeClub",
+      "companies": [],
+      "technologyRoutes": [],
+      "indications": [],
+      "investmentSignal": "positive",
+      "importanceScore": 58,
+      "confidence": 0.51,
+      "sources": [
+        {
+          "title": "潜脑科技完成数千万元种子+轮融资 - AgeClub",
+          "url": "https://news.google.com/rss/articles/CBMiVkFVX3lxTE1BQlZTdmNnblQtMk1UdG1UZHZjTkFkUGpaXzVPaWQtRGpSbHV1NU04N1diMEZfR0dSUTVRUUxrY2o5QU1EVy1WMC1rbW5VRlJQYWNTR0hB?oc=5",
+          "provider": "Google News",
+          "source": "AgeClub",
+          "accessStatus": "metadata_only",
+          "contentQuality": 50
+        }
+      ]
+    },
+    {
+      "id": "evt-article-48663-766f8b4dfe",
+      "date": "2026-05-20",
+      "track": "industry",
+      "eventType": "market_news",
+      "title": "Neurosoft Bioelectronics Closes $7.5M Oversubscribed Seed Round to Build Stretchable and Scalable Brain-Computer Interfaces - BioSpace",
+      "summary": "Neurosoft Bioelectronics Closes $7.5M Oversubscribed Seed Round to Build Stretchable and Scalable Brain-Computer Interfaces BioSpace",
+      "companies": [],
+      "technologyRoutes": [],
+      "indications": [],
+      "investmentSignal": "neutral",
+      "importanceScore": 58,
+      "confidence": 0.51,
+      "sources": [
+        {
+          "title": "Neurosoft Bioelectronics Closes $7.5M Oversubscribed Seed Round to Build Stretchable and Scalable Brain-Computer Interfaces - BioSpace",
+          "url": "https://news.google.com/rss/articles/CBMi9AFBVV95cUxNSGFjalNOOThfN3lscTQ2M1NTZFE0Ujl0N3ZCXzdGSDFmODlvLTBhNnp6ZVBKVkhnS1BKdWJPdENvcmFjejUxZzY0NWRsczB4QlBKVU9GNm1mWjRrUVdONXFFZ0lNbVBJZ0t1XzVVR0k1TEhvZEFLeTlURUN1TUROR05ITXdqWTRSNzBhR3ZxZEtnZHlfZ1NKZ28zV1FhZk42bXpyUlNQTHNqVFVwYWRBemx4Qk1SWHBTSFBxWnBLN1c3amtzRFJGUllSYkszZXFBakZZbXZQN2duamhnSHRsRU80cVFqclhqMVVGZGxqNkpzczdj?oc=5",
+          "provider": "Google News",
+          "source": "BioSpace",
+          "accessStatus": "metadata_only",
+          "contentQuality": 50
+        }
+      ]
+    },
+    {
+      "id": "evt-article-21632-57ba810203",
+      "date": "2026-03-28",
+      "track": "research",
+      "eventType": "clinical_milestone",
+      "title": "A multicenter randomized clinical trial of portable transcranial alternating current stimulation for major depressive disorder",
+      "summary": "A multicenter randomized clinical trial of portable transcranial alternating current stimulation for major depressive disorder",
+      "companies": [],
+      "technologyRoutes": [],
+      "indications": [],
+      "investmentSignal": "positive",
+      "importanceScore": 58,
+      "confidence": 0.51,
+      "sources": [
+        {
+          "title": "A multicenter randomized clinical trial of portable transcranial alternating current stimulation for major depressive disorder",
+          "url": "https://www.nature.com/articles/s41746-026-02575-9",
+          "provider": "Nature Neuroscience",
+          "source": "Nature Neuroscience",
+          "accessStatus": "metadata_only",
+          "contentQuality": 50
+        }
+      ]
+    },
+    {
+      "id": "evt-article-19096-ae759138e2",
+      "date": "2026-03-07",
+      "track": "industry",
+      "eventType": "financing",
+      "title": "融资超50亿元 脑机接口的“性感”叙事升级 - 财联社",
+      "summary": "融资超50亿元 脑机接口的“性感”叙事升级 财联社",
+      "companies": [],
+      "technologyRoutes": [],
+      "indications": [],
+      "investmentSignal": "positive",
+      "importanceScore": 58,
+      "confidence": 0.51,
+      "sources": [
+        {
+          "title": "融资超50亿元 脑机接口的“性感”叙事升级 - 财联社",
+          "url": "https://news.google.com/rss/articles/CBMiSEFVX3lxTFBialdqTW9iZFFKQkhGdlRRNVBQRm1WTHZDTDdtdUh4Q2UtZmUtczV5RXZhZkZUckNzZ21CQVFsNzhGMHczXy1BNg?oc=5",
+          "provider": "Google News",
+          "source": "财联社",
+          "accessStatus": "metadata_only",
+          "contentQuality": 50
+        }
+      ]
+    },
+    {
+      "id": "evt-article-17144-a720c795d7",
+      "date": "2026-02-27",
+      "track": "research",
+      "eventType": "research_publication",
+      "title": "Children’s resource taking varies with experimentally manipulated relative status",
+      "summary": "Children’s resource taking varies with experimentally manipulated relative status",
+      "companies": [],
+      "technologyRoutes": [],
+      "indications": [],
+      "investmentSignal": "watch",
+      "importanceScore": 58,
+      "confidence": 0.51,
+      "sources": [
+        {
+          "title": "Children’s resource taking varies with experimentally manipulated relative status",
+          "url": "https://www.nature.com/articles/s41598-026-40976-8",
+          "provider": "Nature Neuroscience",
+          "source": "Nature Neuroscience",
+          "accessStatus": "metadata_only",
+          "contentQuality": 50
+        }
+      ]
+    },
+    {
+      "id": "evt-article-17145-92198ffdbe",
+      "date": "2026-02-27",
+      "track": "research",
+      "eventType": "research_publication",
+      "title": "A transparent AI assurance and benchmarking framework for EEG seizure detection on TUSZ seeded with a reproducible gradient-boosting ensemble",
+      "summary": "A transparent AI assurance and benchmarking framework for EEG seizure detection on TUSZ seeded with a reproducible gradient-boosting ensemble",
+      "companies": [],
+      "technologyRoutes": [
+        "EEG decoding"
+      ],
+      "indications": [],
+      "investmentSignal": "watch",
+      "importanceScore": 58,
+      "confidence": 0.51,
+      "sources": [
+        {
+          "title": "A transparent AI assurance and benchmarking framework for EEG seizure detection on TUSZ seeded with a reproducible gradient-boosting ensemble",
+          "url": "https://www.nature.com/articles/s41598-026-41358-w",
+          "provider": "Nature Neuroscience",
+          "source": "Nature Neuroscience",
+          "accessStatus": "metadata_only",
+          "contentQuality": 50
+        }
+      ]
+    },
+    {
+      "id": "evt-article-1255-bd328e1935",
+      "date": "2026-02-26",
+      "track": "industry",
+      "eventType": "financing",
+      "title": "空山慈科技完成Pre-A轮融资，专注于无创脑机接口与神经调控 - 搜狐网",
+      "summary": "空山慈科技完成Pre-A轮融资，专注于无创脑机接口与神经调控 搜狐网",
+      "companies": [],
+      "technologyRoutes": [
+        "non-invasive BCI"
+      ],
+      "indications": [],
+      "investmentSignal": "positive",
+      "importanceScore": 58,
+      "confidence": 0.51,
+      "sources": [
+        {
+          "title": "空山慈科技完成Pre-A轮融资，专注于无创脑机接口与神经调控 - 搜狐网",
+          "url": "https://news.google.com/rss/articles/CBMihwFBVV95cUxPMDZORUhkT0U1Wnlqc0xUcEFlUlVFR2N4QVhHQjZOc0xHeXZLVHZWLTJ2SmI3ZzEzYllERF96b21rRGdIa2FxbHFOcEltSHNFdVpUdERjaExQUGc5QTM5eGpXY2VBS0lya2Q4ekIybjFISkctQkN4RWVfcDhaSXlFUFNxRGpOdEE?oc=5",
+          "provider": "Google News",
+          "source": "搜狐网",
+          "accessStatus": "metadata_only",
+          "contentQuality": 50
+        }
+      ]
+    },
+    {
+      "id": "evt-article-985-03e856d4cb",
+      "date": "2026-02-26",
+      "track": "research",
+      "eventType": "research_publication",
+      "title": "Gaps in recovery priorities between individuals with spinal cord injury and healthcare professionals",
+      "summary": "Gaps in recovery priorities between individuals with spinal cord injury and healthcare professionals",
+      "companies": [],
+      "technologyRoutes": [],
+      "indications": [
+        "ALS",
+        "paralysis"
+      ],
+      "investmentSignal": "watch",
+      "importanceScore": 58,
+      "confidence": 0.51,
+      "sources": [
+        {
+          "title": "Gaps in recovery priorities between individuals with spinal cord injury and healthcare professionals",
+          "url": "https://www.nature.com/articles/s44401-026-00073-4",
+          "provider": "Nature Neuroscience",
+          "source": "Nature Neuroscience",
+          "accessStatus": "metadata_only",
+          "contentQuality": 50
+        }
+      ]
+    },
+    {
+      "id": "evt-article-6221-9f5744d6da",
+      "date": "2026-02-26",
+      "track": "research",
+      "eventType": "research_publication",
+      "title": "Personalized brain decoding of spontaneous pain in individuals with chronic pain",
+      "summary": "Personalized brain decoding of spontaneous pain in individuals with chronic pain",
+      "companies": [],
+      "technologyRoutes": [],
+      "indications": [
+        "ALS"
+      ],
+      "investmentSignal": "watch",
+      "importanceScore": 58,
+      "confidence": 0.51,
+      "sources": [
+        {
+          "title": "Personalized brain decoding of spontaneous pain in individuals with chronic pain",
+          "url": "https://www.nature.com/articles/s41593-026-02221-3",
+          "provider": "Nature Neuroscience",
+          "source": "Nature Neuroscience",
+          "accessStatus": "metadata_only",
+          "contentQuality": 50
+        }
+      ]
+    },
+    {
+      "id": "evt-article-763-2bb85c6075",
+      "date": "2026-02-24",
+      "track": "research",
+      "eventType": "research_publication",
+      "title": "A large-scale optogenetic neurophysiology platform for improving accessibility in non-human primate behavioral experiments",
+      "summary": "A large-scale optogenetic neurophysiology platform for improving accessibility in non-human primate behavioral experiments",
+      "companies": [],
+      "technologyRoutes": [],
+      "indications": [],
+      "investmentSignal": "watch",
+      "importanceScore": 58,
+      "confidence": 0.51,
+      "sources": [
+        {
+          "title": "A large-scale optogenetic neurophysiology platform for improving accessibility in non-human primate behavioral experiments",
+          "url": "https://www.nature.com/articles/s41467-026-69448-3",
+          "provider": "Nature Neuroscience",
+          "source": "Nature Neuroscience",
+          "accessStatus": "metadata_only",
+          "contentQuality": 50
+        }
+      ]
+    },
+    {
+      "id": "evt-article-773-e0a45e89d6",
+      "date": "2026-02-24",
+      "track": "research",
+      "eventType": "research_publication",
+      "title": "Robust learning framework for a scalable remote monitoring of autonomic dysreflexia: use-case in spinal cord injury",
+      "summary": "Robust learning framework for a scalable remote monitoring of autonomic dysreflexia: use-case in spinal cord injury",
+      "companies": [],
+      "technologyRoutes": [],
+      "indications": [
+        "paralysis"
+      ],
+      "investmentSignal": "watch",
+      "importanceScore": 58,
+      "confidence": 0.51,
+      "sources": [
+        {
+          "title": "Robust learning framework for a scalable remote monitoring of autonomic dysreflexia: use-case in spinal cord injury",
+          "url": "https://www.nature.com/articles/s41598-025-33797-8",
+          "provider": "Nature Neuroscience",
+          "source": "Nature Neuroscience",
+          "accessStatus": "metadata_only",
+          "contentQuality": 50
+        }
+      ]
+    },
+    {
+      "id": "evt-article-50989-2e2ed833c0",
+      "date": "2023-10-09",
+      "track": "industry",
+      "eventType": "financing",
+      "title": "【首发】柔灵科技完成Pre-A轮数千万元融资，加速临床及商业化落地 - 动脉网",
+      "summary": "【首发】柔灵科技完成Pre-A轮数千万元融资，加速临床及商业化落地 动脉网",
+      "companies": [],
+      "technologyRoutes": [],
+      "indications": [],
+      "investmentSignal": "positive",
+      "importanceScore": 58,
+      "confidence": 0.51,
+      "sources": [
+        {
+          "title": "【首发】柔灵科技完成Pre-A轮数千万元融资，加速临床及商业化落地 - 动脉网",
+          "url": "https://news.google.com/rss/articles/CBMiR0FVX3lxTE1vMXNUcWFJMjc4OXFKVUFUYUlwc3FLVS1MNTdDUjBLQktXeTh5Q3d3Nk5QOWd0VVI0OEk2aC1vck9qNDlteUpV?oc=5",
+          "provider": "Google News",
+          "source": "动脉网",
+          "accessStatus": "metadata_only",
+          "contentQuality": 50
+        }
+      ]
+    },
+    {
+      "id": "evt-article-18733-d4fa477e94",
+      "date": "2023-02-21",
+      "track": "industry",
+      "eventType": "financing",
+      "title": "【首发】技术世界领先！微创植入式脑机接口全链条自主技术领军企业微灵医疗完成数千万元天使轮融资 - 动脉网",
+      "summary": "【首发】技术世界领先！微创植入式脑机接口全链条自主技术领军企业微灵医疗完成数千万元天使轮融资 动脉网",
+      "companies": [],
+      "technologyRoutes": [
+        "invasive BCI"
+      ],
+      "indications": [],
+      "investmentSignal": "positive",
+      "importanceScore": 58,
+      "confidence": 0.51,
+      "sources": [
+        {
+          "title": "【首发】技术世界领先！微创植入式脑机接口全链条自主技术领军企业微灵医疗完成数千万元天使轮融资 - 动脉网",
+          "url": "https://news.google.com/rss/articles/CBMiR0FVX3lxTE11aVVHSkRlWW14RmdvbGlmUkdVbWt3blFlR3FJaTEwdmpkRldLRTM1dk10UzlRSm5zMng4MzJWb3M5YjhxTEpj?oc=5",
+          "provider": "Google News",
+          "source": "动脉网",
+          "accessStatus": "metadata_only",
+          "contentQuality": 50
+        }
+      ]
+    },
+    {
+      "id": "evt-article-24808-5bc900cce5",
+      "date": "2023-02-21",
+      "track": "industry",
+      "eventType": "financing",
+      "title": "微创植入式脑机接口全链条自主技术企业微灵医疗完成数千万元天使轮融资 - 投中",
+      "summary": "微创植入式脑机接口全链条自主技术企业微灵医疗完成数千万元天使轮融资 投中",
+      "companies": [],
+      "technologyRoutes": [
+        "invasive BCI"
+      ],
+      "indications": [],
+      "investmentSignal": "positive",
+      "importanceScore": 58,
+      "confidence": 0.51,
+      "sources": [
+        {
+          "title": "微创植入式脑机接口全链条自主技术企业微灵医疗完成数千万元天使轮融资 - 投中",
+          "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTE1xeXhZVzZMbGYwejhtekhDbnp3SWtLNW5TMFdxS3h0ZVUtOVVpdnp3TUJ1dWZYRTMxeVludVFlRzhqNHdWdVVvNXBHMXBCa0otdWtmeGhlVlpDc3V1YjQ4b0ltNG42STJtNWFz?oc=5",
+          "provider": "Google News",
+          "source": "投中",
+          "accessStatus": "metadata_only",
+          "contentQuality": 50
+        }
+      ]
+    },
+    {
+      "id": "evt-article-62389-9aca1fcea5",
+      "date": "2023-02-21",
+      "track": "industry",
+      "eventType": "financing",
+      "title": "蓝驰创投领投，脑机智能融合公司微灵医疗完成数千万元天使轮融资｜蓝驰家族 - ByDrug",
+      "summary": "蓝驰创投领投，脑机智能融合公司微灵医疗完成数千万元天使轮融资｜蓝驰家族 ByDrug",
+      "companies": [],
+      "technologyRoutes": [],
+      "indications": [],
+      "investmentSignal": "positive",
+      "importanceScore": 58,
+      "confidence": 0.58,
+      "sources": [
+        {
+          "title": "蓝驰创投领投，脑机智能融合公司微灵医疗完成数千万元天使轮融资｜蓝驰家族 - ByDrug",
+          "url": "https://news.google.com/rss/articles/CBMifkFVX3lxTE5iMU9qLVN4LW9BY0FJYWlpdzlzcHB6YzE1TnVvUjdOTVU4M1gyUWlxUTFvczZpNi1PTjJHRU92SkFZMnhyVVpaemRVZXFJbmQ0dHYzOVVHbG5hamdXMklJTTNnYk9TRHFIbmhOOUJLUjRfVEF3N3I0XzZZb2VTdw?oc=5",
+          "provider": "Google News",
+          "source": "ByDrug",
+          "accessStatus": "metadata_only",
+          "contentQuality": 45
+        }
+      ]
+    },
+    {
+      "id": "evt-article-21900-a40af6217b",
+      "date": "2026-03-11",
+      "track": "industry",
+      "eventType": "financing",
+      "title": "获奖项目中科搏锐获数千万B轮融资，深耕脑机接口全产业链布局 - ncsti.gov.cn",
+      "summary": "获奖项目中科搏锐获数千万B轮融资，深耕脑机接口全产业链布局 ncsti.gov.cn",
+      "companies": [],
+      "technologyRoutes": [],
+      "indications": [],
+      "investmentSignal": "positive",
+      "importanceScore": 57,
+      "confidence": 0.51,
+      "sources": [
+        {
+          "title": "获奖项目中科搏锐获数千万B轮融资，深耕脑机接口全产业链布局 - ncsti.gov.cn",
+          "url": "https://news.google.com/rss/articles/CBMiggFBVV95cUxOSC1NcWpDY0hnak5kenJ5V195d2RpWWZRYkdFdlZQOFB0M3IxNllsdGZYSS1XcXhCM0pVZGllamVqRUc5WnhsNlh0RjI0SEY5OGIxY2pVaGtyQVJqM1pybktaYmkwX2pGNlA1c2lqVE1iRmgwNmVmUEhfZUJfWHBjaU5n?oc=5",
+          "provider": "Google News",
+          "source": "ncsti.gov.cn",
+          "accessStatus": "metadata_only",
+          "contentQuality": 50
+        }
+      ]
+    },
+    {
+      "id": "evt-article-1181-7d1aed3ba4",
+      "date": "2025-12-01",
+      "track": "industry",
+      "eventType": "financing",
+      "title": "Synchron Attracts $200M Series D Investment to Drive Breakthroughs in BCI Technology - The Healthcare Technology Report.",
+      "summary": "Synchron Attracts $200M Series D Investment to Drive Breakthroughs in BCI Technology The Healthcare Technology Report.",
+      "companies": [
+        "Synchron"
+      ],
+      "technologyRoutes": [],
+      "indications": [],
+      "investmentSignal": "positive",
+      "importanceScore": 57,
+      "confidence": 0.6,
+      "sources": [
+        {
+          "title": "Synchron Attracts $200M Series D Investment to Drive Breakthroughs in BCI Technology - The Healthcare Technology Report.",
+          "url": "https://news.google.com/rss/articles/CBMixAFBVV95cUxOWi1TTC1RVE9qTmtfcktaRjRMM2xNYlpzVHJESWgxSENYR25pSV93MkJIMEQ0Wkc0RWY0MkRPSlM3a04tSWxObEtRYW1KQnBIaGFaTEJWR0JoRFY0S1ZLU2tvNFpNWm9nRU9SOUtGSkxPZ1MxbFhaZU9HZ01vMHhwb3FzOGhqaHJFdms3V1FqU2s0dmk0dWR3XzRGUHhFdFNnOW1laURPYndVeU5vaWw4ZWUxbHZxZTZkOW1mQVRoZ25vNThZ?oc=5",
+          "provider": "Google News",
+          "source": "The Healthcare Technology Report.",
+          "accessStatus": "metadata_only",
+          "contentQuality": 55
+        }
+      ]
+    },
+    {
+      "id": "evt-article-1133-4cba4ba0f5",
+      "date": "2025-06-04",
+      "track": "industry",
+      "eventType": "financing",
+      "title": "Neuralink secures $650M series E funding to expand patient access to brain chip technology - Fierce Biotech",
+      "summary": "Neuralink secures $650M series E funding to expand patient access to brain chip technology Fierce Biotech",
+      "companies": [
+        "Neuralink"
+      ],
+      "technologyRoutes": [],
+      "indications": [],
+      "investmentSignal": "positive",
+      "importanceScore": 57,
+      "confidence": 0.6,
+      "sources": [
+        {
+          "title": "Neuralink secures $650M series E funding to expand patient access to brain chip technology - Fierce Biotech",
+          "url": "https://news.google.com/rss/articles/CBMivgFBVV95cUxOMG0xaEQ1NDBmNjc3dVZ1WktGM1RtZGE3Sm03MjNkSExmWnlTM2NQbnhOWmNRZFE4YjEyOEJjb3FhZXFhR2N5QkpFUngzTEhGQnJQblJFNU1NOTMwaG9wdXBZQkhvNzBEOEthY19jeEZvRjZBRGtmLVh2b25vS2thNThzck83YTZOVmtTUXl0RldFazFCRGpxM3ZVQWpRWURBc3FNdVFWVWdKaW4wV0drQ2Q4V2FOT3lUc1YzcWNn?oc=5",
+          "provider": "Google News",
+          "source": "Fierce Biotech",
+          "accessStatus": "metadata_only",
+          "contentQuality": 55
+        }
+      ]
+    },
+    {
+      "id": "evt-article-18296-550e6997aa",
+      "date": "2025-06-04",
+      "track": "industry",
+      "eventType": "financing",
+      "title": "Elon Musk’s Neuralink raises $650 million in Series E funding - The American Bazaar",
+      "summary": "Elon Musk’s Neuralink raises $650 million in Series E funding The American Bazaar",
+      "companies": [
+        "Neuralink"
+      ],
+      "technologyRoutes": [],
+      "indications": [],
+      "investmentSignal": "positive",
+      "importanceScore": 57,
+      "confidence": 0.6,
+      "sources": [
+        {
+          "title": "Elon Musk’s Neuralink raises $650 million in Series E funding - The American Bazaar",
+          "url": "https://news.google.com/rss/articles/CBMisAFBVV95cUxQZUM0V20yVl8yODl6WF9OUDdFMjJGdHZBZy1zZ1N4eFFNM3lWYXJOcWZOakQ2N2JLRl9KM29ncGd6VzROcVE3Qm04bXAtYURxSWQyVlB3Z2p6YkNKalVrZzVQZjRrblZXalBSSXVLWUlqeFhyMlFsUnBDMHh5OWlUTkQ1S3c0NXZ1TXFpc1BFb1gzdHJNM1BiRmp1c2JIbGxoNGFoZDI1dVdSRlYzMFZ6MQ?oc=5",
+          "provider": "Google News",
+          "source": "The American Bazaar",
+          "accessStatus": "metadata_only",
+          "contentQuality": 55
+        }
+      ]
+    },
+    {
+      "id": "evt-article-1097-4935815561",
+      "date": "2024-12-11",
+      "track": "industry",
+      "eventType": "company_update",
+      "title": "Brain-Computer Interface Market Report 2024, with Profiles of g.tec Medical Engineering, Emotiv, Synchron, Neuralink and Blackrock Neurotech - ResearchAndMarkets.com - Business Wire",
+      "summary": "Brain-Computer Interface Market Report 2024, with Profiles of g.tec Medical Engineering, Emotiv, Synchron, Neuralink and Blackrock Neurotech - ResearchAndMarkets.com Business Wire",
+      "companies": [
+        "Neuralink",
+        "Synchron",
+        "Blackrock Neurotech"
+      ],
+      "technologyRoutes": [],
+      "indications": [],
+      "investmentSignal": "neutral",
+      "importanceScore": 57,
+      "confidence": 0.51,
+      "sources": [
+        {
+          "title": "Brain-Computer Interface Market Report 2024, with Profiles of g.tec Medical Engineering, Emotiv, Synchron, Neuralink and Blackrock Neurotech - ResearchAndMarkets.com - Business Wire",
+          "url": "https://news.google.com/rss/articles/CBMivwJBVV95cUxQSzl0WE16MUUzeUFsS1p0N1F0cjJMNWVndDJNNlNYMkJjU1pzcG9ad1NYQ0Jrc1FIYWlGVTY5Ty1sR0xwUnJBeDR4dDRkTXFsTWNTU1ZhQ0tydkdPWTZvdUUyTTB6VTlENE94YVdDeFdzSlI0aC1PbFBJUDFITEdfNTZPdzhvdk5Vd1FPLVNRZUZzQ1hJUXZNNkZuNjZlNmx4MFUzQ0pZeGVkNnVfbGtFU3ZmUFN0RlhHVS1uTlBlMDBDdWFEUnowOEstbzNRMGtWQjd4SE12R01iUEtKVEU1MW03dDJpckJ3SEk3VkVvWkliSFFOVFRNZHBrWEZ3ZjBqbVJGajlneEJ5d3Z2a3BQN05SVlYwV1hhU1RzS1UySWJkNUhMSFI3emF5Zy1zbWJBa2R1NGpQd0JERmxEYzJJ?oc=5",
+          "provider": "Google News",
+          "source": "Business Wire",
+          "accessStatus": "metadata_only",
+          "contentQuality": 50
+        }
+      ]
+    },
+    {
+      "id": "evt-article-1142-de143a5bae",
+      "date": "2022-12-15",
+      "track": "industry",
+      "eventType": "financing",
+      "title": "Synchron Raises $75M Series C Led by ARCH Venture Partners to Advance Endovascular Brain-Computer Interface - BioSpace",
+      "summary": "Synchron Raises $75M Series C Led by ARCH Venture Partners to Advance Endovascular Brain-Computer Interface BioSpace",
+      "companies": [
+        "Synchron"
+      ],
+      "technologyRoutes": [
+        "endovascular BCI"
+      ],
+      "indications": [],
+      "investmentSignal": "positive",
+      "importanceScore": 57,
+      "confidence": 0.51,
+      "sources": [
+        {
+          "title": "Synchron Raises $75M Series C Led by ARCH Venture Partners to Advance Endovascular Brain-Computer Interface - BioSpace",
+          "url": "https://news.google.com/rss/articles/CBMiywFBVV95cUxNMVhsYkdsYkcyODRLSnF5V2pEaGhYcUtOcHdBYWNPUzhFeDZOSWZWMUVVN3I1cFZKekdDbk51YmlhaDdNY3dVZnlfRlNvRzY3SHRyUlBkSWJFbWVmWHlSbkRNSG1acDYxQzJ5bDd3RWYxajUwbnR0MXNpd3FYZVVHN25iZTFkbFBORzNDbDdfblZSb3o0eUctNEZXV2g1OERzTnJmRUxzbGJsOG1YUDJNYVNQWG9hMUVvQ3B5OFhDcHpqdHhESU1vbEpEQQ?oc=5",
+          "provider": "Google News",
+          "source": "BioSpace",
+          "accessStatus": "metadata_only",
+          "contentQuality": 50
+        }
+      ]
+    },
+    {
+      "id": "evt-article-48717-c74a0211fe",
+      "date": "2022-12-15",
+      "track": "industry",
+      "eventType": "financing",
+      "title": "Synchron Raises $75M Series C Led by ARCH Venture Partners to Advance Endovascular Brain-Computer Interface - Business Wire",
+      "summary": "Synchron Raises $75M Series C Led by ARCH Venture Partners to Advance Endovascular Brain-Computer Interface Business Wire",
+      "companies": [
+        "Synchron"
+      ],
+      "technologyRoutes": [
+        "endovascular BCI"
+      ],
+      "indications": [],
+      "investmentSignal": "positive",
+      "importanceScore": 57,
+      "confidence": 0.51,
+      "sources": [
+        {
+          "title": "Synchron Raises $75M Series C Led by ARCH Venture Partners to Advance Endovascular Brain-Computer Interface - Business Wire",
+          "url": "https://news.google.com/rss/articles/CBMi-gFBVV95cUxQeTVZaTMyMkdCak82RTA3XzVDcDk5VHI4UTFzcE1LNElwc3lWZjZUNWpVWmlHdldsd014a3FLRzdveVdHRDVuS0NURUplSzUyRS04RHZpSnoxaDB2WXEyd1FEUTlEQlY1MkZSNnJiN2dDXzk3anUzNkJzSHZ2MkoyVlBFRW1pT3JKaFF1LWprdkNxbTdEMFpmV3hyNDVhSFA1bl9UM05YUGE3enNldlFTRVF4cEI5ck1zSlZKeVFMMFI2RGFPbG5jUjBJMjhuNW9DdFYxTl9DNVl2M2V6V1NoR2tlSEhFVzloenQ4V29pNXFXZU1DU2pkdXBR?oc=5",
+          "provider": "Google News",
+          "source": "Business Wire",
+          "accessStatus": "metadata_only",
+          "contentQuality": 50
+        }
+      ]
+    },
+    {
+      "id": "evt-article-40563-b365899a18",
+      "date": "2026-03-31",
+      "track": "research",
+      "eventType": "research_publication",
+      "title": "Global Trends in Research of Brain-Computer Interfaces in Neuroscience From 2014 to 2023: A Bibliometric Analysis.",
+      "summary": "Global Trends in Research of Brain-Computer Interfaces in Neuroscience From 2014 to 2023: A Bibliometric Analysis.",
+      "companies": [],
+      "technologyRoutes": [],
+      "indications": [],
+      "investmentSignal": "watch",
+      "importanceScore": 56,
+      "confidence": 0.51,
+      "sources": [
+        {
+          "title": "Global Trends in Research of Brain-Computer Interfaces in Neuroscience From 2014 to 2023: A Bibliometric Analysis.",
+          "url": "https://pubmed.ncbi.nlm.nih.gov/41902355/",
+          "provider": "PubMed",
+          "source": "CNS neuroscience & therapeutics",
+          "accessStatus": "metadata_only",
+          "contentQuality": 50
+        }
+      ]
+    },
+    {
+      "id": "evt-article-46093-e58708267c",
+      "date": "2026-03-31",
+      "track": "research",
+      "eventType": "research_publication",
+      "title": "Ndfip2 in TrkA-expressing sensory neurons regulates noxious mechanosensation through control of TrkA signaling and protein levels",
+      "summary": "Ndfip2 in TrkA-expressing sensory neurons regulates noxious mechanosensation through control of TrkA signaling and protein levels",
+      "companies": [],
+      "technologyRoutes": [],
+      "indications": [],
+      "investmentSignal": "watch",
+      "importanceScore": 56,
+      "confidence": 0.51,
+      "sources": [
+        {
+          "title": "Ndfip2 in TrkA-expressing sensory neurons regulates noxious mechanosensation through control of TrkA signaling and protein levels",
+          "url": "https://www.nature.com/articles/s41419-026-08670-9",
+          "provider": "Nature Neuroscience",
+          "source": "Nature Neuroscience",
+          "accessStatus": "metadata_only",
+          "contentQuality": 50
+        }
+      ]
+    },
+    {
+      "id": "evt-article-46746-7f151dae65",
+      "date": "2026-03-31",
+      "track": "research",
+      "eventType": "research_publication",
+      "title": "A prefrontal cortex-lateral hypothalamus circuit controls stress-driven increased food intake",
+      "summary": "A prefrontal cortex-lateral hypothalamus circuit controls stress-driven increased food intake",
+      "companies": [],
+      "technologyRoutes": [],
+      "indications": [],
+      "investmentSignal": "watch",
+      "importanceScore": 56,
+      "confidence": 0.51,
+      "sources": [
+        {
+          "title": "A prefrontal cortex-lateral hypothalamus circuit controls stress-driven increased food intake",
+          "url": "https://www.nature.com/articles/s41467-026-71073-z",
+          "provider": "Nature Neuroscience",
+          "source": "Nature Neuroscience",
+          "accessStatus": "metadata_only",
+          "contentQuality": 50
+        }
+      ]
+    },
+    {
+      "id": "evt-article-46748-ede350a7f3",
+      "date": "2026-03-31",
+      "track": "research",
+      "eventType": "research_publication",
+      "title": "Synaptic rescue in an Alzheimer’s mouse model: low-temperature steam-derived black ginseng oligosaccharides remodel protein S-nitrosylation-NADPH oxidase axis",
+      "summary": "Synaptic rescue in an Alzheimer’s mouse model: low-temperature steam-derived black ginseng oligosaccharides remodel protein S-nitrosylation-NADPH oxidase axis",
+      "companies": [],
+      "technologyRoutes": [],
+      "indications": [],
+      "investmentSignal": "watch",
+      "importanceScore": 56,
+      "confidence": 0.51,
+      "sources": [
+        {
+          "title": "Synaptic rescue in an Alzheimer’s mouse model: low-temperature steam-derived black ginseng oligosaccharides remodel protein S-nitrosylation-NADPH oxidase axis",
+          "url": "https://www.nature.com/articles/s41538-026-00812-9",
+          "provider": "Nature Neuroscience",
+          "source": "Nature Neuroscience",
+          "accessStatus": "metadata_only",
+          "contentQuality": 50
+        }
+      ]
+    },
+    {
+      "id": "evt-article-47724-604a7fe893",
+      "date": "2026-03-31",
+      "track": "research",
+      "eventType": "research_publication",
+      "title": "Pathogenic KIF1A R350 mutations disrupt a conserved and conformation-dependent kinesin-tubulin salt bridge",
+      "summary": "Pathogenic KIF1A R350 mutations disrupt a conserved and conformation-dependent kinesin-tubulin salt bridge",
+      "companies": [],
+      "technologyRoutes": [],
+      "indications": [],
+      "investmentSignal": "watch",
+      "importanceScore": 56,
+      "confidence": 0.51,
+      "sources": [
+        {
+          "title": "Pathogenic KIF1A R350 mutations disrupt a conserved and conformation-dependent kinesin-tubulin salt bridge",
+          "url": "https://www.nature.com/articles/s41467-026-71026-6",
+          "provider": "Nature Neuroscience",
+          "source": "Nature Neuroscience",
+          "accessStatus": "metadata_only",
+          "contentQuality": 50
+        }
+      ]
+    },
+    {
+      "id": "evt-article-48466-46a949223c",
+      "date": "2026-03-31",
+      "track": "research",
+      "eventType": "research_publication",
+      "title": "The biological roots of political division: mapping the neural architecture of ideology and social influence",
+      "summary": "The biological roots of political division: mapping the neural architecture of ideology and social influence",
+      "companies": [],
+      "technologyRoutes": [],
+      "indications": [],
+      "investmentSignal": "watch",
+      "importanceScore": 56,
+      "confidence": 0.51,
+      "sources": [
+        {
+          "title": "The biological roots of political division: mapping the neural architecture of ideology and social influence",
+          "url": "https://www.nature.com/articles/s41598-026-40834-7",
+          "provider": "Nature Neuroscience",
+          "source": "Nature Neuroscience",
+          "accessStatus": "metadata_only",
+          "contentQuality": 50
+        }
+      ]
+    },
+    {
+      "id": "evt-article-48467-bb333a2bf2",
+      "date": "2026-03-31",
+      "track": "research",
+      "eventType": "research_publication",
+      "title": "Bioenergetic and early treatment response stratification (BIOERES): a two-variable prognostic model for early identification of treatment-resistance schizophrenia",
+      "summary": "Bioenergetic and early treatment response stratification (BIOERES): a two-variable prognostic model for early identification of treatment-resistance schizophrenia",
+      "companies": [],
+      "technologyRoutes": [],
+      "indications": [],
+      "investmentSignal": "watch",
+      "importanceScore": 56,
+      "confidence": 0.51,
+      "sources": [
+        {
+          "title": "Bioenergetic and early treatment response stratification (BIOERES): a two-variable prognostic model for early identification of treatment-resistance schizophrenia",
+          "url": "https://www.nature.com/articles/s41398-026-03983-x",
+          "provider": "Nature Neuroscience",
+          "source": "Nature Neuroscience",
+          "accessStatus": "metadata_only",
+          "contentQuality": 50
+        }
+      ]
+    },
+    {
+      "id": "evt-article-48468-3315e5a82b",
+      "date": "2026-03-31",
+      "track": "research",
+      "eventType": "research_publication",
+      "title": "Autophagy dysfunction in iPSCs-derived neurons and midbrain organoids carrying a SNCA triplication",
+      "summary": "Autophagy dysfunction in iPSCs-derived neurons and midbrain organoids carrying a SNCA triplication",
+      "companies": [],
+      "technologyRoutes": [],
+      "indications": [],
+      "investmentSignal": "watch",
+      "importanceScore": 56,
+      "confidence": 0.51,
+      "sources": [
+        {
+          "title": "Autophagy dysfunction in iPSCs-derived neurons and midbrain organoids carrying a SNCA triplication",
+          "url": "https://www.nature.com/articles/s41531-026-01330-x",
+          "provider": "Nature Neuroscience",
+          "source": "Nature Neuroscience",
+          "accessStatus": "metadata_only",
+          "contentQuality": 50
+        }
+      ]
+    },
+    {
+      "id": "evt-article-48469-db2a378bcd",
+      "date": "2026-03-31",
+      "track": "research",
+      "eventType": "research_publication",
+      "title": "Lisinopril activates BI1 to reprogram lipid metabolism and restore autophagy in ALS",
+      "summary": "Lisinopril activates BI1 to reprogram lipid metabolism and restore autophagy in ALS",
+      "companies": [],
+      "technologyRoutes": [],
+      "indications": [
+        "ALS"
+      ],
+      "investmentSignal": "watch",
+      "importanceScore": 56,
+      "confidence": 0.51,
+      "sources": [
+        {
+          "title": "Lisinopril activates BI1 to reprogram lipid metabolism and restore autophagy in ALS",
+          "url": "https://www.nature.com/articles/s42003-026-09930-2",
+          "provider": "Nature Neuroscience",
+          "source": "Nature Neuroscience",
+          "accessStatus": "metadata_only",
+          "contentQuality": 50
+        }
+      ]
+    },
+    {
+      "id": "evt-article-48470-99d67af5e5",
+      "date": "2026-03-31",
+      "track": "research",
+      "eventType": "research_publication",
+      "title": "Characterizing spatiotemporal white matter hyperintensity pathophysiology in vivo to disentangle vascular and neurodegenerative contributions",
+      "summary": "Characterizing spatiotemporal white matter hyperintensity pathophysiology in vivo to disentangle vascular and neurodegenerative contributions",
+      "companies": [],
+      "technologyRoutes": [
+        "endovascular BCI"
+      ],
+      "indications": [],
+      "investmentSignal": "watch",
+      "importanceScore": 56,
+      "confidence": 0.51,
+      "sources": [
+        {
+          "title": "Characterizing spatiotemporal white matter hyperintensity pathophysiology in vivo to disentangle vascular and neurodegenerative contributions",
+          "url": "https://www.nature.com/articles/s41467-026-70832-2",
+          "provider": "Nature Neuroscience",
+          "source": "Nature Neuroscience",
+          "accessStatus": "metadata_only",
+          "contentQuality": 50
+        }
+      ]
+    }
+  ]
+}

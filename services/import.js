@@ -72,6 +72,20 @@ function extractSiteName(html) {
         || '';
 }
 
+function isLikelyPaywalled(html) {
+    const text = html.toLowerCase();
+    return [
+        'subscribe to continue',
+        'sign in to continue',
+        'create an account to continue',
+        'access through your institution',
+        'purchase access',
+        '付费阅读',
+        '订阅后继续阅读',
+        '登录后继续阅读',
+    ].some(marker => text.includes(marker.toLowerCase()));
+}
+
 function extractBodyText(html) {
     // Try to find <article> content first
     const articleMatch = html.match(/<article[^>]*>([\s\S]*?)<\/article>/i);
@@ -182,6 +196,9 @@ async function extractArticleFromURL(url) {
     const author = extractAuthor(html);
     const siteName = extractSiteName(html);
     const { provider, category } = detectSource(url);
+    const accessStatus = isLikelyPaywalled(html) && bodyText.length < 120
+        ? 'paywalled'
+        : bodyText.length > 350 ? 'full_text' : 'metadata_only';
 
     return {
         url: url,
@@ -192,6 +209,10 @@ async function extractArticleFromURL(url) {
         abstract: description || bodyText || '',
         category: category,
         provider: provider,
+        accessStatus,
+        extractionMethod: 'manual_import',
+        lastFetchStatus: accessStatus === 'paywalled' ? 'partial' : 'success',
+        lastFetchError: accessStatus === 'paywalled' ? 'paywall_detected' : '',
     };
 }
 

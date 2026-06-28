@@ -23,6 +23,12 @@ db.exec(`
     provider    TEXT DEFAULT '',
     importance  INTEGER DEFAULT 0,
     importanceLevel TEXT DEFAULT 'low',
+    accessStatus TEXT DEFAULT 'metadata_only',
+    contentQuality INTEGER DEFAULT 50,
+    sourceReliability TEXT DEFAULT 'unknown',
+    extractionMethod TEXT DEFAULT 'api',
+    lastFetchStatus TEXT DEFAULT 'success',
+    lastFetchError TEXT DEFAULT '',
     fetchedAt   TEXT DEFAULT (datetime('now'))
   );
 
@@ -58,7 +64,39 @@ db.exec(`
     FOREIGN KEY (articleId) REFERENCES articles(id),
     UNIQUE(collectionId, articleId)
   );
+
+  CREATE TABLE IF NOT EXISTS fetch_runs (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    source      TEXT NOT NULL,
+    status      TEXT DEFAULT 'success',
+    itemCount   INTEGER DEFAULT 0,
+    startedAt   TEXT DEFAULT '',
+    finishedAt  TEXT DEFAULT (datetime('now')),
+    error       TEXT DEFAULT ''
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_fetch_runs_source_finished ON fetch_runs(source, finishedAt DESC);
 `);
+
+const ARTICLE_QUALITY_COLUMNS = [
+    { name: 'accessStatus', ddl: "TEXT DEFAULT 'metadata_only'" },
+    { name: 'contentQuality', ddl: 'INTEGER DEFAULT 50' },
+    { name: 'sourceReliability', ddl: "TEXT DEFAULT 'unknown'" },
+    { name: 'extractionMethod', ddl: "TEXT DEFAULT 'api'" },
+    { name: 'lastFetchStatus', ddl: "TEXT DEFAULT 'success'" },
+    { name: 'lastFetchError', ddl: "TEXT DEFAULT ''" },
+];
+
+function ensureArticleQualityColumns() {
+    const existing = new Set(db.prepare('PRAGMA table_info(articles)').all().map(c => c.name));
+    for (const col of ARTICLE_QUALITY_COLUMNS) {
+        if (!existing.has(col.name)) {
+            db.exec(`ALTER TABLE articles ADD COLUMN ${col.name} ${col.ddl}`);
+        }
+    }
+}
+
+ensureArticleQualityColumns();
 
 // ─── Preset Collections ───────────────────────────────────
 
@@ -133,8 +171,8 @@ try {
 // ─── Prepared Statements ──────────────────────────────────
 
 const upsertStmt = db.prepare(`
-  INSERT INTO articles (url, title, titleZh, authors, source, date, abstract, category, provider, importance, importanceLevel, fetchedAt)
-  VALUES (@url, @title, @titleZh, @authors, @source, @date, @abstract, @category, @provider, @importance, @importanceLevel, datetime('now'))
+  INSERT INTO articles (url, title, titleZh, authors, source, date, abstract, category, provider, importance, importanceLevel, accessStatus, contentQuality, sourceReliability, extractionMethod, lastFetchStatus, lastFetchError, fetchedAt)
+  VALUES (@url, @title, @titleZh, @authors, @source, @date, @abstract, @category, @provider, @importance, @importanceLevel, @accessStatus, @contentQuality, @sourceReliability, @extractionMethod, @lastFetchStatus, @lastFetchError, datetime('now'))
   ON CONFLICT(url) DO UPDATE SET
     title       = excluded.title,
     titleZh     = excluded.titleZh,
@@ -143,10 +181,32 @@ const upsertStmt = db.prepare(`
     date        = excluded.date,
     abstract    = excluded.abstract,
     importance  = excluded.importance,
-    importanceLevel = excluded.importanceLevel
+    importanceLevel = excluded.importanceLevel,
+    accessStatus = excluded.accessStatus,
+    contentQuality = excluded.contentQuality,
+    sourceReliability = excluded.sourceReliability,
+    extractionMethod = excluded.extractionMethod,
+    lastFetchStatus = excluded.lastFetchStatus,
+    lastFetchError = excluded.lastFetchError
 `);
 
 // ─── Public API ───────────────────────────────────────────
+
+function pick(value, allowed, fallback) {
+    return allowed.includes(value) ? value : fallback;
+}
+
+function qualityScore(value) {
+    const n = parseInt(value, 10);
+    if (Number.isNaN(n)) return 50;
+    return Math.min(100, Math.max(0, n));
+}
+
+function safeCount(value) {
+    const n = parseInt(value, 10);
+    if (Number.isNaN(n)) return 0;
+    return Math.max(0, n);
+}
 
 function upsertArticle(item) {
     return upsertStmt.run({
@@ -161,6 +221,12 @@ function upsertArticle(item) {
         provider: item.provider || '',
         importance: item.importance || 0,
         importanceLevel: item.importanceLevel || 'low',
+        accessStatus: pick(item.accessStatus, ['full_text', 'metadata_only', 'paywalled', 'failed'], 'metadata_only'),
+        contentQuality: qualityScore(item.contentQuality),
+        sourceReliability: pick(item.sourceReliability, ['official', 'journal', 'preprint', 'media', 'social', 'unknown'], 'unknown'),
+        extractionMethod: pick(item.extractionMethod, ['api', 'rss', 'html', 'manual_import', 'demo'], 'api'),
+        lastFetchStatus: pick(item.lastFetchStatus, ['success', 'partial', 'failed'], 'success'),
+        lastFetchError: (item.lastFetchError || '').slice(0, 200),
     });
 }
 
@@ -302,6 +368,52 @@ function getArticlesSince(hoursAgo) {
     ).all({ since });
 }
 
+// ─── Fetch Health ─────────────────────────────────────────
+
+function logFetchRun({ source, status, itemCount, startedAt, finishedAt, error } = {}) {
+    return db.prepare(`
+        INSERT INTO fetch_runs (source, status, itemCount, startedAt, finishedAt, error)
+        VALUES (@source, @status, @itemCount, @startedAt, @finishedAt, @error)
+    `).run({
+        source: source || 'unknown',
+        status: pick(status, ['success', 'partial', 'failed'], 'failed'),
+        itemCount: safeCount(itemCount),
+        startedAt: startedAt || new Date().toISOString(),
+        finishedAt: finishedAt || new Date().toISOString(),
+        error: (error || '').slice(0, 200),
+    });
+}
+
+function getSourceHealth() {
+    const latest = db.prepare(`
+        SELECT fr.*
+        FROM fetch_runs fr
+        JOIN (
+            SELECT source, MAX(id) as latestId
+            FROM fetch_runs
+            GROUP BY source
+        ) l ON l.latestId = fr.id
+        ORDER BY fr.source
+    `).all();
+
+    const successRows = db.prepare(`
+        SELECT source, MAX(finishedAt) as lastSuccessAt
+        FROM fetch_runs
+        WHERE status = 'success'
+        GROUP BY source
+    `).all();
+    const lastSuccess = new Map(successRows.map(r => [r.source, r.lastSuccessAt]));
+
+    return latest.map(row => ({
+        source: row.source,
+        status: row.status,
+        itemCount: row.itemCount,
+        lastRunAt: row.finishedAt,
+        lastSuccessAt: lastSuccess.get(row.source) || '',
+        error: row.error || '',
+    }));
+}
+
 // ─── Collections ──────────────────────────────────────────
 
 function getCollections() {
@@ -380,6 +492,7 @@ module.exports = {
     upsertArticle, upsertMany, searchArticles, getStats, getAllSources, getArticleById,
     getTrendingKeywords,
     addSubscriber, removeSubscriber, getActiveSubscribers, getArticlesSince,
+    logFetchRun, getSourceHealth,
     getCollections, getCollectionItems, addToCollection, removeFromCollection,
     createCollection, deleteCollection, autoAssignCollections
 };

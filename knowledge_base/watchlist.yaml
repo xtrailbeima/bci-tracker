@@ -1,0 +1,40 @@
+# BCI Tracker V2 watchlist.
+# This file is intentionally simple YAML for human editing.
+
+companies:
+  tier1:
+    - Neuralink
+    - Synchron
+    - Blackrock Neurotech
+    - Paradromics
+    - Axoft
+  emerging: []
+
+technologyRoutes:
+  - invasive BCI
+  - endovascular BCI
+  - flexible electrode
+  - non-invasive BCI
+  - EEG decoding
+  - speech decoding
+  - ultrasound neuromodulation
+
+indications:
+  - ALS
+  - paralysis
+  - Parkinson's disease
+  - depression
+  - communication assistance
+
+policySources:
+  - FDA
+  - ClinicalTrials.gov
+  - NMPA
+  - NIH
+  - DARPA
+
+investors:
+  - Founders Fund
+  - ARCH Ventures
+  - Khosla Ventures
+  - Lux Capital

@@ -1,0 +1,49 @@
+{
+  "generatedAt": "2026-06-28T00:00:00.000Z",
+  "events": [
+    {
+      "id": "evt-example-synchron-24m",
+      "date": "2026-06-28",
+      "track": "industry",
+      "eventType": "clinical_followup",
+      "title": "Synchron reports positive 24-month Stentrode follow-up",
+      "summary": "A fictional sample event showing stable long-term endovascular BCI follow-up data.",
+      "companies": ["Synchron"],
+      "technologyRoutes": ["endovascular BCI", "invasive BCI"],
+      "indications": ["ALS", "paralysis"],
+      "investmentSignal": "positive",
+      "importanceScore": 86,
+      "confidence": 0.82,
+      "sources": [
+        {
+          "title": "Sample public source",
+          "url": "https://example.com/synchron-followup",
+          "provider": "Example",
+          "accessStatus": "metadata_only"
+        }
+      ]
+    },
+    {
+      "id": "evt-example-flexible-electrode-paper",
+      "date": "2026-06-28",
+      "track": "research",
+      "eventType": "paper",
+      "title": "Flexible electrode material shows lower tissue response",
+      "summary": "A fictional sample event for matching against flexible electrode projects.",
+      "companies": [],
+      "technologyRoutes": ["flexible electrode", "invasive BCI"],
+      "indications": ["motor impairment"],
+      "investmentSignal": "watch",
+      "importanceScore": 74,
+      "confidence": 0.76,
+      "sources": [
+        {
+          "title": "Sample paper",
+          "url": "https://example.com/flexible-electrode-paper",
+          "provider": "Example Journal",
+          "accessStatus": "full_text"
+        }
+      ]
+    }
+  ]
+}

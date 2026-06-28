@@ -7,11 +7,15 @@
         "start": "node --env-file=.env server.js",
         "dev": "node --env-file=.env server.js",
         "test": "node --env-file=.env test/smoke.js",
-        "verify": "node -c server.js && node -c public/app.js && node --env-file=.env test/smoke.js"
+        "verify": "node -c server.js && node -c routes/api.js && node -c services/fetcher.js && node -c services/import.js && node -c public/app.js && node -c scripts/export_external_events.js && node --env-file=.env test/smoke.js",
+        "export:events": "node scripts/export_external_events.js",
+        "validate:events": "node scripts/validate_external_events.js",
+        "validate:knowledge": "node scripts/validate_knowledge_base.js",
+        "validate:v2-local": "npm run validate:events -- external_events/_example.json && npm run validate:knowledge"
     },
     "dependencies": {
         "@google/genai": "^1.0.0",
-        "better-sqlite3": "^12.6.2",
+        "better-sqlite3": "^12.11.1",
         "cors": "^2.8.5",
         "express": "^4.21.0",
         "nodemailer": "^8.0.1",

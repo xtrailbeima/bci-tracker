@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BCI Tracker V2 External Events",
+  "type": "object",
+  "required": ["events"],
+  "properties": {
+    "generatedAt": { "type": "string" },
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "date",
+          "track",
+          "eventType",
+          "title",
+          "summary",
+          "companies",
+          "technologyRoutes",
+          "indications",
+          "investmentSignal",
+          "importanceScore",
+          "confidence",
+          "sources"
+        ],
+        "properties": {
+          "id": { "type": "string" },
+          "date": { "type": "string" },
+          "track": { "enum": ["research", "industry", "media", "policy"] },
+          "eventType": { "type": "string" },
+          "title": { "type": "string" },
+          "summary": { "type": "string" },
+          "companies": { "type": "array", "items": { "type": "string" } },
+          "technologyRoutes": { "type": "array", "items": { "type": "string" } },
+          "indications": { "type": "array", "items": { "type": "string" } },
+          "investmentSignal": { "enum": ["positive", "neutral", "negative", "watch"] },
+          "importanceScore": { "type": "number", "minimum": 0, "maximum": 100 },
+          "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+          "sources": { "type": "array" }
+        }
+      }
+    }
+  }
+}

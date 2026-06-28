@@ -184,6 +184,61 @@ async function fetchRSS(feedUrl, sourceName) {
 const { translateTitle } = require('../translate');
 const { scoreImportance, getImportanceLevel } = require('../scoring');
 
+function inferExtractionMethod(item) {
+    if (item.extractionMethod) return item.extractionMethod;
+    if (String(item.id || '').includes('demo')) return 'demo';
+    const provider = `${item.provider || ''} ${item.source || ''}`.toLowerCase();
+    if (provider.includes('google news') || provider.includes('nature') || provider.includes('science') || provider.includes('neuron')) return 'rss';
+    if (provider.includes('wechat') || provider.includes('twitter') || provider.includes('x/twitter')) return 'manual_import';
+    return 'api';
+}
+
+function inferSourceReliability(item) {
+    if (item.sourceReliability) return item.sourceReliability;
+    const provider = `${item.provider || ''} ${item.source || ''}`.toLowerCase();
+    if (provider.includes('fda') || provider.includes('clinicaltrials') || provider.includes('nih')) return 'official';
+    if (item.category === 'journal' || provider.includes('pubmed') || provider.includes('nature') || provider.includes('science') || provider.includes('neuron')) return 'journal';
+    if (item.category === 'preprint' || provider.includes('arxiv') || provider.includes('biorxiv')) return 'preprint';
+    if (item.category === 'video' || provider.includes('youtube') || provider.includes('twitter') || provider.includes('x/twitter')) return 'social';
+    if (item.category === 'news' || provider.includes('news') || provider.includes('wechat')) return 'media';
+    return 'unknown';
+}
+
+function inferAccessStatus(item, extractionMethod) {
+    if (item.accessStatus) return item.accessStatus;
+    if (item.lastFetchStatus === 'failed') return 'failed';
+    const abstractLength = (item.abstract || '').trim().length;
+    if (extractionMethod === 'manual_import' && abstractLength > 350) return 'full_text';
+    if (item.title || abstractLength > 0) return 'metadata_only';
+    return 'failed';
+}
+
+function inferContentQuality(item, accessStatus, sourceReliability) {
+    if (typeof item.contentQuality === 'number') return Math.min(100, Math.max(0, Math.round(item.contentQuality)));
+    let score = { full_text: 85, metadata_only: 55, paywalled: 35, failed: 10 }[accessStatus] || 50;
+    const abstractLength = (item.abstract || '').trim().length;
+    if (abstractLength > 600) score += 10;
+    else if (abstractLength < 80) score -= 10;
+    if (sourceReliability === 'official' || sourceReliability === 'journal') score += 5;
+    if (sourceReliability === 'social' || sourceReliability === 'unknown') score -= 5;
+    return Math.min(100, Math.max(0, score));
+}
+
+function enrichQualityFields(item) {
+    const extractionMethod = inferExtractionMethod(item);
+    const sourceReliability = inferSourceReliability(item);
+    const accessStatus = inferAccessStatus(item, extractionMethod);
+    const contentQuality = inferContentQuality(item, accessStatus, sourceReliability);
+    return {
+        accessStatus,
+        contentQuality,
+        sourceReliability,
+        extractionMethod,
+        lastFetchStatus: item.lastFetchStatus || (extractionMethod === 'demo' ? 'partial' : 'success'),
+        lastFetchError: item.lastFetchError || '',
+    };
+}
+
 function enrichItem(item) {
     // Cap future dates to today — academic journals often set future issue dates
     if (item.date) {
@@ -196,15 +251,24 @@ function enrichItem(item) {
     const titleZh = translateTitle(item.title);
     const importance = scoreImportance(item);
     const importanceLevel = getImportanceLevel(importance);
-    return { ...item, titleZh, importance, importanceLevel };
+    const quality = enrichQualityFields(item);
+    return { ...item, ...quality, titleZh, importance, importanceLevel };
 }
 
 // ─── Fetch & Store (background job) ───────────────────────
 
-const { upsertMany, autoAssignCollections, getStats } = require('../db');
+const { upsertMany, autoAssignCollections, getStats, logFetchRun } = require('../db');
 
 let isFetching = false;
 let useDemoData = false;
+
+const SOURCE_REQUESTS = [
+    { source: 'PubMed', path: '/api/pubmed' },
+    { source: 'arXiv', path: '/api/arxiv' },
+    { source: 'Journals', path: '/api/journals' },
+    { source: 'Google News', path: '/api/news' },
+    { source: 'YouTube', path: '/api/youtube' },
+];
 
 async function fetchAndStore(PORT) {
     if (isFetching) return;
@@ -213,26 +277,43 @@ async function fetchAndStore(PORT) {
 
     try {
         const baseUrl = `http://localhost:${PORT}`;
-        const [pubmed, arxiv, journals, news, youtube] = await Promise.allSettled([
-            fetchJSON(`${baseUrl}/api/pubmed`),
-            fetchJSON(`${baseUrl}/api/arxiv`),
-            fetchJSON(`${baseUrl}/api/journals`),
-            fetchJSON(`${baseUrl}/api/news`),
-            fetchJSON(`${baseUrl}/api/youtube`),
-        ]);
+        const startedAt = new Date().toISOString();
+        const results = await Promise.allSettled(
+            SOURCE_REQUESTS.map(s => fetchJSON(`${baseUrl}${s.path}`))
+        );
 
-        const all = [
-            ...(pubmed.status === 'fulfilled' ? pubmed.value : []),
-            ...(arxiv.status === 'fulfilled' ? arxiv.value : []),
-            ...(journals.status === 'fulfilled' ? journals.value : []),
-            ...(news.status === 'fulfilled' ? news.value : []),
-            ...(youtube.status === 'fulfilled' ? youtube.value : []),
-        ].map(enrichItem);
+        const all = [];
+        for (let i = 0; i < SOURCE_REQUESTS.length; i++) {
+            const source = SOURCE_REQUESTS[i];
+            const result = results[i];
+            let items = [];
+            let status = 'failed';
+            let error = '';
 
-        upsertMany(all);
-        autoAssignCollections(all);
+            if (result.status === 'fulfilled' && Array.isArray(result.value)) {
+                items = result.value;
+                const hasDemo = items.some(item => String(item.id || '').includes('demo'));
+                status = items.length > 0 && !hasDemo ? 'success' : 'partial';
+            } else {
+                error = result.reason?.message || 'fetch_failed';
+            }
+
+            logFetchRun({
+                source: source.source,
+                status,
+                itemCount: items.length,
+                startedAt,
+                error,
+            });
+            all.push(...items);
+        }
+
+        const enriched = all.map(enrichItem);
+
+        upsertMany(enriched);
+        autoAssignCollections(enriched);
         const stats = getStats();
-        console.log(`✅ Stored ${all.length} items (DB total: ${stats.total})`);
+        console.log(`✅ Stored ${enriched.length} items (DB total: ${stats.total})`);
     } catch (err) {
         console.error('fetchAndStore error:', err.message);
         // Fallback: store demo data
