@@ -33,6 +33,11 @@ Build BCI Tracker V2 as an investor-facing BCI intelligence workspace:
   - `matching_reports/2026-06-28.md`
   - scope limited to `knowledge_base/projects/`
   - no BP, interview, or meeting-note files read
+- Added the first P0 deployment hardening slice:
+  - `server.js` defaults to `HOST=127.0.0.1` instead of binding the Node app to all interfaces
+  - `deploy.sh` no longer opens or advertises public port `4000`
+  - frontend header version label now shows v5.0
+  - deployed commit `8814596` to Tencent Cloud and verified Nginx HTTPS still works
 
 ## Current Verification
 
@@ -41,6 +46,8 @@ Last known completed checks:
 - `npm run validate:events -- external_events/2026-06-28.json`: passed, 50 events valid
 - `npm run validate:v2-local`: passed
 - `npm run verify`: passed, 98 passed / 0 failed
+- Remote `npm run verify` on Tencent Cloud after commit `8814596`: passed, 98 passed / 0 failed
+- Remote listener check after commit `8814596`: Node app listens on `127.0.0.1:4000`; `https://njubci.com/` returns 200; direct `http://111.229.73.49:4000/` no longer returns the app page
 - `matching_reports/2026-06-28.md`: generated as workflow validation report
 
 Re-run checks after each new implementation slice.
@@ -75,6 +82,7 @@ Re-run checks after each new implementation slice.
 2. Expand Chinese company and technology-route extraction rules using `knowledge_base/watchlist.yaml`.
 3. Decide whether the next matching run should remain manual Codex output or become a reusable local script/template.
 4. Keep highly sensitive project material restricted to project profile summaries unless the user explicitly asks to read BP/interview detail.
+5. After explicit browser-action confirmation, remove the now-unneeded Tencent Cloud firewall rule for public `TCP 4000`; code already prevents direct app access, but the cloud rule should still be cleaned up.
 
 ## Recovery Prompt
 
