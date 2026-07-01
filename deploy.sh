@@ -55,6 +55,7 @@ else
 
     cat > .env << EOF
 PORT=4000
+HOST=127.0.0.1
 DEEPSEEK_API_KEY=${DEEPSEEK_KEY}
 GEMINI_API_KEY=${GEMINI_KEY}
 HUNYUAN_API_KEY=${HUNYUAN_KEY}
@@ -70,18 +71,15 @@ pm2 start server.js --name bci-tracker --node-args="--env-file=.env"
 pm2 save
 pm2 startup systemd -u root --hp /root 2>/dev/null || true
 
-# 开放防火墙端口
-if command -v ufw &>/dev/null; then
-    ufw allow 4000/tcp 2>/dev/null || true
-fi
+# 不直接开放 Node 应用端口；公网访问应通过 Nginx 80/443 反向代理到 127.0.0.1:4000。
 
 # 完成
 echo ""
 echo "─────────────────────────────────"
 echo "✅ BCI Tracker 部署完成！"
 echo ""
-SERVER_IP=$(curl -s ifconfig.me 2>/dev/null || echo '你的服务器IP')
-echo "🌐 访问地址: http://${SERVER_IP}:4000"
+echo "🌐 本机服务: http://127.0.0.1:4000"
+echo "🔒 公网访问请配置 Nginx/HTTPS 反向代理，不要直接开放 4000 端口"
 echo "📊 服务状态:"
 pm2 status
 echo ""

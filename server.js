@@ -8,6 +8,7 @@ const { sendDailyBriefing } = require('./briefing');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const HOST = process.env.HOST || '127.0.0.1';
 
 // ─── Middleware ───────────────────────────────────────────
 app.use(cors());
@@ -50,8 +51,8 @@ function scheduleDailyBriefing() {
 
 // ─── Start ───────────────────────────────────────────────
 
-app.listen(PORT, () => {
-    console.log(`🧠 BCI Tracker v5.0 running at http://localhost:${PORT}`);
+app.listen(PORT, HOST, () => {
+    console.log(`🧠 BCI Tracker v5.0 running at http://${HOST}:${PORT}`);
     console.log(`🛡️ Security headers: ON | Rate limiting: ON`);
     console.log(`📦 Modules: middleware/security, services/{fetcher,import,youtube}, routes/{pubmed,arxiv,journals,news,youtube,api}`);
     // Initial fetch after 3 seconds (so server is ready)
