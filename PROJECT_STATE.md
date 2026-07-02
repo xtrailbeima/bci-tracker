@@ -93,6 +93,10 @@ Build BCI Tracker V2 as an investor-facing BCI intelligence workspace:
   - Gemini is documented as an experimental module only, not a DeepSeek fallback or production route
   - `scripts/test_gemini_route_contract.js` asserts `gemini.js` is not mounted in `server.js` or `routes/api.js`
   - `npm run verify` now fails if the frontend or primary docs drift back into an unclear Gemini entrypoint
+- Cleared current npm audit vulnerabilities:
+  - upgraded the dependency lock to patched Express, qs, path-to-regexp, protobufjs, ws, and related transitive packages
+  - upgraded direct `nodemailer` dependency from 8.x to 9.x after confirming the project only uses the stable SMTP `sendMail({ html, bcc })` path
+  - `npm audit --audit-level=moderate` now reports 0 vulnerabilities
 - Added configurable custom collection rules:
   - custom collections can be created with keyword rules and updated through `PATCH /api/collections/:id/rules`
   - rule input is bounded to string keyword arrays with count, length, dedupe, and character validation
@@ -115,6 +119,8 @@ Last known completed checks:
 - `node scripts/test_collection_rules.js`: passed after configurable collection rules implementation
 - `npm run verify`: passed, 185 passed / 0 failed after adding source/date filter smoke coverage
 - `npm run verify`: passed, 185 passed / 0 failed after adding Gemini route contract validation
+- `npm audit --audit-level=moderate`: passed, 0 vulnerabilities after dependency security upgrades
+- `npm run verify`: passed, 185 passed / 0 failed after dependency security upgrades
 - Remote `npm run verify` on Tencent Cloud after commit `8814596`: passed, 98 passed / 0 failed
 - Remote listener check after commit `8814596`: Node app listens on `127.0.0.1:4000`; `https://njubci.com/` returns 200; direct `http://111.229.73.49:4000/` no longer returns the app page
 - Remote `npm run verify` on Tencent Cloud after commit `b2702b4`: passed, 111 passed / 0 failed
@@ -164,7 +170,7 @@ Re-run checks after each new implementation slice.
 2. Use `matching_reports/YYYY-MM-DD_context.md` as the handoff into Codex analysis, then manually review the final `matching_reports/YYYY-MM-DD.md` before updating project profiles.
 3. Keep highly sensitive project material restricted to project profile summaries unless the user explicitly asks to read BP/interview detail.
 4. After explicit browser-action confirmation, remove the now-unneeded Tencent Cloud firewall rule for public `TCP 4000`; code already binds the app to localhost, but the cloud rule should still be cleaned up.
-5. Triage dependency audit output before production hardening; current `npm install` reports 7 vulnerabilities (3 moderate, 4 high), so do not run `npm audit fix` blindly without reviewing runtime impact.
+5. Review npm `allow-scripts` warnings for `better-sqlite3` and `protobufjs` before adopting a stricter install-script approval policy.
 
 ## Recovery Prompt
 
