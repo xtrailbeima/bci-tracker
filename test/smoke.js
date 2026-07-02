@@ -165,6 +165,8 @@ async function testSummaryAPI() {
     console.log('\n🤖 /api/summary');
     const data = await fetchJSON('/api/summary');
     assert(typeof data.generated === 'string', 'has generated timestamp');
+    assert(data.provider === 'local-compat', 'legacy summary uses local compatibility provider');
+    assert(data.retiredProvider === 'hunyuan-turbo', 'legacy summary marks Hunyuan retired');
     assert(Array.isArray(data.sections), 'has sections array');
 
     if (data.sections.length > 0) {
@@ -197,11 +199,9 @@ async function testScoringConsistency() {
 
     if (newsScores.length && summaryScores.length) {
         assert(summaryScores.every(s => s >= 0 && s <= 100), `summary scores in 0-100`);
-        const firstText = summaryData.sections?.[0]?.items?.[0]?.text || '';
-        const isFallback = firstText.includes('失败') || firstText.includes('未配置') || firstText.includes('冷却中');
-        if (isFallback) {
-            passed++;
-            console.log('  ✅ fallback summary detected, skipping varied scores check');
+        const isLocalCompat = summaryData.provider === 'local-compat';
+        if (isLocalCompat) {
+            assert(summaryScores.some(s => newsScores.includes(s)), 'local summary reuses article importance scores');
         } else {
             const unique = [...new Set(summaryScores)];
             assert(unique.length >= 2, `varied scores (${unique.join(', ')})`);

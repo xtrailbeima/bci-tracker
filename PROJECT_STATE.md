@@ -67,6 +67,10 @@ Build BCI Tracker V2 as an investor-facing BCI intelligence workspace:
   - remote `.env` now includes `AUTH_COOKIE_SECURE=1` and owner bootstrap variables
   - initial owner credentials were generated on the server at `~/bci-owner-credentials.txt` with mode `600`
   - Nginx `bci-tracker` site received an explicit TLS curve compatibility line: `ssl_ecdh_curve X25519:prime256v1:secp384r1;`
+- Retired the legacy Hunyuan `/api/summary` runtime path:
+  - `/api/summary` remains available as a local compatibility endpoint with the old `sections` shape
+  - the route no longer reads `HUNYUAN_API_KEY` or calls the offline `hunyuan-turbo` model
+  - smoke coverage now asserts the local compatibility provider and Hunyuan retirement marker
 
 ## Current Verification
 
@@ -114,8 +118,7 @@ Re-run checks after each new implementation slice.
 1. Re-test `https://njubci.com/` from the user's browser or a non-proxy network; if it still fails, inspect Tencent Cloud Lighthouse firewall/security rules for `TCP 443`.
 2. Decide whether the next matching run should remain manual Codex output or become a reusable local script/template.
 3. Keep highly sensitive project material restricted to project profile summaries unless the user explicitly asks to read BP/interview detail.
-4. Replace or retire the legacy Hunyuan `/api/summary` model path; current Hunyuan model can return provider error `2030` because the configured model is offline.
-5. After explicit browser-action confirmation, remove the now-unneeded Tencent Cloud firewall rule for public `TCP 4000`; code already binds the app to localhost, but the cloud rule should still be cleaned up.
+4. After explicit browser-action confirmation, remove the now-unneeded Tencent Cloud firewall rule for public `TCP 4000`; code already binds the app to localhost, but the cloud rule should still be cleaned up.
 
 ## Recovery Prompt
 

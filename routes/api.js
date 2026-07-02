@@ -1,7 +1,5 @@
 const express = require('express');
 const router = express.Router();
-const fs = require('fs');
-const path = require('path');
 
 const { rateLimit } = require('../middleware/security');
 const { requireRole } = require('../middleware/auth');
@@ -13,17 +11,6 @@ const { enrichItem } = require('../services/fetcher');
 
 function audit(req, action, target, metadata) {
     logAudit({ user: req.user, action, target, metadata, ip: req.ip });
-}
-
-// ─── Company Profile ──────────────────────────────────────
-
-const companyProfilePath = path.join(__dirname, '..', 'company_profile.md');
-let companyProfile = '';
-try {
-    companyProfile = fs.readFileSync(companyProfilePath, 'utf-8');
-    console.log('📄 Loaded company profile: company_profile.md');
-} catch (e) {
-    console.warn('⚠️ company_profile.md not found, competitive commentary will be skipped');
 }
 
 // ─── API: All (from database) ─────────────────────────────
@@ -213,202 +200,121 @@ router.post('/briefing/send', requireRole('owner'), async (req, res) => {
     }
 });
 
-// ─── API: AI Summary (Hunyuan) ────────────────────────────
+// ─── API: Legacy Summary Compatibility ───────────────────
 
 let cachedSummary = null;
 let summaryLastGenerated = 0;
 const SUMMARY_CACHE_TTL = 45 * 60 * 1000; // 45 minutes
 
-let aiCooldownUntil = 0;
-const API_COOLDOWN_MS = 10 * 60 * 1000; // 10 minutes global cooldown
+const LEGACY_SUMMARY_SECTIONS = [
+    {
+        title: '🏢 重点公司动态',
+        icon: '🏢',
+        keywords: ['neuralink', 'synchron', 'blackrock', 'paradromics', 'precision', 'axon', 'axoft', '强脑', '脑虎', '博睿康', '公司', '合作']
+    },
+    {
+        title: '💰 融资与投资',
+        icon: '💰',
+        keywords: ['融资', '投资', 'funding', 'financing', 'venture', 'seed', 'series', 'ipo', 'acquisition', '并购', '轮融资']
+    },
+    {
+        title: '🔬 技术突破',
+        icon: '🔬',
+        keywords: ['electrode', 'implant', 'ultrasound', 'eeg', 'decoder', 'algorithm', 'flexible', 'neural', 'interface', '电极', '植入', '超声', '算法', '柔性']
+    },
+    {
+        title: '📊 行业趋势',
+        icon: '📊',
+        keywords: []
+    }
+];
+
+function itemMatchesKeywords(item, keywords) {
+    if (!keywords.length) return true;
+    const haystack = `${item.title || ''} ${item.titleZh || ''} ${item.abstract || ''} ${item.source || ''}`.toLowerCase();
+    return keywords.some(keyword => haystack.includes(keyword.toLowerCase()));
+}
+
+function summarizeLegacyItem(item) {
+    const source = item.source || item.provider || '未知来源';
+    const title = item.titleZh || item.title || '未命名动态';
+    const clippedTitle = title.length > 72 ? `${title.slice(0, 72)}...` : title;
+    return {
+        text: `${clippedTitle}（${source}）`,
+        url: item.url || '',
+        importance: Math.max(0, Math.min(100, Number(item.importance) || 0))
+    };
+}
+
+function buildLegacySummary(items) {
+    const usedUrls = new Set();
+    const sections = LEGACY_SUMMARY_SECTIONS.map(section => {
+        let candidates = items
+            .filter(item => !usedUrls.has(item.url || item.id))
+            .filter(item => itemMatchesKeywords(item, section.keywords))
+            .slice(0, 5);
+
+        if (candidates.length === 0) {
+            candidates = items
+                .filter(item => !usedUrls.has(item.url || item.id))
+                .slice(0, 3);
+        }
+
+        candidates.forEach(item => usedUrls.add(item.url || item.id));
+
+        return {
+            title: section.title,
+            icon: section.icon,
+            items: candidates.map(summarizeLegacyItem)
+        };
+    });
+
+    return {
+        generated: new Date().toISOString(),
+        provider: 'local-compat',
+        model: 'local-compat',
+        retiredProvider: 'hunyuan-turbo',
+        sections
+    };
+}
 
 router.get('/summary', requireRole('owner', 'operator'), async (req, res) => {
     try {
         const forceRefresh = req.query.force === '1';
 
-        // Return cached if fresh (unless force refresh)
         if (!forceRefresh && cachedSummary && (Date.now() - summaryLastGenerated) < SUMMARY_CACHE_TTL) {
             return res.json(cachedSummary);
         }
 
-        // 🛡️ API Quota Protection: Prevent frequent manual force-refreshes
-        if (Date.now() < aiCooldownUntil) {
-            if (cachedSummary) {
-                const minutesLeft = Math.ceil((aiCooldownUntil - Date.now()) / 60000);
-                const summaryCopy = JSON.parse(JSON.stringify(cachedSummary));
-                if (summaryCopy.sections && summaryCopy.sections.length > 0) {
-                    summaryCopy.sections[0].items.unshift({
-                        text: `【频控提示】因多人同时刷新触发了安全保护，我们为您保留了上一份简报。请在 ${minutesLeft} 分钟后重试。`,
-                        importance: 0
-                    });
-                }
-                return res.json(summaryCopy);
-            } else {
-                const minutesLeft = Math.ceil((aiCooldownUntil - Date.now()) / 60000);
-                return res.json({
-                    generated: new Date().toISOString(),
-                    sections: [
-                        { 
-                            title: '🛡️ API 额度保护机制', 
-                            icon: '⏳', 
-                            items: [{ 
-                                text: `AI 摘要服务正在冷却中，请在 ${minutesLeft} 分钟后再次刷新。`, 
-                                importance: 90 
-                            }] 
-                        }
-                    ]
-                });
-            }
-        }
-        
-        // Lock the cooldown globally immediately
-        aiCooldownUntil = Date.now() + API_COOLDOWN_MS;
-
-        const apiKey = process.env.HUNYUAN_API_KEY || process.env.GEMINI_API_KEY;
-        if (!apiKey) {
-            return res.json({
-                generated: new Date().toISOString(),
-                sections: [
-                    { title: '⚠️ AI 总结未启用', icon: '⚙️', items: [{ text: '请设置环境变量 HUNYUAN_API_KEY 以启用 AI 行业总结功能。', importance: 10 }] }
-                ]
-            });
-        }
-
-        // Get recent high-importance items from DB
         const recent = searchArticles({ sort: 'importance', limit: 30 });
         const items = recent.items || [];
         if (items.length === 0) {
-            return res.json({ generated: new Date().toISOString(), sections: [{ title: '暂无数据', icon: '📭', items: [{ text: '数据库为空，请等待首次数据抓取完成。' }] }] });
+            cachedSummary = {
+                generated: new Date().toISOString(),
+                provider: 'local-compat',
+                model: 'local-compat',
+                retiredProvider: 'hunyuan-turbo',
+                sections: [
+                    { title: '暂无数据', icon: '📭', items: [{ text: '数据库为空，请等待首次数据抓取完成。', importance: 0 }] }
+                ]
+            };
+        } else {
+            cachedSummary = buildLegacySummary(items);
         }
 
-        // Build context for AI — include URLs and actual importance scores
-        const context = items.map((it, idx) => {
-            const score = it.importance || 0;
-            return `[${idx + 1}] [分数:${score}] [${it.category}] ${it.title} | ${it.source} | ${it.date} | URL: ${it.url || 'N/A'}`;
-        }).join('\n');
-
-        // Build company context for competitive commentary
-        const companyContext = companyProfile
-            ? `\n\n以下是我们公司（NeuroWorm）的技术简介，请在第一个板块中结合最新行业动态，从 NeuroWorm 的技术优势角度进行竞品对比评论：\n---\n${companyProfile.substring(0, 2000)}\n---`
-            : '';
-
-        const competitiveSection = companyProfile
-            ? `{ "title": "NeuroWorm 竞品洞察", "icon": "🧠", "items": [{"text": "...", "url": "...", "importance": 80}, ...] },`
-            : '';
-
-        const prompt = `你是BCI行业分析师兼NeuroWorm战略顾问。根据以下数据生成行业简报。
-
-输出严格的JSON，不要有任何其他文字：
-{
-  "sections": [
-    ${competitiveSection}
-    { "title": "重点公司动态", "icon": "🏢", "items": [{"text": "...", "url": "...", "importance": 0}, ...] },
-    { "title": "融资与投资", "icon": "💰", "items": [{"text": "...", "url": "...", "importance": 0}, ...] },
-    { "title": "技术突破", "icon": "🔬", "items": [{"text": "...", "url": "...", "importance": 0}, ...] },
-    { "title": "行业趋势", "icon": "📊", "items": [{"text": "...", "url": "...", "importance": 0}, ...] }
-  ]
-}
-
-规则：
-- 每个item有text、url、importance三个字段
-- importance是0-100的数字，必须直接使用每条数据前面[分数:XX]中提供的分数，不要自己编造
-- 如果一条总结综合了多条数据，取其中最高的分数
-- url从下方条目URL中选取
-- 每个section写3-5条，text不超100字
-${companyProfile ? `- 竞品洞察的importance统一设为80
-- 竞品洞察的text格式: 先引述行业动态，再给出NeuroWorm视角分析（柔性材料、磁场导航、60通道、43周稳定、深部微血管）
-- 竞品洞察是给CEO的战略简报` : ''}
-
-条目数据：
-${context}${companyContext}`;
-
-        const hunyuanUrl = 'https://hunyuan.cloud.tencent.com/openai/v1/chat/completions';
-        
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000);
-        let aiRes;
-        try {
-            aiRes = await fetch(hunyuanUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${apiKey}`
-                },
-                body: JSON.stringify({
-                    model: 'hunyuan-turbo',
-                    messages: [{ role: 'user', content: prompt }],
-                    temperature: 0.3,
-                    max_tokens: 4096
-                }),
-                signal: controller.signal
-            });
-        } catch (fetchErr) {
-            if (fetchErr.name === 'AbortError') {
-                throw new Error('网络连接超时 (Hunyuan API 响应超时)');
-            }
-            throw new Error(`网络连接失败 (Hunyuan): ${fetchErr.message}`);
-        } finally {
-            clearTimeout(timeoutId);
-        }
-
-        if (!aiRes.ok) {
-            const errorText = await aiRes.text();
-            throw new Error(`Hunyuan API 错误 ${aiRes.status}: ${errorText}`);
-        }
-
-        const aiData = await aiRes.json();
-        const rawText = aiData.choices?.[0]?.message?.content || '';
-        
-        let parsed;
-        try {
-            parsed = JSON.parse(rawText);
-        } catch (initialErr) {
-            console.warn('AI Summary: strict JSON parse failed, attempting repair...', initialErr.message);
-            
-            // SAVE output for debugging
-            fs.writeFileSync(path.join(__dirname, '..', 'failed_summary.json'), rawText, 'utf-8');
-
-            // Fallback: extract JSON if it's wrapped in markdown or has trailing garbage
-            let cleaned = rawText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-            
-            // AI models often forget the closing quote on very long URLs.
-            cleaned = cleaned.replace(/(\"url\":\s*\"[^\"\n]+)\n/g, '$1",\n');
-            cleaned = cleaned.replace(/(\"\w+\":\s*\"[^\"\n]+)(\n\s*(\}|\]))/g, '$1"$2');
-            
-            // Remove illegal control characters inside strings
-            cleaned = cleaned.replace(/[\u0000-\u0009\u000B-\u001F]+/g, '');
-
-            const jsonStart = cleaned.indexOf('{');
-            const jsonEnd = cleaned.lastIndexOf('}');
-            if (jsonStart !== -1 && jsonEnd !== -1) {
-                cleaned = cleaned.substring(jsonStart, jsonEnd + 1);
-            }
-            try {
-                parsed = JSON.parse(cleaned);
-            } catch (repairErr) {
-                console.error('Failed to parse repaired JSON:', repairErr.message);
-                throw repairErr;
-            }
-        }
-
-        cachedSummary = {
-            generated: new Date().toISOString(),
-            sections: parsed.sections || []
-        };
         summaryLastGenerated = Date.now();
-        audit(req, 'ai.summary_legacy', 'hunyuan', { forceRefresh });
+        audit(req, 'summary.legacy_compat', 'local', { forceRefresh, count: items.length });
 
         res.json(cachedSummary);
     } catch (err) {
-        console.error('AI Summary error:', err.message);
-        // Reset cooldown so the user doesn't get locked out for 10 minutes on an error
-        aiCooldownUntil = 0;
-        
-        // Return fallback summary
+        console.error('Legacy Summary error:', err.message);
         res.json({
             generated: new Date().toISOString(),
+            provider: 'local-compat',
+            model: 'local-compat',
+            retiredProvider: 'hunyuan-turbo',
             sections: [
-                { title: '🏢 重点公司动态', icon: '🏢', items: [{text: 'AI 总结生成失败，请稍后重试。错误：' + err.message, importance: 0 }] }
+                { title: '🏢 重点公司动态', icon: '🏢', items: [{ text: '兼容简报生成失败，请稍后重试。', importance: 0 }] }
             ]
         });
     }
