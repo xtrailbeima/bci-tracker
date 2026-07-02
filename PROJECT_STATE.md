@@ -89,6 +89,10 @@ Build BCI Tracker V2 as an investor-facing BCI intelligence workspace:
   - `services/ai_json.js` is the shared JSON parser/repair utility for both providers
   - parse failures log provider, parser error, and response length without logging raw model output
   - DeepSeek daily/weekly/article analysis have stable degraded fallbacks for JSON parse failures
+- Closed the Gemini product-role ambiguity:
+  - Gemini is documented as an experimental module only, not a DeepSeek fallback or production route
+  - `scripts/test_gemini_route_contract.js` asserts `gemini.js` is not mounted in `server.js` or `routes/api.js`
+  - `npm run verify` now fails if the frontend or primary docs drift back into an unclear Gemini entrypoint
 - Added configurable custom collection rules:
   - custom collections can be created with keyword rules and updated through `PATCH /api/collections/:id/rules`
   - rule input is bounded to string keyword arrays with count, length, dedupe, and character validation
@@ -110,6 +114,7 @@ Last known completed checks:
 - `node scripts/test_deepseek_json.js`: passed after shared AI JSON parser and degraded summary fallback changes
 - `node scripts/test_collection_rules.js`: passed after configurable collection rules implementation
 - `npm run verify`: passed, 185 passed / 0 failed after adding source/date filter smoke coverage
+- `npm run verify`: passed, 185 passed / 0 failed after adding Gemini route contract validation
 - Remote `npm run verify` on Tencent Cloud after commit `8814596`: passed, 98 passed / 0 failed
 - Remote listener check after commit `8814596`: Node app listens on `127.0.0.1:4000`; `https://njubci.com/` returns 200; direct `http://111.229.73.49:4000/` no longer returns the app page
 - Remote `npm run verify` on Tencent Cloud after commit `b2702b4`: passed, 111 passed / 0 failed
