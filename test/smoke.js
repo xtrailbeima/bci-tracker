@@ -157,6 +157,23 @@ async function testSearchAPI() {
     assert(Array.isArray(items), 'search returns array');
 }
 
+async function testSourceFilterAPI() {
+    console.log('\n🏷️  Source filtering');
+    const sources = await fetchJSON('/api/sources');
+    assert(Array.isArray(sources), 'sources returns array');
+    const source = sources.find(Boolean);
+    if (!source) {
+        assert(true, 'source filter skipped because no sources exist');
+        return;
+    }
+    const data = await fetchJSON(`/api/all?source=${encodeURIComponent(source)}&limit=5`);
+    const items = data.items || [];
+    assert(Array.isArray(items), 'source filter returns array');
+    if (items.length > 0) {
+        assert(items.every(item => item.provider === source || item.source === source), `source filter only returns ${source}`);
+    }
+}
+
 async function testStatsAPI() {
     console.log('\n📊 /api/stats');
     const data = await fetchJSON('/api/stats');
@@ -310,6 +327,23 @@ async function testDateSorting() {
     console.log('  ✅ dates sorted descending correctly');
 }
 
+async function testDateFilterAPI() {
+    console.log('\n📆 Date Filter');
+    const latestData = await fetchJSON('/api/all?sort=date&limit=1');
+    const latest = (latestData.items || [])[0];
+    assert(Boolean(latest?.date), 'has latest article date for date filter test');
+    if (!latest?.date) return;
+
+    const from = String(latest.date).slice(0, 10);
+    const data = await fetchJSON(`/api/all?from=${encodeURIComponent(from)}&sort=date&limit=10`);
+    const items = data.items || [];
+    assert(Array.isArray(items), 'date filter returns array');
+    for (const item of items) {
+        if (!item.date) continue;
+        assert(String(item.date).slice(0, 10) >= from, `date filter keeps item on/after ${from}`);
+    }
+}
+
 async function testFrontendFields() {
     console.log('\n🔗 Frontend field mapping');
     const code = await (await request('/app.js')).text();
@@ -378,12 +412,14 @@ async function run() {
         await testStaticAssets();
         await testNewsAPI();
         await testSearchAPI();
+        await testSourceFilterAPI();
         await testStatsAPI();
         await testSourceHealthAPI();
         await testCollectionRulesAPI();
         await testSummaryAPI();
         await testAnalysisArticleAPI();
         await testDateSorting();
+        await testDateFilterAPI();
         await testScoringConsistency();
         await testFrontendFields();
         await testDeepSeekDailyAPI();

@@ -293,7 +293,7 @@ function searchArticles({ query, category, source, sort, page, limit, dateFrom, 
     }
 
     if (source) {
-        conditions.push('provider = @source');
+        conditions.push('(provider = @source OR source = @source)');
         params.source = source;
     }
 
@@ -339,7 +339,12 @@ function getStats() {
 }
 
 function getAllSources() {
-    return db.prepare('SELECT DISTINCT provider FROM articles WHERE provider != "" ORDER BY provider').all()
+    return db.prepare(`
+        SELECT DISTINCT COALESCE(NULLIF(provider, ''), source) as provider
+        FROM articles
+        WHERE COALESCE(NULLIF(provider, ''), source) != ''
+        ORDER BY provider
+    `).all()
         .map(r => r.provider);
 }
 

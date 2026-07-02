@@ -177,7 +177,7 @@ router.get('/sources', (req, res) => {
         const { category } = req.query;
         if (category && category !== 'all') {
             const result = searchArticles({ category, limit: 1000 });
-            const sources = [...new Set(result.items.map(i => i.provider))].filter(Boolean);
+            const sources = [...new Set(result.items.map(i => i.provider || i.source))].filter(Boolean);
             return res.json(sources);
         }
         res.json(getAllSources());

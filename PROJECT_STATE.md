@@ -60,6 +60,7 @@ Build BCI Tracker V2 as an investor-facing BCI intelligence workspace:
 - Made smoke tests self-contained:
   - `npm test` now starts and stops a local test server when one is not already running
   - `npm run verify` uses the self-contained smoke runner
+  - smoke coverage includes source filtering, date filtering, collection rule CRUD, import security, date sorting, scoring consistency, DeepSeek availability branches, and reader RBAC/redaction
 - Added the first three-tier auth/RBAC and audit slice:
   - SQLite tables `users`, `sessions`, and `audit_logs`
   - `/api/auth/login`, `/api/auth/logout`, `/api/auth/me`, owner-only user management, and owner-only audit log access
@@ -108,6 +109,7 @@ Last known completed checks:
 - `npm run verify`: passed, 168 passed / 0 failed after adding API documentation coverage validation
 - `node scripts/test_deepseek_json.js`: passed after shared AI JSON parser and degraded summary fallback changes
 - `node scripts/test_collection_rules.js`: passed after configurable collection rules implementation
+- `npm run verify`: passed, 185 passed / 0 failed after adding source/date filter smoke coverage
 - Remote `npm run verify` on Tencent Cloud after commit `8814596`: passed, 98 passed / 0 failed
 - Remote listener check after commit `8814596`: Node app listens on `127.0.0.1:4000`; `https://njubci.com/` returns 200; direct `http://111.229.73.49:4000/` no longer returns the app page
 - Remote `npm run verify` on Tencent Cloud after commit `b2702b4`: passed, 111 passed / 0 failed
