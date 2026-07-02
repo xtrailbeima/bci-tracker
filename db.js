@@ -486,6 +486,32 @@ function getCollectionItems(collectionId, { page = 1, limit = 50 } = {}) {
     return { items, total };
 }
 
+function normalizeCollectionRules(rules = []) {
+    if (!Array.isArray(rules)) {
+        throw new Error('rules must be an array');
+    }
+    const seen = new Set();
+    const normalized = [];
+
+    for (const raw of rules) {
+        const value = String(raw || '').trim().replace(/\s+/g, ' ');
+        if (!value) continue;
+        if (value.length > 40) throw new Error('rule keyword too long');
+        if (!/^[\p{L}\p{N}\s._/+&()：:：-]+$/u.test(value)) {
+            throw new Error('rule keyword contains unsupported characters');
+        }
+        const key = value.toLowerCase();
+        if (seen.has(key)) continue;
+        seen.add(key);
+        normalized.push(value);
+    }
+
+    if (normalized.length > 20) {
+        throw new Error('too many rule keywords');
+    }
+    return normalized;
+}
+
 function addToCollection(collectionId, articleId, addedBy = 'manual') {
     return db.prepare(
         'INSERT OR IGNORE INTO collection_items (collectionId, articleId, addedBy) VALUES (@collectionId, @articleId, @addedBy)'
@@ -498,15 +524,30 @@ function removeFromCollection(collectionId, articleId) {
     ).run({ collectionId, articleId });
 }
 
-function createCollection(name, icon = '📁') {
+function createCollection(name, icon = '📁', rules = []) {
+    const normalizedRules = normalizeCollectionRules(rules);
     return db.prepare(
-        'INSERT INTO collections (name, icon, rules, isPreset) VALUES (@name, @icon, \'[]\', 0)'
-    ).run({ name, icon });
+        'INSERT INTO collections (name, icon, rules, isPreset) VALUES (@name, @icon, @rules, 0)'
+    ).run({ name, icon, rules: JSON.stringify(normalizedRules) });
 }
 
 function deleteCollection(id) {
     db.prepare('DELETE FROM collection_items WHERE collectionId = @id').run({ id });
     return db.prepare('DELETE FROM collections WHERE id = @id AND isPreset = 0').run({ id });
+}
+
+function deleteCollectionByName(name) {
+    const row = db.prepare('SELECT id FROM collections WHERE name = @name AND isPreset = 0').get({ name });
+    if (!row) return { changes: 0 };
+    return deleteCollection(row.id);
+}
+
+function updateCollectionRules(id, rules) {
+    const normalizedRules = normalizeCollectionRules(rules);
+    const result = db.prepare(
+        'UPDATE collections SET rules = @rules WHERE id = @id AND isPreset = 0'
+    ).run({ id, rules: JSON.stringify(normalizedRules) });
+    return { changes: result.changes, rules: normalizedRules };
 }
 
 function autoAssignCollections(articles) {
@@ -518,7 +559,7 @@ function autoAssignCollections(articles) {
         for (const article of articles) {
             const text = `${article.title} ${article.abstract || ''}`.toLowerCase();
             for (const col of collections) {
-                const rules = JSON.parse(col.rules || '[]');
+                const rules = normalizeCollectionRules(JSON.parse(col.rules || '[]'));
                 if (rules.some(kw => text.includes(kw.toLowerCase()))) {
                     // Find article ID by URL
                     const row = db.prepare('SELECT id FROM articles WHERE url = @url').get({ url: article.url });
@@ -690,7 +731,7 @@ module.exports = {
     addSubscriber, removeSubscriber, getActiveSubscribers, getArticlesSince,
     logFetchRun, getSourceHealth,
     getCollections, getCollectionItems, addToCollection, removeFromCollection,
-    createCollection, deleteCollection, autoAssignCollections,
+    createCollection, deleteCollection, deleteCollectionByName, normalizeCollectionRules, updateCollectionRules, autoAssignCollections,
     countUsers, createUser, getUserByEmail, getUserById, listUsers, updateUser,
     touchUserLogin, createSession, getSessionByTokenHash, touchSession,
     deleteSession, deleteExpiredSessions, logAudit, listAuditLogs

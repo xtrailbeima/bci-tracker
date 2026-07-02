@@ -137,6 +137,7 @@ npm run verify
 | GET | `/api/collections/:id` | 专题内容 |
 | POST | `/api/collections` | 创建专题 |
 | POST | `/api/collections/:id/add` | 添加到专题 |
+| PATCH | `/api/collections/:id/rules` | 更新自定义专题自动归集规则 |
 | DELETE | `/api/collections/:id` | 删除专题 |
 | DELETE | `/api/collections/:collectionId/items/:articleId` | 移除专题内容 |
 | POST | `/api/subscribe` | 订阅每日简报 (限速 5次/分钟) |

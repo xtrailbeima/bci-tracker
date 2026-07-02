@@ -96,6 +96,12 @@ async function testAuthFlow() {
     assert(readerCannotImport.status === 403, `reader cannot import (${readerCannotImport.status})`);
     const readerNoHealth = await request('/api/source-health');
     assert(readerNoHealth.status === 403, `reader cannot read source health (${readerNoHealth.status})`);
+    const readerCannotEditRules = await request('/api/collections/1/rules', {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ rules: ['neuralink'] }),
+    });
+    assert(readerCannotEditRules.status === 403, `reader cannot edit collection rules (${readerCannotEditRules.status})`);
 
     await request('/api/auth/logout', { method: 'POST' });
     authCookie = '';
@@ -168,6 +174,44 @@ async function testSourceHealthAPI() {
         assert(typeof source.lastRunAt === 'string', 'source has lastRunAt');
         assert(typeof source.lastSuccessAt === 'string', 'source has lastSuccessAt');
         assert(typeof source.error === 'string', 'source has error');
+    }
+}
+
+async function testCollectionRulesAPI() {
+    console.log('\n📁 /api/collections rules');
+    const name = `Smoke Rules ${Date.now()}`;
+    let collectionId = null;
+    try {
+        const createRes = await request('/api/collections', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ name, icon: '🧪', rules: [' Neuralink ', 'neuralink', 'FDA approval'] }),
+        });
+        assert(createRes.ok, `creates collection with rules (${createRes.status})`);
+        const created = await createRes.json();
+        collectionId = created.id;
+        assert(JSON.parse(created.rules).length === 2, 'create returns normalized rules');
+
+        const patchRes = await request(`/api/collections/${collectionId}/rules`, {
+            method: 'PATCH',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ rules: ['Synchron', 'clinical trial'] }),
+        });
+        assert(patchRes.ok, `updates collection rules (${patchRes.status})`);
+        const patched = await patchRes.json();
+        assert(JSON.parse(patched.rules).includes('Synchron'), 'patch returns updated rules');
+
+        const invalidRes = await request(`/api/collections/${collectionId}/rules`, {
+            method: 'PATCH',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ rules: ['<script>'] }),
+        });
+        assert(invalidRes.status === 400, `rejects unsafe collection rule (${invalidRes.status})`);
+    } finally {
+        if (collectionId) {
+            const deleteRes = await request(`/api/collections/${collectionId}`, { method: 'DELETE' });
+            assert(deleteRes.ok, `cleans up smoke collection (${deleteRes.status})`);
+        }
     }
 }
 
@@ -336,6 +380,7 @@ async function run() {
         await testSearchAPI();
         await testStatsAPI();
         await testSourceHealthAPI();
+        await testCollectionRulesAPI();
         await testSummaryAPI();
         await testAnalysisArticleAPI();
         await testDateSorting();

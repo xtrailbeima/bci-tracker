@@ -751,6 +751,30 @@ if (subscribeForm) {
 
 let collectionsCache = [];
 
+function parseCollectionRules(rules) {
+    if (Array.isArray(rules)) return rules.map(r => String(r).trim()).filter(Boolean);
+    try {
+        const parsed = JSON.parse(rules || '[]');
+        return Array.isArray(parsed) ? parsed.map(r => String(r).trim()).filter(Boolean) : [];
+    } catch {
+        return [];
+    }
+}
+
+function parseRulesInput(value) {
+    return String(value || '')
+        .split(/[\n,，]+/)
+        .map(rule => rule.trim())
+        .filter(Boolean);
+}
+
+function renderRuleChips(rules) {
+    if (!rules.length) return '<span class="collection-rules-empty">无自动规则</span>';
+    return rules.slice(0, 8)
+        .map(rule => `<span class="collection-rule-chip">${escapeHtml(rule)}</span>`)
+        .join('');
+}
+
 async function fetchCollections() {
     try {
         const res = await fetch('/api/collections');
@@ -768,16 +792,20 @@ function renderCollectionsGrid() {
     grid.style.display = 'grid';
     detail.style.display = 'none';
 
-    grid.innerHTML = collectionsCache.map(c => `
+    grid.innerHTML = collectionsCache.map(c => {
+        const rules = parseCollectionRules(c.rules);
+        return `
         <button class="collection-card" type="button" onclick="openCollection(${c.id}, '${escapeHtml(c.icon)} ${escapeHtml(c.name)}')">
             <div class="collection-icon">${escapeHtml(c.icon)}</div>
             <div class="collection-info">
                 <span class="collection-name">${escapeHtml(c.name)}</span>
                 <span class="collection-count">${c.itemCount} 条内容</span>
+                <span class="collection-rules-preview">${renderRuleChips(rules)}</span>
             </div>
             ${c.isPreset ? '<span class="collection-preset">预设</span>' : (canManageContent() ? `<span class="collection-delete" onclick="event.stopPropagation(); deleteCollectionById(${c.id})" role="button" tabindex="0" title="删除" aria-label="删除专题 ${escapeHtml(c.name)}">✕</span>` : '')}
         </button>
-    `).join('');
+    `;
+    }).join('');
 }
 
 async function openCollection(id, title) {
@@ -786,6 +814,8 @@ async function openCollection(id, title) {
     grid.style.display = 'none';
     detail.style.display = 'block';
     document.getElementById('collectionDetailTitle').textContent = title;
+    const collection = collectionsCache.find(c => Number(c.id) === Number(id));
+    renderCollectionRulesPanel(collection);
 
     try {
         const res = await fetch(`/api/collections/${id}`);
@@ -798,8 +828,10 @@ async function openCollection(id, title) {
         }
         container.innerHTML = data.items.map(item => {
             const impLevel = item.importanceLevel || 'low';
-            const impScore = item.importance || 0;
+            const hasImportanceScore = typeof item.importance === 'number';
+            const impScore = hasImportanceScore ? item.importance : 0;
             const impLabel = { critical: '🔴 严重', high: '🟠 重要', medium: '🟡 一般', low: '⚪ 普通' }[impLevel] || '⚪';
+            const impText = hasImportanceScore ? `${impLabel} ${impScore}` : impLabel;
             return `
                 <a href="${escapeHtml(item.url)}" target="_blank" class="collection-item">
                     <div class="collection-item-main">
@@ -809,7 +841,7 @@ async function openCollection(id, title) {
                     <div class="collection-item-meta">
                         <span class="collection-item-source">${escapeHtml(item.source || item.provider || '')}</span>
                         <span class="collection-item-date">${item.date || ''}</span>
-                        <span class="card-importance importance-${impLevel}">${impLabel} ${impScore}</span>
+                        <span class="card-importance importance-${impLevel}">${impText}</span>
                     </div>
                 </a>
             `;
@@ -817,6 +849,67 @@ async function openCollection(id, title) {
     } catch (err) {
         document.getElementById('collectionDetailItems').innerHTML = '<div class="empty-collection">加载失败</div>';
     }
+}
+
+function renderCollectionRulesPanel(collection) {
+    const panel = document.getElementById('collectionDetailRules');
+    if (!panel || !collection) return;
+    const rules = parseCollectionRules(collection.rules);
+    panel.innerHTML = `
+        <div class="collection-rules-header">
+            <span>自动归集规则</span>
+            ${canManageContent() && !collection.isPreset ? `<button type="button" class="collection-rules-edit" onclick="showRulesEditor(${collection.id})">编辑规则</button>` : ''}
+        </div>
+        <div class="collection-rules-list">${renderRuleChips(rules)}</div>
+    `;
+}
+
+async function showRulesEditor(collectionId) {
+    if (!canManageContent()) return;
+    const collection = collectionsCache.find(c => Number(c.id) === Number(collectionId));
+    if (!collection || collection.isPreset) return;
+    const overlay = document.createElement('div');
+    overlay.className = 'custom-modal-overlay';
+    const rules = parseCollectionRules(collection.rules);
+    overlay.innerHTML = `
+        <div class="custom-modal">
+            <div class="custom-modal-header">
+                <h3 class="custom-modal-title">编辑专题规则</h3>
+                <button class="custom-modal-close" id="closeRulesModal" aria-label="关闭">✕</button>
+            </div>
+            <div class="custom-modal-subtitle">每行一个关键词，最多 20 个；后续抓取或导入时会自动归集匹配内容</div>
+            <textarea class="collection-rules-input" id="rulesEditorInput">${escapeHtml(rules.join('\n'))}</textarea>
+            <div class="custom-modal-footer">
+                <button type="button" class="custom-modal-btn custom-modal-btn--secondary" id="cancelRulesModal">取消</button>
+                <button type="button" class="custom-modal-btn custom-modal-btn--primary" id="saveRulesModal">保存</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+    const closeModal = () => overlay.remove();
+    overlay.querySelector('#closeRulesModal').addEventListener('click', closeModal);
+    overlay.querySelector('#cancelRulesModal').addEventListener('click', closeModal);
+    overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+    setTimeout(() => overlay.querySelector('#rulesEditorInput').focus(), 50);
+
+    overlay.querySelector('#saveRulesModal').addEventListener('click', async () => {
+        const rulesInput = overlay.querySelector('#rulesEditorInput');
+        const rules = parseRulesInput(rulesInput.value);
+        try {
+            const res = await fetch(`/api/collections/${collectionId}/rules`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ rules })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+            collection.rules = data.rules;
+            renderCollectionRulesPanel(collection);
+            closeModal();
+        } catch (err) {
+            await showCustomAlert('规则保存失败', err.message);
+        }
+    });
 }
 
 async function deleteCollectionById(id) {
@@ -1044,12 +1137,15 @@ document.getElementById('btnCreateCollection')?.addEventListener('click', () => 
                     <input type="text" id="newCollectionIcon" placeholder="例如：📁, 🔬, 💰..." value="📁"
                         style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px; color:var(--text-primary); font-size:14px; outline:none; transition:all 0.2s;" />
                 </div>
+                <div class="collection-rules-field">
+                    <label>自动归集规则</label>
+                    <textarea class="collection-rules-input" id="newCollectionRules" placeholder="每行一个关键词，例如：Synchron&#10;stentrode&#10;clinical trial"></textarea>
+                </div>
             </div>
             
             <div class="custom-modal-footer">
                 <button type="button" class="custom-modal-btn custom-modal-btn--secondary" id="cancelCreateModal">取消</button>
-                <button type="button" class="custom-modal-btn" id="confirmCreateModal" 
-                    style="background:var(--gradient-main); border:none; color:#06080f; font-weight:700;">创建</button>
+                <button type="button" class="custom-modal-btn custom-modal-btn--primary" id="confirmCreateModal">创建</button>
             </div>
         </div>
     `;
@@ -1066,6 +1162,7 @@ document.getElementById('btnCreateCollection')?.addEventListener('click', () => 
 
     const nameInput = overlay.querySelector('#newCollectionName');
     const iconInput = overlay.querySelector('#newCollectionIcon');
+    const rulesInput = overlay.querySelector('#newCollectionRules');
     const confirmBtn = overlay.querySelector('#confirmCreateModal');
 
     // Handle focus visual effects
@@ -1077,6 +1174,7 @@ document.getElementById('btnCreateCollection')?.addEventListener('click', () => 
     confirmBtn.addEventListener('click', async () => {
         const name = nameInput.value.trim();
         const icon = iconInput.value.trim() || '📁';
+        const rules = parseRulesInput(rulesInput.value);
         
         if (!name) {
             nameInput.style.borderColor = 'var(--accent-rose)';
@@ -1091,7 +1189,7 @@ document.getElementById('btnCreateCollection')?.addEventListener('click', () => 
             const res = await fetch('/api/collections', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, icon })
+                body: JSON.stringify({ name, icon, rules })
             });
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             

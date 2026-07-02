@@ -1473,6 +1473,40 @@ body::before {
   color: var(--text-secondary);
 }
 
+.collection-rules-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+  min-height: 18px;
+}
+
+.collection-rule-chip,
+.collection-rules-empty {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  min-height: 18px;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  font-size: 10px;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.collection-rule-chip {
+  color: var(--accent-cyan);
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glow);
+}
+
+.collection-rules-empty {
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
 .collection-preset {
   font-size: 10px;
   padding: 2px 8px;
@@ -1543,6 +1577,48 @@ body::before {
   border-radius: 6px;
 }
 
+.collection-detail-rules {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.collection-rules-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.collection-rules-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.collection-rules-edit {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--accent-cyan);
+  border-radius: var(--radius-sm);
+  padding: 4px 8px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.collection-rules-edit:hover {
+  border-color: var(--border-glow);
+  background: var(--bg-card);
+}
+
 .collection-detail-items {
   display: flex;
   flex-direction: column;
@@ -1596,6 +1672,39 @@ body::before {
   padding: 40px 20px;
   color: var(--text-muted);
   font-size: 14px;
+}
+
+.collection-rules-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.collection-rules-field label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.collection-rules-input {
+  width: 100%;
+  min-height: 112px;
+  resize: vertical;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  color: var(--text-primary);
+  font-size: 13px;
+  line-height: 1.5;
+  font-family: var(--font-sans);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.collection-rules-input:focus {
+  border-color: var(--border-glow);
+  box-shadow: var(--shadow-glow);
 }
 
 /* Bookmark button on cards */
@@ -3159,6 +3268,16 @@ button:active:not(:disabled), .card:active {
   font-weight: 600;
   cursor: pointer;
   transition: all var(--dur-normal) var(--ease-out);
+}
+
+.custom-modal-btn--primary {
+  background: var(--gradient-main);
+  border: 1px solid var(--border-glow);
+  color: var(--bg-primary);
+}
+
+.custom-modal-btn--primary:hover {
+  transform: translateY(-1px);
 }
 
 .custom-modal-btn--secondary {

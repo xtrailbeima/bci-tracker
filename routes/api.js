@@ -3,7 +3,7 @@ const router = express.Router();
 
 const { rateLimit } = require('../middleware/security');
 const { requireRole } = require('../middleware/auth');
-const { searchArticles, getStats, getAllSources, getArticleById, getTrendingKeywords, getSourceHealth, addSubscriber, removeSubscriber, getCollections, getCollectionItems, addToCollection, removeFromCollection, createCollection, deleteCollection, upsertArticle, autoAssignCollections, logAudit } = require('../db');
+const { searchArticles, getStats, getAllSources, getArticleById, getTrendingKeywords, getSourceHealth, addSubscriber, removeSubscriber, getCollections, getCollectionItems, addToCollection, removeFromCollection, createCollection, deleteCollection, normalizeCollectionRules, updateCollectionRules, upsertArticle, autoAssignCollections, logAudit } = require('../db');
 const { sendDailyBriefing } = require('../briefing');
 const deepseek = require('../services/deepseek');
 const { extractArticleFromURL } = require('../services/import');
@@ -112,16 +112,30 @@ router.get('/collections/:id', (req, res) => {
 
 router.post('/collections', requireRole('owner', 'operator'), express.json(), (req, res) => {
     try {
-        const { name, icon } = req.body;
+        const { name, icon, rules } = req.body;
         if (!name || typeof name !== 'string') return res.status(400).json({ error: 'name required' });
         // Input validation (security-auditor skill)
         const safeName = name.slice(0, 50).replace(/[<>"'&]/g, '');
         const safeIcon = (icon || '📁').slice(0, 4);
-        const result = createCollection(safeName, safeIcon);
-        audit(req, 'collection.create', safeName);
-        res.json({ id: result.lastInsertRowid, name: safeName, icon: safeIcon });
+        const normalizedRules = normalizeCollectionRules(rules || []);
+        const result = createCollection(safeName, safeIcon, normalizedRules);
+        audit(req, 'collection.create', safeName, { rules: normalizedRules });
+        res.json({ id: result.lastInsertRowid, name: safeName, icon: safeIcon, rules: JSON.stringify(normalizedRules) });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        res.status(400).json({ error: err.message });
+    }
+});
+
+router.patch('/collections/:id/rules', requireRole('owner', 'operator'), express.json(), (req, res) => {
+    try {
+        const id = parseInt(req.params.id, 10);
+        if (!Number.isInteger(id) || id <= 0) return res.status(400).json({ error: 'invalid collection id' });
+        const result = updateCollectionRules(id, req.body?.rules || []);
+        if (result.changes === 0) return res.status(404).json({ error: 'collection not found or preset collection cannot be edited' });
+        audit(req, 'collection.update_rules', String(id), { rules: result.rules });
+        res.json({ ok: true, rules: JSON.stringify(result.rules) });
+    } catch (err) {
+        res.status(400).json({ error: err.message });
     }
 });
 
