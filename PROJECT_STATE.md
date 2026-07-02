@@ -105,6 +105,7 @@ Last known completed checks:
 - Server-side HTTPS/SNI check after commit `19e59b3`: `https://njubci.com/` returns 200 with the v5.0 login gate; unauthenticated `https://njubci.com/api/all` returns 401
 - Remote `npm run verify` on Tencent Cloud after commit `0110209`: passed, 149 passed / 0 failed
 - Remote `npm run verify` on Tencent Cloud after commit `ce3d21f`: passed, 160 passed / 0 failed; PM2 `bci-tracker` online
+- Remote `npm run verify` on Tencent Cloud after commit `75d0b65`: passed, 160 passed / 0 failed; API documentation coverage check included; PM2 `bci-tracker` online
 - Tencent Cloud deployment for `0110209` used a local Git bundle because the server-to-GitHub pull failed with transient TLS/HTTP2 errors.
 - Local-machine HTTPS checks may fail with `SSL_ERROR_SYSCALL` / Chrome `ERR_CONNECTION_CLOSED` when the current Mac resolves `njubci.com` to `198.18.x.x` fake-ip through a proxy/TUN path; those failed requests do not appear in Nginx logs.
 - Public DoH checked from this machine resolves `njubci.com` to `111.229.73.49`; server-side Nginx checks and remote verification are the source of truth until the browser/proxy path is bypassed or tested from a non-proxy network.
