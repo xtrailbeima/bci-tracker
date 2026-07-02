@@ -42,6 +42,10 @@ Build BCI Tracker V2 as an investor-facing BCI intelligence workspace:
   - generated `external_events/2026-07-02.json` with 70 valid public events
   - generated `matching_reports/2026-07-02_context.md` with `aiApiCalled: false` and `bpOrInterviewFilesRead: false`
   - generated `matching_reports/2026-07-02.md` as a workflow-validation report using only example project profiles
+- Added matching report shape validation:
+  - `scripts/validate_matching_reports.js` validates date-stamped `matching_reports/YYYY-MM-DD.md`
+  - checks required metadata, referenced event/context files, core sections, and project match fields
+  - `npm run validate:v2-local` and `npm run verify` now include matching report validation
 - Added the first P0 deployment hardening slice:
   - `server.js` defaults to `HOST=127.0.0.1` instead of binding the Node app to all interfaces
   - `deploy.sh` no longer opens or advertises public port `4000`
@@ -136,6 +140,9 @@ Last known completed checks:
 - `npm run validate:v2-local`: passed after generating the 2026-07-02 event/context/report artifacts
 - `node scripts/test_matching_context.js`: passed after generating the 2026-07-02 matching context
 - `npm run verify`: passed, 185 passed / 0 failed after generating the 2026-07-02 V2 matching artifacts
+- `npm run validate:matching`: passed, 2 matching reports valid
+- `npm run validate:v2-local`: passed after adding matching report shape validation
+- `npm run verify`: passed, 185 passed / 0 failed after adding matching report shape validation
 - Remote `npm run verify` on Tencent Cloud after commit `8814596`: passed, 98 passed / 0 failed
 - Remote listener check after commit `8814596`: Node app listens on `127.0.0.1:4000`; `https://njubci.com/` returns 200; direct `http://111.229.73.49:4000/` no longer returns the app page
 - Remote `npm run verify` on Tencent Cloud after commit `b2702b4`: passed, 111 passed / 0 failed

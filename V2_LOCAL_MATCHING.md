@@ -43,6 +43,14 @@ Then ask Codex to read that context file and write the final report:
 不要读取 knowledge_base/bp_notes 或 knowledge_base/interviews，除非我明确要求。
 ```
 
+Validate the finished report shape:
+
+```bash
+npm run validate:matching
+```
+
+This checks date-stamped files in `matching_reports/YYYY-MM-DD.md` for the required metadata, referenced event/context files, and report sections.
+
 Useful options:
 
 - `--events external_events/YYYY-MM-DD.json`: choose an event file directly.
