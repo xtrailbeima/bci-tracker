@@ -121,6 +121,7 @@ Last known completed checks:
 - Remote `npm run verify` on Tencent Cloud after commit `75d0b65`: passed, 160 passed / 0 failed; API documentation coverage check included; PM2 `bci-tracker` online
 - Remote `npm run verify` on Tencent Cloud after commit `5196263`: passed, 160 passed / 0 failed; shared AI JSON parser and degraded fallbacks deployed; PM2 `bci-tracker` online
 - Remote `npm run verify` on Tencent Cloud after commit `4f54416`: passed, 167 passed / 0 failed; configurable custom collection rules deployed; PM2 `bci-tracker` online
+- Remote `npm run verify` on Tencent Cloud after commit `5aeef40`: passed, 173 passed / 0 failed; source/date filter smoke coverage deployed; PM2 `bci-tracker` online
 - Tencent Cloud deployment for `0110209` used a local Git bundle because the server-to-GitHub pull failed with transient TLS/HTTP2 errors.
 - Local-machine HTTPS checks may fail with `SSL_ERROR_SYSCALL` / Chrome `ERR_CONNECTION_CLOSED` when the current Mac resolves `njubci.com` to `198.18.x.x` fake-ip through a proxy/TUN path; those failed requests do not appear in Nginx logs.
 - Public DoH checked from this machine resolves `njubci.com` to `111.229.73.49`; server-side Nginx checks and remote verification are the source of truth until the browser/proxy path is bypassed or tested from a non-proxy network.
@@ -157,6 +158,7 @@ Re-run checks after each new implementation slice.
 2. Use `matching_reports/YYYY-MM-DD_context.md` as the handoff into Codex analysis, then manually review the final `matching_reports/YYYY-MM-DD.md` before updating project profiles.
 3. Keep highly sensitive project material restricted to project profile summaries unless the user explicitly asks to read BP/interview detail.
 4. After explicit browser-action confirmation, remove the now-unneeded Tencent Cloud firewall rule for public `TCP 4000`; code already binds the app to localhost, but the cloud rule should still be cleaned up.
+5. Triage dependency audit output before production hardening; current `npm install` reports 7 vulnerabilities (3 moderate, 4 high), so do not run `npm audit fix` blindly without reviewing runtime impact.
 
 ## Recovery Prompt
 
