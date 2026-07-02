@@ -8,6 +8,8 @@ const port = process.env.PORT || envFile.PORT || '3000';
 const host = process.env.HOST || envFile.HOST || '127.0.0.1';
 const testHost = host === '0.0.0.0' || host === '::' ? '127.0.0.1' : host;
 const baseUrl = process.env.TEST_URL || `http://${testHost}:${port}`;
+const authEmail = process.env.TEST_AUTH_EMAIL || process.env.AUTH_OWNER_EMAIL || envFile.AUTH_OWNER_EMAIL || 'bci-test-owner@example.com';
+const authPassword = process.env.TEST_AUTH_PASSWORD || process.env.AUTH_OWNER_PASSWORD || envFile.AUTH_OWNER_PASSWORD || 'bci-test-owner-password';
 
 function parseEnvFile(file) {
     const env = {};
@@ -22,7 +24,7 @@ function parseEnvFile(file) {
 async function isReady() {
     try {
         const res = await fetch(`${baseUrl}/api/stats`, { signal: AbortSignal.timeout(1000) });
-        return res.ok;
+        return res.ok || res.status === 401;
     } catch {
         return false;
     }
@@ -41,7 +43,7 @@ function runSmoke() {
     return new Promise((resolve, reject) => {
         const child = spawn(process.execPath, ['--env-file=.env', 'test/smoke.js'], {
             stdio: 'inherit',
-            env: { ...process.env, TEST_URL: baseUrl, PORT: port },
+            env: { ...process.env, TEST_URL: baseUrl, PORT: port, TEST_AUTH_EMAIL: authEmail, TEST_AUTH_PASSWORD: authPassword },
         });
         child.on('exit', code => code === 0 ? resolve() : reject(new Error(`smoke exited ${code}`)));
         child.on('error', reject);
@@ -60,7 +62,7 @@ async function main() {
     if (!alreadyRunning) {
         server = spawn(process.execPath, ['--env-file=.env', 'server.js'], {
             stdio: ['ignore', 'inherit', 'inherit'],
-            env: { ...process.env, HOST: host, PORT: port },
+            env: { ...process.env, HOST: host, PORT: port, AUTH_OWNER_EMAIL: authEmail, AUTH_OWNER_PASSWORD: authPassword },
         });
         await waitUntilReady();
     }

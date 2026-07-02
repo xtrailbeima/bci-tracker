@@ -4,11 +4,16 @@ const fs = require('fs');
 const path = require('path');
 
 const { rateLimit } = require('../middleware/security');
-const { searchArticles, getStats, getAllSources, getArticleById, getTrendingKeywords, getSourceHealth, addSubscriber, removeSubscriber, getCollections, getCollectionItems, addToCollection, removeFromCollection, createCollection, deleteCollection, upsertArticle, autoAssignCollections } = require('../db');
+const { requireRole } = require('../middleware/auth');
+const { searchArticles, getStats, getAllSources, getArticleById, getTrendingKeywords, getSourceHealth, addSubscriber, removeSubscriber, getCollections, getCollectionItems, addToCollection, removeFromCollection, createCollection, deleteCollection, upsertArticle, autoAssignCollections, logAudit } = require('../db');
 const { sendDailyBriefing } = require('../briefing');
 const deepseek = require('../services/deepseek');
 const { extractArticleFromURL } = require('../services/import');
 const { enrichItem } = require('../services/fetcher');
+
+function audit(req, action, target, metadata) {
+    logAudit({ user: req.user, action, target, metadata, ip: req.ip });
+}
 
 // ─── Company Profile ──────────────────────────────────────
 
@@ -53,7 +58,7 @@ router.get('/stats', (req, res) => {
     }
 });
 
-router.get('/source-health', (req, res) => {
+router.get('/source-health', requireRole('owner', 'operator'), (req, res) => {
     try {
         res.json(getSourceHealth());
     } catch (err) {
@@ -84,7 +89,7 @@ router.get('/collections/:id', (req, res) => {
     }
 });
 
-router.post('/collections', express.json(), (req, res) => {
+router.post('/collections', requireRole('owner', 'operator'), express.json(), (req, res) => {
     try {
         const { name, icon } = req.body;
         if (!name || typeof name !== 'string') return res.status(400).json({ error: 'name required' });
@@ -92,34 +97,38 @@ router.post('/collections', express.json(), (req, res) => {
         const safeName = name.slice(0, 50).replace(/[<>"'&]/g, '');
         const safeIcon = (icon || '📁').slice(0, 4);
         const result = createCollection(safeName, safeIcon);
+        audit(req, 'collection.create', safeName);
         res.json({ id: result.lastInsertRowid, name: safeName, icon: safeIcon });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-router.post('/collections/:id/add', express.json(), (req, res) => {
+router.post('/collections/:id/add', requireRole('owner', 'operator'), express.json(), (req, res) => {
     try {
         const { articleId } = req.body;
         addToCollection(parseInt(req.params.id), articleId, 'manual');
+        audit(req, 'collection.add_item', String(req.params.id), { articleId });
         res.json({ ok: true });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-router.delete('/collections/:collectionId/items/:articleId', (req, res) => {
+router.delete('/collections/:collectionId/items/:articleId', requireRole('owner', 'operator'), (req, res) => {
     try {
         removeFromCollection(parseInt(req.params.collectionId), parseInt(req.params.articleId));
+        audit(req, 'collection.remove_item', String(req.params.collectionId), { articleId: req.params.articleId });
         res.json({ ok: true });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-router.delete('/collections/:id', (req, res) => {
+router.delete('/collections/:id', requireRole('owner', 'operator'), (req, res) => {
     try {
         deleteCollection(parseInt(req.params.id));
+        audit(req, 'collection.delete', String(req.params.id));
         res.json({ ok: true });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -194,9 +203,10 @@ router.post('/unsubscribe', (req, res) => {
 
 // ─── API: Manual Briefing Trigger ─────────────────────────
 
-router.post('/briefing/send', async (req, res) => {
+router.post('/briefing/send', requireRole('owner'), async (req, res) => {
     try {
         const result = await sendDailyBriefing();
+        audit(req, 'briefing.send', 'daily');
         res.json(result);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -212,7 +222,7 @@ const SUMMARY_CACHE_TTL = 45 * 60 * 1000; // 45 minutes
 let aiCooldownUntil = 0;
 const API_COOLDOWN_MS = 10 * 60 * 1000; // 10 minutes global cooldown
 
-router.get('/summary', async (req, res) => {
+router.get('/summary', requireRole('owner', 'operator'), async (req, res) => {
     try {
         const forceRefresh = req.query.force === '1';
 
@@ -386,6 +396,7 @@ ${context}${companyContext}`;
             sections: parsed.sections || []
         };
         summaryLastGenerated = Date.now();
+        audit(req, 'ai.summary_legacy', 'hunyuan', { forceRefresh });
 
         res.json(cachedSummary);
     } catch (err) {
@@ -412,7 +423,7 @@ const DAILY_CACHE_TTL = 60 * 60 * 1000; // 1 hour
 let dailyCooldownUntil = 0;
 const DAILY_COOLDOWN_MS = 2 * 60 * 1000; // 2 minutes
 
-router.get('/summary/daily', async (req, res) => {
+router.get('/summary/daily', requireRole('owner', 'operator'), async (req, res) => {
     try {
         const forceRefresh = req.query.force === '1';
 
@@ -453,6 +464,7 @@ router.get('/summary/daily', async (req, res) => {
         }
 
         const summary = await deepseek.generateDailySummary(result.items);
+        audit(req, 'ai.summary_daily', 'deepseek', { forceRefresh, count: result.items.length });
 
         cachedDailySummary = {
             generated: new Date().toISOString(),
@@ -487,7 +499,7 @@ const WEEKLY_CACHE_TTL = 4 * 60 * 60 * 1000; // 4 hours
 let weeklyCooldownUntil = 0;
 const WEEKLY_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes
 
-router.get('/summary/weekly', async (req, res) => {
+router.get('/summary/weekly', requireRole('owner', 'operator'), async (req, res) => {
     try {
         const forceRefresh = req.query.force === '1';
 
@@ -524,6 +536,7 @@ router.get('/summary/weekly', async (req, res) => {
         }
 
         const summary = await deepseek.generateWeeklySummary(result.items);
+        audit(req, 'ai.summary_weekly', 'deepseek', { forceRefresh, count: result.items.length });
 
         cachedWeeklySummary = {
             generated: new Date().toISOString(),
@@ -552,7 +565,7 @@ router.get('/summary/weekly', async (req, res) => {
 
 // ─── DeepSeek Article Analysis ────────────────────────────
 
-router.get('/analysis/:articleId', rateLimit(60000, 10), async (req, res) => {
+router.get('/analysis/:articleId', requireRole('owner', 'operator'), rateLimit(60000, 10), async (req, res) => {
     try {
         if (!deepseek.isAvailable()) {
             return res.status(503).json({ error: true, message: 'DeepSeek API 未配置' });
@@ -569,6 +582,7 @@ router.get('/analysis/:articleId', rateLimit(60000, 10), async (req, res) => {
         }
 
         const analysis = await deepseek.analyzeArticle(article);
+        audit(req, 'ai.article_analysis', String(articleId));
         res.json({
             articleId,
             model: 'deepseek-chat',
@@ -582,7 +596,7 @@ router.get('/analysis/:articleId', rateLimit(60000, 10), async (req, res) => {
 
 // ─── API: Import Article from URL ─────────────────────
 
-router.post('/import', rateLimit(60000, 10), async (req, res) => {
+router.post('/import', requireRole('owner', 'operator'), rateLimit(60000, 10), async (req, res) => {
     try {
         const { url } = req.body;
 
@@ -609,6 +623,7 @@ router.post('/import', rateLimit(60000, 10), async (req, res) => {
         autoAssignCollections([enriched]);
 
         console.log(`📥 Imported: ${enriched.title} (${enriched.provider}, score: ${enriched.importance})`);
+        audit(req, 'article.import', enriched.url, { provider: enriched.provider, importance: enriched.importance });
 
         res.json({
             success: true,

@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const { parseStringPromise } = require('xml2js');
+const { requireRole } = require('../middleware/auth');
 const { fetchText, truncate, DEMO_DATA } = require('../services/fetcher');
 
-router.get('/news', async (req, res) => {
+router.get('/news', requireRole('owner', 'operator'), async (req, res) => {
     try {
         const queries = [
             // ── 核心追踪公司（用户指定） ──

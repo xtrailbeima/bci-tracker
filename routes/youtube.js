@@ -5,9 +5,10 @@
 
 const express = require('express');
 const router = express.Router();
+const { requireRole } = require('../middleware/auth');
 const { searchVideos, isAvailable } = require('../services/youtube');
 
-router.get('/youtube', async (req, res) => {
+router.get('/youtube', requireRole('owner', 'operator'), async (req, res) => {
     if (!isAvailable()) {
         return res.json([]); // 无 API Key 时返回空数组
     }

@@ -78,6 +78,143 @@ body {
   overflow-x: hidden;
 }
 
+body.auth-locked > :not(.auth-gate) {
+  display: none !important;
+}
+
+.auth-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  padding: var(--space-6);
+  background: var(--bg-primary);
+}
+
+.auth-gate[hidden] {
+  display: none;
+}
+
+.auth-card {
+  width: min(420px, 100%);
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-8);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+}
+
+.auth-brand {
+  color: var(--accent-cyan);
+  font-family: var(--font-mono);
+  font-size: var(--fs-sm);
+  letter-spacing: 0;
+}
+
+.auth-card h2 {
+  font-size: var(--fs-2xl);
+}
+
+.auth-card p {
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.auth-card label {
+  color: var(--text-secondary);
+  font-size: var(--fs-sm);
+}
+
+.auth-card input {
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.auth-card button,
+.btn-admin,
+.btn-logout {
+  border: 1px solid var(--border-glow);
+  border-radius: var(--radius-sm);
+  background: var(--bg-glass);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.auth-card button {
+  padding: var(--space-3) var(--space-4);
+  font-weight: 700;
+}
+
+.btn-admin,
+.btn-logout {
+  padding: var(--space-2) var(--space-3);
+}
+
+.auth-user {
+  color: var(--text-secondary);
+  font-size: var(--fs-sm);
+}
+
+.auth-message {
+  min-height: 20px;
+  color: var(--accent-rose);
+  font-size: var(--fs-sm);
+}
+
+.admin-user-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr 120px;
+  gap: var(--space-2);
+  margin: var(--space-4) 0;
+}
+
+.admin-user-form input,
+.admin-user-form select {
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.admin-user-form input[type="password"],
+.admin-user-form button {
+  grid-column: span 3;
+}
+
+.admin-user-form button {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-glow);
+  border-radius: var(--radius-sm);
+  background: var(--bg-glass);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.admin-user-list {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.admin-user-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(100px, 0.7fr) 90px 80px;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: var(--fs-sm);
+}
+
 /* Noise texture overlay for premium depth */
 body::before {
   content: '';

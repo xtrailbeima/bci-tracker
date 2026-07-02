@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const { parseStringPromise } = require('xml2js');
+const { requireRole } = require('../middleware/auth');
 const { fetchText, truncate, DEMO_DATA } = require('../services/fetcher');
 
-router.get('/arxiv', async (req, res) => {
+router.get('/arxiv', requireRole('owner', 'operator'), async (req, res) => {
     try {
         const query = req.query.q || 'brain-computer interface';
         const maxResults = req.query.max || 20;

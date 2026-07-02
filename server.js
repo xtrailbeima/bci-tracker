@@ -3,6 +3,8 @@ const cors = require('cors');
 const path = require('path');
 
 const { securityHeaders, errorHandler } = require('./middleware/security');
+const { attachUser, requireAuth } = require('./middleware/auth');
+const { bootstrapOwnerFromEnv } = require('./services/auth');
 const { fetchAndStore } = require('./services/fetcher');
 const { sendDailyBriefing } = require('./briefing');
 
@@ -17,6 +19,10 @@ app.use(securityHeaders);
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ─── Routes ──────────────────────────────────────────────
+bootstrapOwnerFromEnv();
+app.use('/api', attachUser);
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api', requireAuth);
 app.use('/api', require('./routes/pubmed'));
 app.use('/api', require('./routes/arxiv'));
 app.use('/api', require('./routes/journals'));

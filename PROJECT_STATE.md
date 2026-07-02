@@ -55,6 +55,13 @@ Build BCI Tracker V2 as an investor-facing BCI intelligence workspace:
 - Made smoke tests self-contained:
   - `npm test` now starts and stops a local test server when one is not already running
   - `npm run verify` uses the self-contained smoke runner
+- Added the first three-tier auth/RBAC and audit slice:
+  - SQLite tables `users`, `sessions`, and `audit_logs`
+  - `/api/auth/login`, `/api/auth/logout`, `/api/auth/me`, owner-only user management, and owner-only audit log access
+  - HttpOnly session cookie auth with `owner`, `operator`, and `reader` roles
+  - all `/api/*` business routes require login; write/AI/source-health/data-source routes require owner/operator; user/audit/manual briefing routes require owner
+  - front-end login gate, role badge, logout, owner user-management dialog, and role-based hiding of write/AI controls
+  - audit logging for login, logout, user changes, collection changes, AI generation, import, and manual briefing send
 
 ## Current Verification
 
@@ -62,8 +69,8 @@ Last known completed checks:
 
 - `npm run validate:events -- external_events/2026-06-28.json`: passed, 40 events valid
 - `npm run validate:v2-local`: passed
-- `npm test`: passed, 102 passed / 0 failed, including self-start/self-stop behavior
-- `npm run verify`: passed, 102 passed / 0 failed
+- `npm test`: passed, 110 passed / 0 failed, including auth/RBAC and self-start/self-stop behavior
+- `npm run verify`: passed, 110 passed / 0 failed
 - Remote `npm run verify` on Tencent Cloud after commit `8814596`: passed, 98 passed / 0 failed
 - Remote listener check after commit `8814596`: Node app listens on `127.0.0.1:4000`; `https://njubci.com/` returns 200; direct `http://111.229.73.49:4000/` no longer returns the app page
 - `matching_reports/2026-06-28.md`: generated as workflow validation report
@@ -96,7 +103,7 @@ Re-run checks after each new implementation slice.
 
 ## Next Step
 
-1. Implement the three-tier auth/RBAC foundation (`owner`, `operator`, `reader`) and audit logging for sensitive actions.
+1. Deploy auth/RBAC with production owner bootstrap variables (`AUTH_OWNER_EMAIL`, `AUTH_OWNER_PASSWORD`, `AUTH_COOKIE_SECURE=1`) and verify `https://njubci.com/` shows the login gate.
 2. Decide whether the next matching run should remain manual Codex output or become a reusable local script/template.
 3. Keep highly sensitive project material restricted to project profile summaries unless the user explicitly asks to read BP/interview detail.
 4. Replace or retire the legacy Hunyuan `/api/summary` model path; current Hunyuan model returns provider error `2030` because the configured model is offline.

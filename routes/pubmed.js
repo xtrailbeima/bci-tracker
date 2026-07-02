@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
+const { requireRole } = require('../middleware/auth');
 const { fetchJSON, DEMO_DATA } = require('../services/fetcher');
 
-router.get('/pubmed', async (req, res) => {
+router.get('/pubmed', requireRole('owner', 'operator'), async (req, res) => {
     try {
         const query = req.query.q || 'brain-computer interface';
         const maxResults = req.query.max || 20;

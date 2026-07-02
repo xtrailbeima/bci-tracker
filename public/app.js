@@ -8,6 +8,15 @@ let currentPage = 1;
 let hasMore = false;
 let totalItems = 0;
 let activeTimeRange = 'all'; // 'all', 'week', 'month', 'quarter', 'year'
+let currentUser = null;
+
+const nativeFetch = window.fetch.bind(window);
+window.fetch = async (input, options = {}) => {
+    const res = await nativeFetch(input, options);
+    const url = typeof input === 'string' ? input : input?.url || '';
+    if (String(url).includes('/api/') && res.status === 401) showAuthGate();
+    return res;
+};
 
 // Auto-refresh every 45 minutes
 const REFRESH_INTERVAL = 45 * 60 * 1000;
@@ -29,6 +38,94 @@ const statUpdated = document.getElementById('statUpdated');
 const refreshCountdown = document.getElementById('refreshCountdown');
 const trendingPanel = document.getElementById('trendingPanel');
 const trendingTags = document.getElementById('trendingTags');
+const authGate = document.getElementById('authGate');
+const authForm = document.getElementById('authForm');
+const authMessage = document.getElementById('authMessage');
+const authUser = document.getElementById('authUser');
+const btnLogout = document.getElementById('btnLogout');
+const btnAdmin = document.getElementById('btnAdmin');
+
+function canManageContent() {
+    return currentUser && ['owner', 'operator'].includes(currentUser.role);
+}
+
+function canUseAI() {
+    return canManageContent();
+}
+
+function showAuthGate(message = '') {
+    document.body.classList.add('auth-locked');
+    authGate.hidden = false;
+    if (authMessage) authMessage.textContent = message;
+}
+
+function hideAuthGate() {
+    document.body.classList.remove('auth-locked');
+    authGate.hidden = true;
+}
+
+function applyRoleUI() {
+    const canWrite = canManageContent();
+    if (authUser) {
+        authUser.hidden = false;
+        authUser.textContent = `${currentUser.name || currentUser.email} · ${currentUser.role}`;
+    }
+    if (btnLogout) btnLogout.hidden = false;
+    if (btnAdmin) btnAdmin.hidden = currentUser?.role !== 'owner';
+    if (importBtn) importBtn.style.display = canWrite ? '' : 'none';
+    document.getElementById('tab-analysis').style.display = canUseAI() ? '' : 'none';
+    document.getElementById('btnCreateCollection').style.display = canWrite ? '' : 'none';
+    document.querySelectorAll('.btn-generate-analysis').forEach(btn => {
+        btn.style.display = canUseAI() ? '' : 'none';
+    });
+}
+
+async function initAuth() {
+    try {
+        const res = await nativeFetch('/api/auth/me');
+        if (!res.ok) {
+            showAuthGate();
+            return;
+        }
+        const data = await res.json();
+        currentUser = data.user;
+        hideAuthGate();
+        applyRoleUI();
+        fetchAll();
+    } catch {
+        showAuthGate('无法连接服务器');
+    }
+}
+
+authForm?.addEventListener('submit', async e => {
+    e.preventDefault();
+    authMessage.textContent = '正在登录...';
+    const email = document.getElementById('authEmail').value;
+    const password = document.getElementById('authPassword').value;
+    try {
+        const res = await nativeFetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ email, password }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || '登录失败');
+        currentUser = data.user;
+        hideAuthGate();
+        applyRoleUI();
+        fetchAll();
+    } catch (err) {
+        authMessage.textContent = err.message;
+    }
+});
+
+btnLogout?.addEventListener('click', async () => {
+    await nativeFetch('/api/auth/logout', { method: 'POST' }).catch(() => {});
+    currentUser = null;
+    showAuthGate('已退出登录');
+});
+
+btnAdmin?.addEventListener('click', showUserAdminDialog);
 
 
 // ── Time Range Helpers ────────────────────────────────
@@ -320,14 +417,14 @@ function createCard(item) {
             <span class="btn-icon">🌐</span>
             <span class="btn-text">原文</span>
           </a>
-          <button class="card-action-btn btn-ai" onclick="analyzeArticleById(${item.id})" title="AI 深度分析">
+          ${canUseAI() ? `<button class="card-action-btn btn-ai" onclick="analyzeArticleById(${item.id})" title="AI 深度分析">
             <span class="btn-icon">🤖</span>
             <span class="btn-text">AI分析</span>
-          </button>
-          <button class="card-action-btn btn-bookmark" onclick="showBookmarkDialog(${item.id})" title="归集到专题">
+          </button>` : ''}
+          ${canManageContent() ? `<button class="card-action-btn btn-bookmark" onclick="showBookmarkDialog(${item.id})" title="归集到专题">
             <span class="btn-icon">📁</span>
             <span class="btn-text">归集</span>
-          </button>
+          </button>` : ''}
         </div>
       </div>
     </div>`;
@@ -675,7 +772,7 @@ function renderCollectionsGrid() {
                 <span class="collection-name">${escapeHtml(c.name)}</span>
                 <span class="collection-count">${c.itemCount} 条内容</span>
             </div>
-            ${c.isPreset ? '<span class="collection-preset">预设</span>' : `<span class="collection-delete" onclick="event.stopPropagation(); deleteCollectionById(${c.id})" role="button" tabindex="0" title="删除" aria-label="删除专题 ${escapeHtml(c.name)}">✕</span>`}
+            ${c.isPreset ? '<span class="collection-preset">预设</span>' : (canManageContent() ? `<span class="collection-delete" onclick="event.stopPropagation(); deleteCollectionById(${c.id})" role="button" tabindex="0" title="删除" aria-label="删除专题 ${escapeHtml(c.name)}">✕</span>` : '')}
         </button>
     `).join('');
 }
@@ -812,6 +909,84 @@ async function showBookmarkDialog(articleId) {
             }
         });
     });
+}
+
+async function showUserAdminDialog() {
+    if (currentUser?.role !== 'owner') return;
+    const overlay = document.createElement('div');
+    overlay.className = 'custom-modal-overlay';
+    overlay.innerHTML = `
+        <div class="custom-modal">
+            <div class="custom-modal-header">
+                <h3 class="custom-modal-title">用户与权限</h3>
+                <button class="custom-modal-close" id="closeUserAdmin" aria-label="关闭">✕</button>
+            </div>
+            <div class="custom-modal-subtitle">创建 owner、operator、reader 三档授权账号</div>
+            <form id="createUserForm" class="admin-user-form">
+                <input type="email" id="newUserEmail" placeholder="邮箱" required>
+                <input type="text" id="newUserName" placeholder="姓名">
+                <select id="newUserRole">
+                    <option value="reader">reader</option>
+                    <option value="operator">operator</option>
+                    <option value="owner">owner</option>
+                </select>
+                <input type="password" id="newUserPassword" placeholder="初始密码，至少 10 位" required>
+                <button type="submit">创建用户</button>
+            </form>
+            <div class="auth-message" id="userAdminMsg"></div>
+            <div id="userList" class="admin-user-list">加载中...</div>
+        </div>`;
+    document.body.appendChild(overlay);
+
+    const close = () => overlay.remove();
+    overlay.querySelector('#closeUserAdmin').addEventListener('click', close);
+    overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+
+    const msg = overlay.querySelector('#userAdminMsg');
+    const list = overlay.querySelector('#userList');
+
+    async function loadUsers() {
+        const res = await fetch('/api/auth/users');
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || `HTTP ${res.status}`);
+        list.innerHTML = data.users.map(user => `
+            <div class="admin-user-row">
+                <span>${escapeHtml(user.email)}</span>
+                <span>${escapeHtml(user.name || '')}</span>
+                <span>${escapeHtml(user.role)}</span>
+                <span>${user.active ? 'active' : 'disabled'}</span>
+            </div>`).join('');
+    }
+
+    overlay.querySelector('#createUserForm').addEventListener('submit', async e => {
+        e.preventDefault();
+        msg.textContent = '正在创建...';
+        try {
+            const res = await fetch('/api/auth/users', {
+                method: 'POST',
+                headers: { 'content-type': 'application/json' },
+                body: JSON.stringify({
+                    email: overlay.querySelector('#newUserEmail').value,
+                    name: overlay.querySelector('#newUserName').value,
+                    role: overlay.querySelector('#newUserRole').value,
+                    password: overlay.querySelector('#newUserPassword').value,
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || '创建失败');
+            msg.textContent = '已创建用户';
+            e.target.reset();
+            await loadUsers();
+        } catch (err) {
+            msg.textContent = err.message;
+        }
+    });
+
+    try {
+        await loadUsers();
+    } catch (err) {
+        list.textContent = `加载失败：${err.message}`;
+    }
 }
 
 // Main tab switching
@@ -1336,4 +1511,4 @@ function renderSummaryEmpty(icon, text) {
 }
 
 // ── Init ──────────────────────────────────────────────
-fetchAll();
+initAuth();

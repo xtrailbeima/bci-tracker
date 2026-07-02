@@ -76,6 +76,50 @@ db.exec(`
   );
 
   CREATE INDEX IF NOT EXISTS idx_fetch_runs_source_finished ON fetch_runs(source, finishedAt DESC);
+
+  CREATE TABLE IF NOT EXISTS users (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    email        TEXT UNIQUE NOT NULL,
+    name         TEXT DEFAULT '',
+    role         TEXT NOT NULL DEFAULT 'reader',
+    passwordHash TEXT NOT NULL,
+    passwordSalt TEXT NOT NULL,
+    active       INTEGER DEFAULT 1,
+    createdAt    TEXT DEFAULT (datetime('now')),
+    updatedAt    TEXT DEFAULT (datetime('now')),
+    lastLoginAt  TEXT DEFAULT ''
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+  CREATE INDEX IF NOT EXISTS idx_users_role ON users(role);
+
+  CREATE TABLE IF NOT EXISTS sessions (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    userId      INTEGER NOT NULL,
+    tokenHash   TEXT UNIQUE NOT NULL,
+    createdAt   TEXT DEFAULT (datetime('now')),
+    expiresAt   TEXT NOT NULL,
+    lastSeenAt  TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (userId) REFERENCES users(id)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(tokenHash);
+  CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expiresAt);
+
+  CREATE TABLE IF NOT EXISTS audit_logs (
+    id        INTEGER PRIMARY KEY AUTOINCREMENT,
+    userId    INTEGER,
+    email     TEXT DEFAULT '',
+    role      TEXT DEFAULT '',
+    action    TEXT NOT NULL,
+    target    TEXT DEFAULT '',
+    metadata  TEXT DEFAULT '{}',
+    ip        TEXT DEFAULT '',
+    createdAt TEXT DEFAULT (datetime('now'))
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_audit_logs_created ON audit_logs(createdAt DESC);
+  CREATE INDEX IF NOT EXISTS idx_audit_logs_action ON audit_logs(action);
 `);
 
 const ARTICLE_QUALITY_COLUMNS = [
@@ -488,11 +532,166 @@ function autoAssignCollections(articles) {
     tx();
 }
 
+// ─── Auth / RBAC ─────────────────────────────────────────
+
+const ROLES = new Set(['owner', 'operator', 'reader']);
+
+function safeRole(role) {
+    return ROLES.has(role) ? role : 'reader';
+}
+
+function normalizeEmail(email) {
+    return String(email || '').trim().toLowerCase();
+}
+
+function countUsers() {
+    return db.prepare('SELECT COUNT(*) as count FROM users').get().count;
+}
+
+function createUser({ email, name = '', role = 'reader', passwordHash, passwordSalt, active = 1 }) {
+    return db.prepare(`
+        INSERT INTO users (email, name, role, passwordHash, passwordSalt, active)
+        VALUES (@email, @name, @role, @passwordHash, @passwordSalt, @active)
+    `).run({
+        email: normalizeEmail(email),
+        name: String(name || '').slice(0, 100),
+        role: safeRole(role),
+        passwordHash,
+        passwordSalt,
+        active: active ? 1 : 0,
+    });
+}
+
+function getUserByEmail(email) {
+    return db.prepare('SELECT * FROM users WHERE email = @email').get({ email: normalizeEmail(email) });
+}
+
+function getUserById(id) {
+    return db.prepare('SELECT * FROM users WHERE id = @id').get({ id });
+}
+
+function listUsers() {
+    return db.prepare(`
+        SELECT id, email, name, role, active, createdAt, updatedAt, lastLoginAt
+        FROM users
+        ORDER BY role = 'owner' DESC, createdAt ASC
+    `).all();
+}
+
+function updateUser(id, fields = {}) {
+    const current = getUserById(id);
+    if (!current) return null;
+    const next = {
+        id,
+        email: normalizeEmail(fields.email || current.email),
+        name: fields.name === undefined ? current.name : String(fields.name || '').slice(0, 100),
+        role: fields.role === undefined ? current.role : safeRole(fields.role),
+        active: fields.active === undefined ? current.active : (fields.active ? 1 : 0),
+        passwordHash: fields.passwordHash || current.passwordHash,
+        passwordSalt: fields.passwordSalt || current.passwordSalt,
+    };
+    db.prepare(`
+        UPDATE users
+        SET email = @email,
+            name = @name,
+            role = @role,
+            active = @active,
+            passwordHash = @passwordHash,
+            passwordSalt = @passwordSalt,
+            updatedAt = datetime('now')
+        WHERE id = @id
+    `).run(next);
+    return getUserById(id);
+}
+
+function touchUserLogin(id) {
+    return db.prepare('UPDATE users SET lastLoginAt = datetime(\'now\') WHERE id = @id').run({ id });
+}
+
+function createSession({ userId, tokenHash, expiresAt }) {
+    return db.prepare(`
+        INSERT INTO sessions (userId, tokenHash, expiresAt)
+        VALUES (@userId, @tokenHash, @expiresAt)
+    `).run({ userId, tokenHash, expiresAt });
+}
+
+function getSessionByTokenHash(tokenHash) {
+    return db.prepare(`
+        SELECT s.id as sessionId,
+               s.userId as id,
+               s.tokenHash,
+               s.createdAt,
+               s.expiresAt,
+               s.lastSeenAt,
+               u.email,
+               u.name,
+               u.role,
+               u.active
+        FROM sessions s
+        JOIN users u ON u.id = s.userId
+        WHERE s.tokenHash = @tokenHash
+          AND s.expiresAt > datetime('now')
+          AND u.active = 1
+    `).get({ tokenHash });
+}
+
+function touchSession(tokenHash) {
+    return db.prepare('UPDATE sessions SET lastSeenAt = datetime(\'now\') WHERE tokenHash = @tokenHash').run({ tokenHash });
+}
+
+function deleteSession(tokenHash) {
+    return db.prepare('DELETE FROM sessions WHERE tokenHash = @tokenHash').run({ tokenHash });
+}
+
+function deleteExpiredSessions() {
+    return db.prepare('DELETE FROM sessions WHERE expiresAt <= datetime(\'now\')').run();
+}
+
+function logAudit({ user, action, target = '', metadata = {}, ip = '' } = {}) {
+    const safeMetadata = JSON.stringify(metadata || {}).slice(0, 2000);
+    return db.prepare(`
+        INSERT INTO audit_logs (userId, email, role, action, target, metadata, ip)
+        VALUES (@userId, @email, @role, @action, @target, @metadata, @ip)
+    `).run({
+        userId: user?.id || null,
+        email: user?.email || '',
+        role: user?.role || '',
+        action: String(action || '').slice(0, 80),
+        target: String(target || '').slice(0, 200),
+        metadata: safeMetadata,
+        ip: String(ip || '').slice(0, 80),
+    });
+}
+
+function listAuditLogs({ limit = 100 } = {}) {
+    const lim = Math.min(500, Math.max(1, parseInt(limit, 10) || 100));
+    return db.prepare(`
+        SELECT id, userId, email, role, action, target, metadata, ip, createdAt
+        FROM audit_logs
+        ORDER BY id DESC
+        LIMIT @limit
+    `).all({ limit: lim }).map(row => ({
+        ...row,
+        metadata: safeJson(row.metadata),
+    }));
+}
+
+function safeJson(value) {
+    try {
+        return JSON.parse(value || '{}');
+    } catch {
+        return {};
+    }
+}
+
 module.exports = {
     upsertArticle, upsertMany, searchArticles, getStats, getAllSources, getArticleById,
     getTrendingKeywords,
     addSubscriber, removeSubscriber, getActiveSubscribers, getArticlesSince,
     logFetchRun, getSourceHealth,
     getCollections, getCollectionItems, addToCollection, removeFromCollection,
-    createCollection, deleteCollection, autoAssignCollections
+    createCollection, deleteCollection, autoAssignCollections,
+    countUsers, createUser, getUserByEmail, getUserById, listUsers, updateUser,
+    touchUserLogin, createSession, getSessionByTokenHash, touchSession,
+    deleteSession, deleteExpiredSessions, logAudit, listAuditLogs
 };

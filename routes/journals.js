@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const fetcher = require('../services/fetcher');
+const { requireRole } = require('../middleware/auth');
 const { fetchRSS, DEMO_DATA } = fetcher;
 
-router.get('/journals', async (req, res) => {
+router.get('/journals', requireRole('owner', 'operator'), async (req, res) => {
     try {
         const feeds = [
             { url: 'https://www.nature.com/subjects/neuroscience.rss', name: 'Nature Neuroscience' },
