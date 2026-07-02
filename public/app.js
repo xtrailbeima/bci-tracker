@@ -383,8 +383,11 @@ function createCard(item) {
     const dotClass = getDotClass(item.provider);
     const dateStr = formatDate(item.date);
     const impLevel = item.importanceLevel || 'low';
-    const impScore = item.importance || 0;
+    const hasImportanceScore = typeof item.importance === 'number';
+    const impScore = hasImportanceScore ? item.importance : 0;
     const impLabel = { critical: '🔴 关键', high: '🟡 重要', medium: '🔵 一般', low: '⚪ 参考' }[impLevel] || '参考';
+    const impTitle = hasImportanceScore ? `重要性评分: ${impScore}` : '重要性等级';
+    const impText = hasImportanceScore ? `${impLabel} ${impScore}` : impLabel;
     const titleZhHtml = item.titleZh ? `<p class="card-title-zh">${escapeHtml(item.titleZh)}</p>` : '';
 
     return `
@@ -397,7 +400,7 @@ function createCard(item) {
           </a>
         </div>
         <div class="card-badges">
-          <span class="card-importance importance-${impLevel}" title="重要性评分: ${impScore}">${impLabel} ${impScore}</span>
+          <span class="card-importance importance-${impLevel}" title="${impTitle}">${impText}</span>
           <span class="card-badge ${badgeClass}">${badgeLabel}</span>
         </div>
       </div>

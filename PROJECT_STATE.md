@@ -76,6 +76,10 @@ Build BCI Tracker V2 as an investor-facing BCI intelligence workspace:
   - `/api/summary` remains available as a local compatibility endpoint with the old `sections` shape
   - the route no longer reads `HUNYUAN_API_KEY` or calls the offline `hunyuan-turbo` model
   - smoke coverage now asserts the local compatibility provider and Hunyuan retirement marker
+- Added reader-facing article redaction:
+  - `/api/all` and `/api/collections/:id` strip exact `importance`, fetch diagnostics, source quality fields, fetch errors, and internal collection metadata for `reader`
+  - front-end article cards fall back to importance level only when the exact score is absent
+  - smoke coverage asserts reader redaction while owner still receives full diagnostic fields
 
 ## Current Verification
 
@@ -86,6 +90,8 @@ Last known completed checks:
 - `node scripts/test_matching_context.js`: passed
 - `npm test`: passed, 157 passed / 0 failed after commit `19e59b3`, including auth/RBAC, reader cleanup, local `/api/summary` compatibility, and self-start/self-stop behavior
 - `npm run verify`: passed, 157 passed / 0 failed after adding the matching context generator
+- `npm test`: passed, 168 passed / 0 failed after reader article redaction
+- `npm run verify`: passed, 168 passed / 0 failed after reader article redaction
 - Remote `npm run verify` on Tencent Cloud after commit `8814596`: passed, 98 passed / 0 failed
 - Remote listener check after commit `8814596`: Node app listens on `127.0.0.1:4000`; `https://njubci.com/` returns 200; direct `http://111.229.73.49:4000/` no longer returns the app page
 - Remote `npm run verify` on Tencent Cloud after commit `b2702b4`: passed, 111 passed / 0 failed

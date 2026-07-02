@@ -78,6 +78,16 @@ async function testAuthFlow() {
     assert(readerLogin.user.role === 'reader', 'reader login works');
     const readerCanRead = await request('/api/all?limit=1');
     assert(readerCanRead.ok, `reader can read feed (${readerCanRead.status})`);
+    const readerFeed = await readerCanRead.json();
+    const readerItem = (readerFeed.items || [])[0];
+    assert(readerItem && typeof readerItem.title === 'string', 'reader feed returns readable article fields');
+    if (readerItem) {
+        for (const field of ['importance', 'accessStatus', 'contentQuality', 'sourceReliability', 'extractionMethod', 'lastFetchStatus', 'lastFetchError', 'fetchedAt']) {
+            assert(!Object.prototype.hasOwnProperty.call(readerItem, field), `reader feed hides ${field}`);
+        }
+        assert(typeof readerItem.importanceLevel === 'string', 'reader feed keeps importanceLevel');
+        assert(typeof readerItem.url === 'string', 'reader feed keeps source URL');
+    }
     const readerCannotImport = await request('/api/import', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },

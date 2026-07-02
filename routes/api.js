@@ -13,6 +13,40 @@ function audit(req, action, target, metadata) {
     logAudit({ user: req.user, action, target, metadata, ip: req.ip });
 }
 
+const READER_HIDDEN_ARTICLE_FIELDS = [
+    'importance',
+    'accessStatus',
+    'contentQuality',
+    'sourceReliability',
+    'extractionMethod',
+    'lastFetchStatus',
+    'lastFetchError',
+    'fetchedAt',
+    'addedBy',
+    'collectedAt',
+];
+
+function sanitizeArticleForRole(user, article) {
+    if (user?.role !== 'reader' || !article || typeof article !== 'object') {
+        return article;
+    }
+    const sanitized = { ...article };
+    for (const field of READER_HIDDEN_ARTICLE_FIELDS) {
+        delete sanitized[field];
+    }
+    return sanitized;
+}
+
+function sanitizeArticleResultForRole(user, result) {
+    if (user?.role !== 'reader' || !result || !Array.isArray(result.items)) {
+        return result;
+    }
+    return {
+        ...result,
+        items: result.items.map(item => sanitizeArticleForRole(user, item)),
+    };
+}
+
 // ─── API: All (from database) ─────────────────────────────
 
 router.get('/all', (req, res) => {
@@ -28,7 +62,7 @@ router.get('/all', (req, res) => {
             dateFrom: from || undefined,
             dateTo: to || undefined
         });
-        res.json(result);
+        res.json(sanitizeArticleResultForRole(req.user, result));
     } catch (err) {
         console.error('DB query error:', err.message);
         res.json({ items: [], total: 0, page: 1, limit: 50, hasMore: false });
@@ -70,7 +104,7 @@ router.get('/collections/:id', (req, res) => {
             page: parseInt(page) || 1,
             limit: parseInt(limit) || 50
         });
-        res.json(data);
+        res.json(sanitizeArticleResultForRole(req.user, data));
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
