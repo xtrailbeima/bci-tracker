@@ -86,7 +86,8 @@ Last known completed checks:
 - Server-side HTTPS/SNI check after commit `b2702b4`: `https://njubci.com/` returns 200 with the v5.0 login gate; unauthenticated `https://njubci.com/api/all` returns 401
 - Remote `npm run verify` on Tencent Cloud after commit `19e59b3`: passed, 149 passed / 0 failed
 - Server-side HTTPS/SNI check after commit `19e59b3`: `https://njubci.com/` returns 200 with the v5.0 login gate; unauthenticated `https://njubci.com/api/all` returns 401
-- Local-machine HTTPS checks may fail with `SSL_ERROR_SYSCALL` if the current network/proxy path does not reach Nginx; server-side Nginx checks and remote verification are the source of truth until the browser path is re-tested from a normal network
+- Local-machine HTTPS checks may fail with `SSL_ERROR_SYSCALL` / Chrome `ERR_CONNECTION_CLOSED` when the current Mac resolves `njubci.com` to `198.18.x.x` fake-ip through a proxy/TUN path; those failed requests do not appear in Nginx logs.
+- Public DoH checked from this machine resolves `njubci.com` to `111.229.73.49`; server-side Nginx checks and remote verification are the source of truth until the browser/proxy path is bypassed or tested from a non-proxy network.
 - `matching_reports/2026-06-28.md`: generated as workflow validation report
 
 Re-run checks after each new implementation slice.
@@ -117,7 +118,7 @@ Re-run checks after each new implementation slice.
 
 ## Next Step
 
-1. Re-test `https://njubci.com/` from the user's browser or a non-proxy network; if it still fails, inspect Tencent Cloud Lighthouse firewall/security rules for `TCP 443`.
+1. Re-test `https://njubci.com/` from a non-proxy network or add `njubci.com` / `111.229.73.49` to the local proxy DIRECT/bypass rule; if it still fails without fake-ip routing, inspect Tencent Cloud Lighthouse firewall/security rules for `TCP 443`.
 2. Decide whether the next matching run should remain manual Codex output or become a reusable local script/template.
 3. Keep highly sensitive project material restricted to project profile summaries unless the user explicitly asks to read BP/interview detail.
 4. After explicit browser-action confirmation, remove the now-unneeded Tencent Cloud firewall rule for public `TCP 4000`; code already binds the app to localhost, but the cloud rule should still be cleaned up.
