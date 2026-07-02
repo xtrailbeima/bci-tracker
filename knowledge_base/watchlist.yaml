@@ -8,7 +8,48 @@ companies:
     - Blackrock Neurotech
     - Paradromics
     - Axoft
-  emerging: []
+  emerging:
+    - Science
+    - Precision Neuroscience
+    - Forest Neurotech
+    - Nudge
+    - Merge Labs
+  china:
+    - 脑虎科技
+    - 强脑科技
+    - 术理创新
+    - 格式塔科技
+    - 脑智天地
+    - 思昇科技
+    - 脑思科技
+    - 神机妙控
+    - 微灵医疗
+    - 空山慈科技
+
+companyAliases:
+  Blackrock Neurotech:
+    - Blackrock
+    - Blackrock Microsystems
+  Synchron:
+    - Stentrode
+  Paradromics:
+    - Connexus
+  Science:
+    - Science Corporation
+  Precision Neuroscience:
+    - Precision
+  脑虎科技:
+    - NeuraLace
+    - Brain Tiger
+  强脑科技:
+    - BrainCo
+    - 博睿康
+  格式塔科技:
+    - Gestalt
+  思昇科技:
+    - 思升科技
+  微灵医疗:
+    - 微灵
 
 technologyRoutes:
   - invasive BCI
@@ -19,12 +60,67 @@ technologyRoutes:
   - speech decoding
   - ultrasound neuromodulation
 
+technologyRouteAliases:
+  invasive BCI:
+    - 侵入式脑机接口
+    - 植入式脑机接口
+    - 微创植入式
+    - 皮层电极
+    - 脑内植入
+  endovascular BCI:
+    - 血管内脑机接口
+    - 支架电极
+    - 血管支架电极
+  flexible electrode:
+    - 柔性微电极
+    - 柔性电极
+    - 薄膜电极
+    - 软电极
+    - 高通量柔性
+  non-invasive BCI:
+    - 无创脑机接口
+    - 非侵入式脑机接口
+    - 无创
+    - 可穿戴脑机接口
+  EEG decoding:
+    - EEG
+    - 脑电
+    - 脑电解码
+    - 运动想象
+  speech decoding:
+    - 语音解码
+    - 语言解码
+    - 脑到文本
+    - 脑控打字
+  ultrasound neuromodulation:
+    - 超声脑机接口
+    - 超声波脑机接口
+    - 聚焦超声
+    - 超声神经调控
+
 indications:
   - ALS
   - paralysis
   - Parkinson's disease
   - depression
   - communication assistance
+
+indicationAliases:
+  ALS:
+    - 渐冻症
+    - 肌萎缩侧索硬化
+  paralysis:
+    - 瘫痪
+    - 四肢瘫痪
+    - 脊髓损伤
+  Parkinson's disease:
+    - 帕金森
+  depression:
+    - 抑郁
+  communication assistance:
+    - 沟通辅助
+    - 交流辅助
+    - 语音辅助
 
 policySources:
   - FDA

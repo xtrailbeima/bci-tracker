@@ -41,6 +41,17 @@ Useful options:
 
 DeepSeek event structuring can replace or refine this heuristic later, but only for public external intelligence.
 
+## Event Deduplication
+
+The export loop deduplicates repeated public coverage by default. This is intended to prevent the same financing, regulatory milestone, or company update from being counted as multiple independent investment signals when it appears in Google News, RSS, or copied media coverage.
+
+- Raw article records remain unchanged in SQLite.
+- Deduplication happens only in `external_events/YYYY-MM-DD.json`.
+- A merged event keeps all unique `sources`.
+- `sourceCount` records how many public sources support the event.
+- `duplicateTitles` and `mergedEventIds` keep the merge explainable.
+- Use `--no-dedupe` only for debugging raw article-to-event mapping.
+
 ## Sensitivity Policy
 
 - `public_like`: public or already-shareable material; Codex may read linked summaries and notes when requested.

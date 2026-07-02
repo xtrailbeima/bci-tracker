@@ -49,6 +49,17 @@ function validateEvent(event, index, file) {
     if (typeof event.confidence !== 'number' || event.confidence < 0 || event.confidence > 1) {
         fail(`${label} confidence must be 0-1`);
     }
+    if ('sourceCount' in event && (!Number.isInteger(event.sourceCount) || event.sourceCount !== event.sources.length)) {
+        fail(`${label} sourceCount must equal sources.length`);
+    }
+    for (const key of ['duplicateTitles', 'mergedEventIds']) {
+        if (key in event && (!Array.isArray(event[key]) || event[key].some(item => typeof item !== 'string'))) {
+            fail(`${label} "${key}" must be a string array`);
+        }
+    }
+    if ('dedupeKey' in event && (typeof event.dedupeKey !== 'string' || event.dedupeKey.trim() === '')) {
+        fail(`${label} dedupeKey must be a non-empty string`);
+    }
     for (const key of ['id', 'date', 'eventType', 'title', 'summary']) {
         if (typeof event[key] !== 'string' || event[key].trim() === '') fail(`${label} "${key}" must be a non-empty string`);
     }

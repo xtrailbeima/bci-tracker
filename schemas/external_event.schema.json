@@ -37,7 +37,11 @@
           "investmentSignal": { "enum": ["positive", "neutral", "negative", "watch"] },
           "importanceScore": { "type": "number", "minimum": 0, "maximum": 100 },
           "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
-          "sources": { "type": "array" }
+          "sources": { "type": "array" },
+          "dedupeKey": { "type": "string" },
+          "sourceCount": { "type": "integer", "minimum": 1 },
+          "duplicateTitles": { "type": "array", "items": { "type": "string" } },
+          "mergedEventIds": { "type": "array", "items": { "type": "string" } }
         }
       }
     }

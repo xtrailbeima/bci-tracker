@@ -6,8 +6,8 @@
     "scripts": {
         "start": "node --env-file=.env server.js",
         "dev": "node --env-file=.env server.js",
-        "test": "node --env-file=.env test/smoke.js",
-        "verify": "node -c server.js && node -c routes/api.js && node -c services/fetcher.js && node -c services/import.js && node -c public/app.js && node -c scripts/export_external_events.js && node --env-file=.env test/smoke.js",
+        "test": "node scripts/run_smoke_with_server.js",
+        "verify": "node -c server.js && node -c routes/api.js && node -c services/fetcher.js && node -c services/import.js && node -c services/deepseek.js && node -c public/app.js && node -c scripts/export_external_events.js && node -c scripts/run_smoke_with_server.js && node -c scripts/test_external_event_dedupe.js && node -c scripts/test_import_security.js && node -c scripts/test_deepseek_json.js && node scripts/test_external_event_dedupe.js && node scripts/test_import_security.js && node scripts/test_deepseek_json.js && node scripts/run_smoke_with_server.js",
         "export:events": "node scripts/export_external_events.js",
         "validate:events": "node scripts/validate_external_events.js",
         "validate:knowledge": "node scripts/validate_knowledge_base.js",

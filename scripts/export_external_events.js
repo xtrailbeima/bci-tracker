@@ -22,6 +22,9 @@ const DEFAULT_WATCHLIST = {
     ],
     indications: ['ALS', 'paralysis', "Parkinson's disease", 'depression', 'communication assistance'],
     policySources: ['FDA', 'ClinicalTrials.gov', 'NMPA', 'NIH', 'DARPA'],
+    companyAliases: {},
+    technologyRouteAliases: {},
+    indicationAliases: {},
 };
 
 const COMPANY_ALIASES = {
@@ -50,6 +53,16 @@ const INDICATION_KEYWORDS = [
     { label: 'communication assistance', terms: ['communication', 'speech', 'brain-to-text', 'typing', '交流', '沟通', '语音', '打字'] },
 ];
 
+const EVENT_DEDUPE_WINDOWS = {
+    financing: 90,
+    regulatory: 45,
+    clinical_milestone: 45,
+    company_update: 14,
+    market_news: 7,
+    research_publication: 7,
+    public_video: 2,
+};
+
 function parseArgs(argv) {
     const args = {
         date: todayLocal(),
@@ -59,6 +72,7 @@ function parseArgs(argv) {
         minImportance: 0,
         out: '',
         stdout: false,
+        dedupe: true,
     };
 
     for (let i = 0; i < argv.length; i++) {
@@ -71,6 +85,7 @@ function parseArgs(argv) {
         else if (arg === '--min-importance' && next) args.minImportance = clampInt(next, 0, 100, 0), i++;
         else if (arg === '--out' && next) args.out = next, i++;
         else if (arg === '--stdout') args.stdout = true;
+        else if (arg === '--no-dedupe') args.dedupe = false;
         else if (arg === '--help' || arg === '-h') {
             printUsage();
             process.exit(0);
@@ -106,24 +121,54 @@ function parseSimpleWatchlist(file) {
     if (!fs.existsSync(file)) return watchlist;
 
     let current = '';
-    for (const line of fs.readFileSync(file, 'utf8').split(/\r?\n/)) {
+    let nested = '';
+    for (const rawLine of fs.readFileSync(file, 'utf8').split(/\r?\n/)) {
+        const line = rawLine.replace(/\s+#.*$/, '');
+        if (!line.trim()) continue;
+
         const top = line.match(/^([A-Za-z][A-Za-z0-9_]*):\s*$/);
         if (top) {
             current = top[1];
-            if (!Array.isArray(watchlist[current])) watchlist[current] = [];
+            nested = '';
+            if (!(current in watchlist)) watchlist[current] = {};
+            continue;
+        }
+
+        const child = line.match(/^\s{2}([^:\n]+):\s*$/);
+        if (child) {
+            nested = child[1].trim();
+            if (current === 'companies') {
+                if (!watchlist.companyGroups) watchlist.companyGroups = {};
+                watchlist.companyGroups[nested] = [];
+            } else if (isAliasMapKey(current)) {
+                if (!watchlist[current]) watchlist[current] = {};
+                watchlist[current][nested] = [];
+            }
             continue;
         }
 
         const item = line.match(/^\s*-\s+(.+?)\s*$/);
-        if (item && Array.isArray(watchlist[current])) {
-            watchlist[current].push(item[1].replace(/^["']|["']$/g, ''));
+        if (item) {
+            const value = item[1].replace(/^["']|["']$/g, '');
+            if (current === 'companies') {
+                watchlist.companies.push(value);
+                if (nested && watchlist.companyGroups) watchlist.companyGroups[nested].push(value);
+            } else if (isAliasMapKey(current) && nested) {
+                watchlist[current][nested].push(value);
+            } else if (Array.isArray(watchlist[current])) {
+                watchlist[current].push(value);
+            }
         }
     }
 
     for (const key of Object.keys(watchlist)) {
-        watchlist[key] = [...new Set(watchlist[key])];
+        if (Array.isArray(watchlist[key])) watchlist[key] = [...new Set(watchlist[key])];
     }
     return watchlist;
+}
+
+function isAliasMapKey(key) {
+    return ['companyAliases', 'technologyRouteAliases', 'indicationAliases'].includes(key);
 }
 
 function cleanText(value) {
@@ -145,14 +190,33 @@ function textOf(article) {
     return cleanText(`${article.title || ''} ${article.abstract || ''} ${article.source || ''} ${article.provider || ''}`).toLowerCase();
 }
 
+function contentTextOf(article) {
+    return cleanText(`${article.title || ''} ${article.abstract || ''}`).toLowerCase();
+}
+
+function escapeRegExp(value) {
+    return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function hasTerm(text, term) {
+    const needle = cleanText(term).toLowerCase();
+    if (!needle) return false;
+    if (/^[a-z0-9][a-z0-9\s.&+/$-]*$/i.test(needle)) {
+        const pattern = escapeRegExp(needle).replace(/\s+/g, '\\s+');
+        return new RegExp(`(^|[^a-z0-9])${pattern}($|[^a-z0-9])`, 'i').test(text);
+    }
+    return text.includes(needle);
+}
+
 function hasAny(text, terms) {
-    return terms.some(term => text.includes(String(term).toLowerCase()));
+    return terms.some(term => hasTerm(text, term));
 }
 
 function matchCompanies(text, watchlist) {
     const matches = new Set();
-    for (const company of watchlist.companies || []) {
-        const aliases = COMPANY_ALIASES[company] || [company];
+    const companyNames = [...new Set([...(watchlist.companies || []), ...Object.keys(watchlist.companyAliases || {})])];
+    for (const company of companyNames) {
+        const aliases = [company, ...(COMPANY_ALIASES[company] || []), ...((watchlist.companyAliases || {})[company] || [])];
         if (hasAny(text, aliases)) matches.add(company);
     }
     return [...matches];
@@ -173,13 +237,14 @@ function extractCompanyCandidates(article) {
     return [...candidates].filter(name => !/[|丨]/.test(name));
 }
 
-function matchLabeledTerms(text, keywordSets, watchTerms = []) {
+function matchLabeledTerms(text, keywordSets, watchTerms = [], aliasMap = {}) {
     const matches = new Set();
     for (const item of keywordSets) {
-        if (hasAny(text, item.terms)) matches.add(item.label);
+        if (hasAny(text, [...item.terms, ...((aliasMap || {})[item.label] || [])])) matches.add(item.label);
     }
     for (const term of watchTerms) {
-        if (text.includes(String(term).toLowerCase())) matches.add(term);
+        const terms = [term, ...((aliasMap || {})[term] || [])];
+        if (hasAny(text, terms)) matches.add(term);
     }
     return [...matches];
 }
@@ -196,7 +261,11 @@ function inferEventType(text, article, watchlist) {
     }
     if (article.category === 'journal' || article.category === 'preprint') return 'research_publication';
     if (article.category === 'video') return 'public_video';
-    if (hasAny(text, watchlist.companies || [])) return 'company_update';
+    const companyTerms = [
+        ...(watchlist.companies || []),
+        ...Object.values(watchlist.companyAliases || {}).flat(),
+    ];
+    if (hasAny(text, companyTerms)) return 'company_update';
     return 'market_news';
 }
 
@@ -242,6 +311,156 @@ function truncate(value, max) {
     return `${text.slice(0, max - 1)}…`;
 }
 
+function uniqueStrings(values) {
+    return [...new Set((values || []).map(v => cleanText(v)).filter(Boolean))];
+}
+
+function normalizeTitleForDedupe(value) {
+    return cleanText(value)
+        .toLowerCase()
+        .replace(/\s[-–—]\s[^-–—]{2,80}$/u, '')
+        .replace(/[丨|].{2,50}$/u, '')
+        .replace(/https?:\/\/\S+/g, ' ')
+        .replace(/[^\p{L}\p{N}\s]+/gu, ' ')
+        .replace(/\b(brain computer interface|brain-computer interface|bci|脑机接口)\b/gi, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function bigrams(value) {
+    const text = normalizeTitleForDedupe(value).replace(/\s+/g, '');
+    if (!text) return [];
+    if (text.length <= 2) return [text];
+    const grams = [];
+    for (let i = 0; i < text.length - 1; i++) grams.push(text.slice(i, i + 2));
+    return grams;
+}
+
+function titleSimilarity(a, b) {
+    const left = new Set(bigrams(a));
+    const right = new Set(bigrams(b));
+    if (left.size === 0 || right.size === 0) return 0;
+    let overlap = 0;
+    for (const gram of left) if (right.has(gram)) overlap++;
+    return overlap / (left.size + right.size - overlap);
+}
+
+function financingSignature(value) {
+    const text = cleanText(value).toLowerCase();
+    const round = text.match(/\bseries\s+[a-e]\b|[a-e]轮|天使轮|angel round|seed round|pre-a/iu)?.[0] || '';
+    const amount = text.match(/(?:us\$|\$)\s*\d+(?:\.\d+)?\s*(?:m|million|b|billion)?|\d+(?:\.\d+)?\s*(?:million|billion|亿元|亿|万元|万)|数亿元|超\d+(?:\.\d+)?亿元/iu)?.[0] || '';
+    const normalizedRound = round.replace(/\s+/g, ' ').trim();
+    const normalizedAmount = amount
+        .replace(/\s+/g, '')
+        .replace(/^us\$/, '$')
+        .replace(/million$/i, 'm')
+        .replace(/billion$/i, 'b');
+    return cleanText(`${normalizedRound}|${normalizedAmount}`);
+}
+
+function sameFinancingDetails(a, b) {
+    const left = financingSignature(`${a.title} ${a.summary}`);
+    const right = financingSignature(`${b.title} ${b.summary}`);
+    return left !== '' && left === right;
+}
+
+function dateDistanceDays(a, b) {
+    const left = new Date(a || '').getTime();
+    const right = new Date(b || '').getTime();
+    if (Number.isNaN(left) || Number.isNaN(right)) return Infinity;
+    return Math.abs(left - right) / 86400000;
+}
+
+function companyOverlap(a, b) {
+    const left = new Set((a.companies || []).map(v => cleanText(v).toLowerCase()));
+    return (b.companies || []).some(v => left.has(cleanText(v).toLowerCase()));
+}
+
+function uniqueSources(sources) {
+    const seen = new Set();
+    const result = [];
+    for (const source of sources || []) {
+        const key = source.url || `${source.provider || ''}:${source.title || ''}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        result.push(source);
+    }
+    return result;
+}
+
+function eventDedupeKey(event) {
+    const dateBucket = ['financing', 'regulatory', 'clinical_milestone'].includes(event.eventType)
+        ? String(event.date || '').slice(0, 7)
+        : String(event.date || '').slice(0, 10);
+    const companies = uniqueStrings(event.companies).sort().join('|');
+    const title = normalizeTitleForDedupe(event.title).slice(0, 80);
+    const base = [event.eventType, dateBucket, companies || title].join('|');
+    return crypto.createHash('sha1').update(base).digest('hex').slice(0, 12);
+}
+
+function areDuplicateEvents(a, b) {
+    if (a.eventType !== b.eventType) return false;
+    const maxDays = EVENT_DEDUPE_WINDOWS[a.eventType] || 7;
+    if (dateDistanceDays(a.date, b.date) > maxDays) return false;
+
+    const similarity = titleSimilarity(a.title, b.title);
+    if (companyOverlap(a, b)) {
+        if (a.eventType === 'financing' && sameFinancingDetails(a, b)) return true;
+        if (['financing', 'regulatory', 'clinical_milestone'].includes(a.eventType)) return similarity >= 0.4;
+        return similarity >= 0.55;
+    }
+    return similarity >= 0.82;
+}
+
+function mergeEvents(primary, duplicate) {
+    const sources = uniqueSources([...(primary.sources || []), ...(duplicate.sources || [])]);
+    const mergedIds = uniqueStrings([primary.id, ...(primary.mergedEventIds || []), duplicate.id, ...(duplicate.mergedEventIds || [])]);
+    const duplicateTitles = uniqueStrings([
+        ...(primary.duplicateTitles || []),
+        duplicate.title,
+        ...(duplicate.sources || []).map(source => source.title),
+    ]).filter(title => title !== primary.title).slice(0, 8);
+    const confidence = Math.min(0.98, Math.max(primary.confidence || 0, duplicate.confidence || 0) + Math.log2(sources.length) * 0.03);
+
+    return {
+        ...primary,
+        date: new Date(duplicate.date || 0) > new Date(primary.date || 0) ? duplicate.date : primary.date,
+        summary: cleanText(duplicate.summary).length > cleanText(primary.summary).length ? duplicate.summary : primary.summary,
+        companies: uniqueStrings([...(primary.companies || []), ...(duplicate.companies || [])]),
+        technologyRoutes: uniqueStrings([...(primary.technologyRoutes || []), ...(duplicate.technologyRoutes || [])]),
+        indications: uniqueStrings([...(primary.indications || []), ...(duplicate.indications || [])]),
+        investmentSignal: combineSignals(primary.investmentSignal, duplicate.investmentSignal),
+        importanceScore: Math.max(primary.importanceScore || 0, duplicate.importanceScore || 0),
+        confidence: Number(confidence.toFixed(2)),
+        sources,
+        sourceCount: sources.length,
+        duplicateTitles,
+        mergedEventIds: mergedIds,
+        dedupeKey: primary.dedupeKey || eventDedupeKey(primary),
+    };
+}
+
+function combineSignals(a, b) {
+    const rank = { negative: 4, positive: 3, watch: 2, neutral: 1 };
+    return (rank[b] || 0) > (rank[a] || 0) ? b : a;
+}
+
+function dedupeEvents(events) {
+    const deduped = [];
+    for (const event of events) {
+        const enriched = {
+            ...event,
+            dedupeKey: eventDedupeKey(event),
+            sourceCount: (event.sources || []).length,
+            mergedEventIds: [event.id],
+        };
+        const index = deduped.findIndex(existing => areDuplicateEvents(existing, enriched));
+        if (index === -1) deduped.push(enriched);
+        else deduped[index] = mergeEvents(deduped[index], enriched);
+    }
+    return deduped;
+}
+
 function stableEventId(article) {
     const base = article.url || `${article.id}-${article.title}`;
     const hash = crypto.createHash('sha1').update(base).digest('hex').slice(0, 10);
@@ -250,10 +469,11 @@ function stableEventId(article) {
 
 function articleToEvent(article, watchlist, outputDate) {
     const text = textOf(article);
+    const contentText = contentTextOf(article);
     const eventType = inferEventType(text, article, watchlist);
-    const companies = [...new Set([...matchCompanies(text, watchlist), ...extractCompanyCandidates(article)])];
-    const technologyRoutes = matchLabeledTerms(text, ROUTE_KEYWORDS, watchlist.technologyRoutes);
-    const indications = matchLabeledTerms(text, INDICATION_KEYWORDS, watchlist.indications);
+    const companies = [...new Set([...matchCompanies(contentText, watchlist), ...extractCompanyCandidates(article)])];
+    const technologyRoutes = matchLabeledTerms(contentText, ROUTE_KEYWORDS, watchlist.technologyRoutes, watchlist.technologyRouteAliases);
+    const indications = matchLabeledTerms(contentText, INDICATION_KEYWORDS, watchlist.indications, watchlist.indicationAliases);
     return {
         id: stableEventId(article),
         date: dateOnly(article.date, outputDate),
@@ -289,15 +509,18 @@ function buildPayload(args) {
         dateTo: args.to || undefined,
     });
     const items = (result.items || []).filter(item => Number(item.importance || 0) >= args.minImportance);
-    const events = items.map(item => articleToEvent(item, watchlist, args.date));
+    const candidateEvents = items.map(item => articleToEvent(item, watchlist, args.date));
+    const events = args.dedupe ? dedupeEvents(candidateEvents) : candidateEvents;
     return {
         generatedAt: new Date().toISOString(),
         source: {
             table: 'articles',
+            inputCount: items.length,
             count: events.length,
             from: args.from || null,
             to: args.to || null,
             minImportance: args.minImportance,
+            dedupe: args.dedupe,
         },
         events,
     };
@@ -305,7 +528,7 @@ function buildPayload(args) {
 
 function printUsage() {
     console.log(`Usage:
-  npm run export:events -- [--date YYYY-MM-DD] [--from ISO_DATE] [--to ISO_DATE] [--limit N] [--min-importance N]
+  npm run export:events -- [--date YYYY-MM-DD] [--from ISO_DATE] [--to ISO_DATE] [--limit N] [--min-importance N] [--no-dedupe]
   npm run export:events -- --out /tmp/events.json
   npm run export:events -- --stdout`);
 }
@@ -330,5 +553,6 @@ if (require.main === module) main();
 module.exports = {
     articleToEvent,
     buildPayload,
+    dedupeEvents,
     parseSimpleWatchlist,
 };

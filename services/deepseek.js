@@ -194,8 +194,28 @@ function parseJsonResponse(rawText) {
     } catch (repairErr) {
         console.error('DeepSeek JSON parse failed:', repairErr.message);
         console.error('Raw response (first 500 chars):', rawText.slice(0, 500));
-        throw new Error('DeepSeek 返回数据解析失败');
+        const err = new Error('DeepSeek 返回数据解析失败');
+        err.code = 'DEEPSEEK_JSON_PARSE_FAILED';
+        throw err;
     }
+}
+
+function fallbackArticleAnalysis(article, reason) {
+    return {
+        summary: (article.abstract || article.title || 'DeepSeek 返回内容解析失败，已生成基础占位分析。').slice(0, 150),
+        keyFindings: [
+            'DeepSeek 返回了非标准 JSON，本次分析需要人工确认。',
+            '原文已成功读取，系统未暴露 API key 或内部错误堆栈。',
+            '建议稍后重试 AI 分析，或先按标题、来源和重要性分数进行人工初筛。'
+        ],
+        investmentAnalysis: 'AI 上游响应解析失败，暂不生成强投资判断。建议等待下一次稳定响应后再用于投资决策。',
+        marketImpact: '待人工确认。',
+        competitiveInsight: '待人工确认。',
+        investmentScore: 5,
+        tags: ['needs_review', 'json_parse_failed'],
+        degraded: true,
+        reason,
+    };
 }
 
 // ─── 公共接口 ─────────────────────────────────────────────
@@ -238,12 +258,21 @@ async function analyzeArticle(article) {
   "tags": ["标签1", "标签2", "标签3"]
 }`;
 
-    return callDeepSeek(prompt);
+    try {
+        return await callDeepSeek(prompt);
+    } catch (err) {
+        if (err.code === 'DEEPSEEK_JSON_PARSE_FAILED') {
+            return fallbackArticleAnalysis(article, err.message);
+        }
+        throw err;
+    }
 }
 
 module.exports = {
     isAvailable,
     generateDailySummary,
     generateWeeklySummary,
-    analyzeArticle
+    analyzeArticle,
+    parseJsonResponse,
+    fallbackArticleAnalysis
 };

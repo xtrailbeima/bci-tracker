@@ -215,6 +215,24 @@ async function testDeepSeekWeeklyAPI() {
     }
 }
 
+async function testImportSecurityAPI() {
+    console.log('\n🔐 /api/import security');
+    const cases = [
+        { url: 'file:///etc/passwd', label: 'rejects file protocol' },
+        { url: 'http://127.0.0.1:4000/', label: 'rejects localhost import target' },
+    ];
+    for (const item of cases) {
+        const res = await fetch(`${BASE}/api/import`, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ url: item.url }),
+        });
+        assert(res.status === 400, `${item.label} → ${res.status}`);
+        const data = await res.json();
+        assert(typeof data.error === 'string' && data.error.length > 0, `${item.label} returns readable error`);
+    }
+}
+
 // ── Runner ──────────────────────────────────────────────
 
 async function run() {
@@ -232,6 +250,7 @@ async function run() {
         await testFrontendFields();
         await testDeepSeekDailyAPI();
         await testDeepSeekWeeklyAPI();
+        await testImportSecurityAPI();
     } catch (err) {
         failed++;
         console.error(`\n💥 Fatal: ${err.message}`);
