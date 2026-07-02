@@ -90,6 +90,16 @@ async function testAuthFlow() {
     await request('/api/auth/logout', { method: 'POST' });
     authCookie = '';
     await login();
+    const usersAfter = await fetchJSON('/api/auth/users');
+    const readerAfter = usersAfter.users.find(u => u.email === readerEmail);
+    if (readerAfter) {
+        const disableRes = await request(`/api/auth/users/${readerAfter.id}`, {
+            method: 'PATCH',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ active: false }),
+        });
+        assert(disableRes.ok, `owner disables smoke reader (${disableRes.status})`);
+    }
 }
 
 async function testStaticAssets() {
