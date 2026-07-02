@@ -155,6 +155,7 @@ Last known completed checks:
 - Tencent Cloud deployment for `0110209` used a local Git bundle because the server-to-GitHub pull failed with transient TLS/HTTP2 errors.
 - Local-machine HTTPS checks may fail with `SSL_ERROR_SYSCALL` / Chrome `ERR_CONNECTION_CLOSED` when the current Mac resolves `njubci.com` to `198.18.x.x` fake-ip through a proxy/TUN path; those failed requests do not appear in Nginx logs.
 - Public DoH checked from this machine resolves `njubci.com` to `111.229.73.49`; server-side Nginx checks and remote verification are the source of truth until the browser/proxy path is bypassed or tested from a non-proxy network.
+- Local HTTPS retest on 2026-07-02 still showed `dig njubci.com -> 198.18.2.59` and local `curl` / `openssl s_client` failing with `SSL_ERROR_SYSCALL` or unexpected EOF, while Tencent-side `curl https://njubci.com/` returned the v5.0 HTML and unauthenticated `/api/all` returned 401. Nginx access/error logs did not show the local failed request entering the app.
 - `matching_reports/2026-06-28.md`: generated as workflow validation report
 
 Re-run checks after each new implementation slice.
@@ -184,7 +185,7 @@ Re-run checks after each new implementation slice.
 
 ## Next Step
 
-1. Re-test `https://njubci.com/` from a non-proxy network or add `njubci.com` / `111.229.73.49` to the local proxy DIRECT/bypass rule; if it still fails without fake-ip routing, inspect Tencent Cloud Lighthouse firewall/security rules for `TCP 443`.
+1. Re-test `https://njubci.com/` from a non-proxy network or add `njubci.com` / `111.229.73.49` to the local proxy DIRECT/bypass rule; the current Mac still resolves the domain to a `198.18.x.x` fake-ip and fails TLS before Nginx sees the request.
 2. Use `matching_reports/YYYY-MM-DD_context.md` as the handoff into Codex analysis, then manually review the final `matching_reports/YYYY-MM-DD.md` before updating project profiles.
 3. Keep highly sensitive project material restricted to project profile summaries unless the user explicitly asks to read BP/interview detail.
 4. After explicit browser-action confirmation, remove the now-unneeded Tencent Cloud firewall rule for public `TCP 4000`; code already binds the app to localhost, but the cloud rule should still be cleaned up.
