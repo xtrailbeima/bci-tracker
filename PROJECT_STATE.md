@@ -78,12 +78,14 @@ Last known completed checks:
 
 - `npm run validate:events -- external_events/2026-06-28.json`: passed, 40 events valid
 - `npm run validate:v2-local`: passed
-- `npm test`: passed, 111 passed / 0 failed, including auth/RBAC, reader cleanup, and self-start/self-stop behavior
-- `npm run verify`: passed, 111 passed / 0 failed
+- `npm test`: passed, 157 passed / 0 failed after commit `19e59b3`, including auth/RBAC, reader cleanup, local `/api/summary` compatibility, and self-start/self-stop behavior
+- `npm run verify`: passed, 157 passed / 0 failed after commit `19e59b3`
 - Remote `npm run verify` on Tencent Cloud after commit `8814596`: passed, 98 passed / 0 failed
 - Remote listener check after commit `8814596`: Node app listens on `127.0.0.1:4000`; `https://njubci.com/` returns 200; direct `http://111.229.73.49:4000/` no longer returns the app page
 - Remote `npm run verify` on Tencent Cloud after commit `b2702b4`: passed, 111 passed / 0 failed
 - Server-side HTTPS/SNI check after commit `b2702b4`: `https://njubci.com/` returns 200 with the v5.0 login gate; unauthenticated `https://njubci.com/api/all` returns 401
+- Remote `npm run verify` on Tencent Cloud after commit `19e59b3`: passed, 149 passed / 0 failed
+- Server-side HTTPS/SNI check after commit `19e59b3`: `https://njubci.com/` returns 200 with the v5.0 login gate; unauthenticated `https://njubci.com/api/all` returns 401
 - Local-machine HTTPS checks may fail with `SSL_ERROR_SYSCALL` if the current network/proxy path does not reach Nginx; server-side Nginx checks and remote verification are the source of truth until the browser path is re-tested from a normal network
 - `matching_reports/2026-06-28.md`: generated as workflow validation report
 
