@@ -97,6 +97,10 @@ Build BCI Tracker V2 as an investor-facing BCI intelligence workspace:
   - upgraded the dependency lock to patched Express, qs, path-to-regexp, protobufjs, ws, and related transitive packages
   - upgraded direct `nodemailer` dependency from 8.x to 9.x after confirming the project only uses the stable SMTP `sendMail({ html, bcc })` path
   - `npm audit --audit-level=moderate` now reports 0 vulnerabilities
+- Added npm install-script approval policy:
+  - `package.json` pins approved install scripts for `better-sqlite3@12.11.1` and `protobufjs@7.6.4`
+  - `scripts/test_allow_scripts_policy.js` fails verification if a package-lock install script is unreviewed or if an approval entry becomes stale
+  - `npm approve-scripts --allow-scripts-pending` reports no packages with unreviewed install scripts
 - Added configurable custom collection rules:
   - custom collections can be created with keyword rules and updated through `PATCH /api/collections/:id/rules`
   - rule input is bounded to string keyword arrays with count, length, dedupe, and character validation
@@ -121,6 +125,9 @@ Last known completed checks:
 - `npm run verify`: passed, 185 passed / 0 failed after adding Gemini route contract validation
 - `npm audit --audit-level=moderate`: passed, 0 vulnerabilities after dependency security upgrades
 - `npm run verify`: passed, 185 passed / 0 failed after dependency security upgrades
+- `npm approve-scripts --allow-scripts-pending`: passed, no packages with unreviewed install scripts
+- `npm install --dry-run`: passed without allow-scripts warnings after pinned install-script approvals
+- `npm run verify`: passed, 185 passed / 0 failed after install-script policy validation
 - Remote `npm run verify` on Tencent Cloud after commit `8814596`: passed, 98 passed / 0 failed
 - Remote listener check after commit `8814596`: Node app listens on `127.0.0.1:4000`; `https://njubci.com/` returns 200; direct `http://111.229.73.49:4000/` no longer returns the app page
 - Remote `npm run verify` on Tencent Cloud after commit `b2702b4`: passed, 111 passed / 0 failed
@@ -171,7 +178,7 @@ Re-run checks after each new implementation slice.
 2. Use `matching_reports/YYYY-MM-DD_context.md` as the handoff into Codex analysis, then manually review the final `matching_reports/YYYY-MM-DD.md` before updating project profiles.
 3. Keep highly sensitive project material restricted to project profile summaries unless the user explicitly asks to read BP/interview detail.
 4. After explicit browser-action confirmation, remove the now-unneeded Tencent Cloud firewall rule for public `TCP 4000`; code already binds the app to localhost, but the cloud rule should still be cleaned up.
-5. Review npm `allow-scripts` warnings for `better-sqlite3` and `protobufjs` before adopting a stricter install-script approval policy.
+5. Keep npm install-script approvals pinned to reviewed versions; update `package.json.allowScripts` intentionally when `better-sqlite3`, `protobufjs`, or another install-script package changes.
 
 ## Recovery Prompt
 
