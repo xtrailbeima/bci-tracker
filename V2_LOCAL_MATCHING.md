@@ -22,6 +22,34 @@ V2 separates public intelligence processing from confidential deal matching.
 
 5. Review the report manually before copying any conclusion back into the project knowledge base.
 
+## Prepare a Reusable Local Matching Context
+
+Before asking Codex for analysis, generate a bounded local context packet. This command does not call DeepSeek, OpenAI, or any external AI API. It reads only the selected external event file and Markdown profiles in `knowledge_base/projects/`.
+
+```bash
+npm run prepare:matching -- --date 2026-06-28
+```
+
+By default this writes:
+
+```text
+matching_reports/2026-06-28_context.md
+```
+
+Then ask Codex to read that context file and write the final report:
+
+```text
+读取 matching_reports/2026-06-28_context.md，生成 matching_reports/2026-06-28.md。
+不要读取 knowledge_base/bp_notes 或 knowledge_base/interviews，除非我明确要求。
+```
+
+Useful options:
+
+- `--events external_events/YYYY-MM-DD.json`: choose an event file directly.
+- `--projects knowledge_base/projects`: choose the project profile directory.
+- `--out matching_reports/custom_context.md`: choose the output path.
+- `--max-events 40`: cap the number of events included.
+
 ## Export Current Public Events
 
 The first V2 export loop is local and heuristic. It reads public article records from SQLite, maps them into the external event schema, and writes one JSON file.
@@ -57,6 +85,12 @@ The export loop deduplicates repeated public coverage by default. This is intend
 - `public_like`: public or already-shareable material; Codex may read linked summaries and notes when requested.
 - `confidential`: internal investment material; Codex should read the project profile and only relevant excerpts.
 - `highly_sensitive`: default to redacted profile fields only; full BP or interview notes require explicit user instruction.
+
+The context generator follows this policy conservatively:
+
+- It never reads BP, interview, or meeting-note directories.
+- For `highly_sensitive` projects, it includes metadata and one-line profile summary only.
+- It marks heuristic matches as requiring human confirmation.
 
 ## External Event Shape
 

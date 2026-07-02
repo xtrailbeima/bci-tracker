@@ -33,6 +33,11 @@ Build BCI Tracker V2 as an investor-facing BCI intelligence workspace:
   - `matching_reports/2026-06-28.md`
   - scope limited to `knowledge_base/projects/`
   - no BP, interview, or meeting-note files read
+- Added a reusable local matching context entry:
+  - `scripts/prepare_matching_context.js`
+  - `npm run prepare:matching -- --date YYYY-MM-DD`
+  - generated `matching_reports/2026-06-28_context.md`
+  - context files call no AI API, read no BP/interview directories, and include only metadata plus one-line summaries for highly sensitive projects
 - Added the first P0 deployment hardening slice:
   - `server.js` defaults to `HOST=127.0.0.1` instead of binding the Node app to all interfaces
   - `deploy.sh` no longer opens or advertises public port `4000`
@@ -78,8 +83,9 @@ Last known completed checks:
 
 - `npm run validate:events -- external_events/2026-06-28.json`: passed, 40 events valid
 - `npm run validate:v2-local`: passed
+- `node scripts/test_matching_context.js`: passed
 - `npm test`: passed, 157 passed / 0 failed after commit `19e59b3`, including auth/RBAC, reader cleanup, local `/api/summary` compatibility, and self-start/self-stop behavior
-- `npm run verify`: passed, 157 passed / 0 failed after commit `19e59b3`
+- `npm run verify`: passed, 157 passed / 0 failed after adding the matching context generator
 - Remote `npm run verify` on Tencent Cloud after commit `8814596`: passed, 98 passed / 0 failed
 - Remote listener check after commit `8814596`: Node app listens on `127.0.0.1:4000`; `https://njubci.com/` returns 200; direct `http://111.229.73.49:4000/` no longer returns the app page
 - Remote `npm run verify` on Tencent Cloud after commit `b2702b4`: passed, 111 passed / 0 failed
@@ -119,7 +125,7 @@ Re-run checks after each new implementation slice.
 ## Next Step
 
 1. Re-test `https://njubci.com/` from a non-proxy network or add `njubci.com` / `111.229.73.49` to the local proxy DIRECT/bypass rule; if it still fails without fake-ip routing, inspect Tencent Cloud Lighthouse firewall/security rules for `TCP 443`.
-2. Decide whether the next matching run should remain manual Codex output or become a reusable local script/template.
+2. Use `matching_reports/YYYY-MM-DD_context.md` as the handoff into Codex analysis, then manually review the final `matching_reports/YYYY-MM-DD.md` before updating project profiles.
 3. Keep highly sensitive project material restricted to project profile summaries unless the user explicitly asks to read BP/interview detail.
 4. After explicit browser-action confirmation, remove the now-unneeded Tencent Cloud firewall rule for public `TCP 4000`; code already binds the app to localhost, but the cloud rule should still be cleaned up.
 
