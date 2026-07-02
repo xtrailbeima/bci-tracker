@@ -7,6 +7,7 @@
  */
 
 const { GoogleGenAI } = require('@google/genai');
+const { parseAIJsonResponse } = require('./services/ai_json');
 
 // ─── Client Initialization ───────────────────────────────
 // Per SKILL.md: prefer env vars, initialize without hard-coding
@@ -180,44 +181,16 @@ function isAvailable() {
 // ─── JSON Parser with Repair ──────────────────────────────
 
 function parseJSONResponse(rawText) {
-    // Attempt strict parse first
-    try {
-        return JSON.parse(rawText);
-    } catch (e) {
-        // Repair: strip markdown fences, control chars
-        let cleaned = rawText
-            .replace(/```json\n?/g, '')
-            .replace(/```\n?/g, '')
-            .trim();
-
-        // Fix unclosed quotes before structural characters
-        cleaned = cleaned.replace(/"url":\s*"([^"\n]+)\n/g, '"url": "$1",\n');
-        cleaned = cleaned.replace(/[\u0000-\u0009\u000B-\u001F]+/g, '');
-
-        const jsonStart = cleaned.indexOf('{');
-        const jsonEnd = cleaned.lastIndexOf('}');
-        if (jsonStart !== -1 && jsonEnd !== -1) {
-            cleaned = cleaned.substring(jsonStart, jsonEnd + 1);
-        }
-
-        try {
-            return JSON.parse(cleaned);
-        } catch (repairErr) {
-            // Save failed output for debugging (same pattern as existing Hunyuan code)
-            const fs = require('fs');
-            const path = require('path');
-            fs.writeFileSync(
-                path.join(__dirname, 'failed_gemini_response.json'),
-                rawText,
-                'utf-8'
-            );
-            throw new Error('Gemini 返回的 JSON 无法解析，已保存到 failed_gemini_response.json');
-        }
-    }
+    return parseAIJsonResponse(rawText, {
+        provider: 'Gemini',
+        errorCode: 'GEMINI_JSON_PARSE_FAILED',
+        userMessage: 'Gemini 返回的 JSON 无法解析',
+    });
 }
 
 module.exports = {
     generateIndustrySummary,
     analyzeArticle,
     isAvailable,
+    parseJSONResponse,
 };

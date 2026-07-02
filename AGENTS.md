@@ -164,7 +164,7 @@ npm run verify
 2. ~~冒烟测试需要服务运行中~~ — ✅ `npm test` 通过 `scripts/run_smoke_with_server.js` 自行启动/关闭测试服务
 3. `translate.js` 为简单词典替换 — 对复杂句式效果有限
 4. 前端 `app.js` 无模块化 — 全局函数 + DOM 操作
-5. AI JSON 解析已有 DeepSeek 容错和 degraded fallback；日报/周报成功结构仍需更多回归样本覆盖
+5. AI JSON 解析已有 DeepSeek/Gemini 共享修复工具和 degraded fallback；日报/周报成功结构仍需更多真实样本回归覆盖
 6. 无 TypeScript — 无类型安全保障
 7. 无 CI/CD 管道 — 部署为手动 SSH
 

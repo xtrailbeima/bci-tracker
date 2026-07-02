@@ -84,6 +84,10 @@ Build BCI Tracker V2 as an investor-facing BCI intelligence workspace:
   - `scripts/validate_api_docs.js` scans actual Express routes and checks `AGENTS.md` plus `REQUIREMENTS.md`
   - documented previously missing `/api/source-health` and `/api/auth/change-password`
   - `npm run verify` now fails if either primary project document omits an implemented API route
+- Hardened AI JSON resilience across DeepSeek and Gemini:
+  - `services/ai_json.js` is the shared JSON parser/repair utility for both providers
+  - parse failures log provider, parser error, and response length without logging raw model output
+  - DeepSeek daily/weekly/article analysis have stable degraded fallbacks for JSON parse failures
 
 ## Current Verification
 
@@ -97,6 +101,7 @@ Last known completed checks:
 - `npm test`: passed, 168 passed / 0 failed after reader article redaction
 - `npm run verify`: passed, 168 passed / 0 failed after reader article redaction
 - `npm run verify`: passed, 168 passed / 0 failed after adding API documentation coverage validation
+- `node scripts/test_deepseek_json.js`: passed after shared AI JSON parser and degraded summary fallback changes
 - Remote `npm run verify` on Tencent Cloud after commit `8814596`: passed, 98 passed / 0 failed
 - Remote listener check after commit `8814596`: Node app listens on `127.0.0.1:4000`; `https://njubci.com/` returns 200; direct `http://111.229.73.49:4000/` no longer returns the app page
 - Remote `npm run verify` on Tencent Cloud after commit `b2702b4`: passed, 111 passed / 0 failed

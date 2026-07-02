@@ -417,7 +417,18 @@ router.get('/summary/daily', requireRole('owner', 'operator'), async (req, res) 
         res.json(cachedDailySummary);
     } catch (err) {
         console.error('DeepSeek Daily Summary error:', err.message);
-        dailyCooldownUntil = 0; // Reset on error
+        if (err.code === 'DEEPSEEK_JSON_PARSE_FAILED') {
+            cachedDailySummary = {
+                generated: new Date().toISOString(),
+                model: 'deepseek-chat',
+                type: 'daily',
+                ...deepseek.fallbackDailySummary(err.message)
+            };
+            dailySummaryLastGenerated = Date.now();
+            return res.json(cachedDailySummary);
+        }
+
+        dailyCooldownUntil = 0; // Reset on upstream/runtime errors
         res.json({
             generated: new Date().toISOString(),
             model: 'deepseek-chat',
@@ -425,7 +436,8 @@ router.get('/summary/daily', requireRole('owner', 'operator'), async (req, res) 
             headline: '❌ 每日速递生成失败',
             highlights: [{ text: err.message, tag: '错误', importance: 0 }],
             sectors: [],
-            investorTakeaway: '请稍后重试。'
+            investorTakeaway: '请稍后重试。',
+            errorCode: err.code || 'DEEPSEEK_UPSTREAM_FAILED'
         });
     }
 });
@@ -489,6 +501,17 @@ router.get('/summary/weekly', requireRole('owner', 'operator'), async (req, res)
         res.json(cachedWeeklySummary);
     } catch (err) {
         console.error('DeepSeek Weekly Summary error:', err.message);
+        if (err.code === 'DEEPSEEK_JSON_PARSE_FAILED') {
+            cachedWeeklySummary = {
+                generated: new Date().toISOString(),
+                model: 'deepseek-chat',
+                type: 'weekly',
+                ...deepseek.fallbackWeeklySummary(err.message)
+            };
+            weeklySummaryLastGenerated = Date.now();
+            return res.json(cachedWeeklySummary);
+        }
+
         weeklyCooldownUntil = 0;
         res.json({
             generated: new Date().toISOString(),
@@ -498,7 +521,8 @@ router.get('/summary/weekly', requireRole('owner', 'operator'), async (req, res)
             milestones: [],
             sectorReviews: [],
             fundingLandscape: { summary: '', deals: [] },
-            strategicGuide: { hotTracks: [], risks: [], earlyStageOpportunities: '请稍后重试。' }
+            strategicGuide: { hotTracks: [], risks: [], earlyStageOpportunities: '请稍后重试。' },
+            errorCode: err.code || 'DEEPSEEK_UPSTREAM_FAILED'
         });
     }
 });

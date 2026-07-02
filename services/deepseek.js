@@ -7,6 +7,8 @@
  * 安全：API Key 仅通过 process.env.DEEPSEEK_API_KEY 读取，绝不暴露到前端。
  */
 
+const { parseAIJsonResponse } = require('./ai_json');
+
 const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
 const DEEPSEEK_MODEL = 'deepseek-chat'; // DeepSeek-V3
 
@@ -148,13 +150,22 @@ async function callDeepSeek(prompt) {
 
         if (!response.ok) {
             const errBody = await response.text().catch(() => '');
-            throw new Error(`DeepSeek API ${response.status}: ${errBody.slice(0, 200)}`);
+            const err = new Error(`DeepSeek API ${response.status}: ${errBody.slice(0, 200)}`);
+            err.code = 'DEEPSEEK_HTTP_ERROR';
+            throw err;
         }
 
         const data = await response.json();
         const rawText = data.choices?.[0]?.message?.content || '';
 
         return parseJsonResponse(rawText);
+    } catch (err) {
+        if (err.name === 'AbortError') {
+            const timeoutErr = new Error('DeepSeek API 请求超时');
+            timeoutErr.code = 'DEEPSEEK_TIMEOUT';
+            throw timeoutErr;
+        }
+        throw err;
     } finally {
         clearTimeout(timeout);
     }
@@ -163,41 +174,50 @@ async function callDeepSeek(prompt) {
 // ─── JSON 解析与修复 ──────────────────────────────────────
 
 function parseJsonResponse(rawText) {
-    // First attempt: direct parse
-    try {
-        return JSON.parse(rawText);
-    } catch (e) {
-        // Fallback: strip markdown fences and repair
-    }
+    return parseAIJsonResponse(rawText, {
+        provider: 'DeepSeek',
+        errorCode: 'DEEPSEEK_JSON_PARSE_FAILED',
+        userMessage: 'DeepSeek 返回数据解析失败',
+    });
+}
 
-    let cleaned = rawText
-        .replace(/```json\n?/g, '')
-        .replace(/```\n?/g, '')
-        .trim();
+function fallbackDailySummary(reason) {
+    return {
+        headline: 'DeepSeek 每日速递需要人工确认',
+        highlights: [
+            {
+                text: 'DeepSeek 返回了非标准 JSON，本次每日速递已降级，需要人工确认后再用于投资判断。',
+                tag: '解析失败',
+                importance: 0,
+                url: ''
+            }
+        ],
+        sectors: [],
+        investorTakeaway: '暂不生成强投资建议。请稍后重试，或先按信息流重要性等级人工筛选。',
+        degraded: true,
+        errorCode: 'DEEPSEEK_JSON_PARSE_FAILED',
+        reason,
+    };
+}
 
-    // Fix unclosed string values
-    cleaned = cleaned.replace(/(\"url\":\s*\"[^\"\n]+)\n/g, '$1",\n');
-    cleaned = cleaned.replace(/(\"[^\"]+\":\s*\"[^\"\n]+)(\n\s*(\}|\]))/g, '$1"$2');
-
-    // Remove illegal control characters
-    cleaned = cleaned.replace(/[\u0000-\u0009\u000B-\u001F]+/g, '');
-
-    // Extract JSON object
-    const jsonStart = cleaned.indexOf('{');
-    const jsonEnd = cleaned.lastIndexOf('}');
-    if (jsonStart !== -1 && jsonEnd !== -1) {
-        cleaned = cleaned.substring(jsonStart, jsonEnd + 1);
-    }
-
-    try {
-        return JSON.parse(cleaned);
-    } catch (repairErr) {
-        console.error('DeepSeek JSON parse failed:', repairErr.message);
-        console.error('Raw response (first 500 chars):', rawText.slice(0, 500));
-        const err = new Error('DeepSeek 返回数据解析失败');
-        err.code = 'DEEPSEEK_JSON_PARSE_FAILED';
-        throw err;
-    }
+function fallbackWeeklySummary(reason) {
+    return {
+        weekOverview: 'DeepSeek 每周周报需要人工确认：上游返回了非标准 JSON，本次结果已降级。',
+        milestones: [],
+        sectorReviews: [],
+        fundingLandscape: {
+            summary: '周报解析失败，融资格局需人工复核。',
+            deals: []
+        },
+        strategicGuide: {
+            hotTracks: [],
+            risks: ['AI 周报解析失败，不能直接作为投资判断依据。'],
+            earlyStageOpportunities: '暂不生成强投资建议。请稍后重试，或基于本周高重要性条目人工复核。'
+        },
+        degraded: true,
+        errorCode: 'DEEPSEEK_JSON_PARSE_FAILED',
+        reason,
+    };
 }
 
 function fallbackArticleAnalysis(article, reason) {
@@ -274,5 +294,7 @@ module.exports = {
     generateWeeklySummary,
     analyzeArticle,
     parseJsonResponse,
-    fallbackArticleAnalysis
+    fallbackArticleAnalysis,
+    fallbackDailySummary,
+    fallbackWeeklySummary
 };
