@@ -80,6 +80,10 @@ Build BCI Tracker V2 as an investor-facing BCI intelligence workspace:
   - `/api/all` and `/api/collections/:id` strip exact `importance`, fetch diagnostics, source quality fields, fetch errors, and internal collection metadata for `reader`
   - front-end article cards fall back to importance level only when the exact score is absent
   - smoke coverage asserts reader redaction while owner still receives full diagnostic fields
+- Added API documentation drift protection:
+  - `scripts/validate_api_docs.js` scans actual Express routes and checks `AGENTS.md` plus `REQUIREMENTS.md`
+  - documented previously missing `/api/source-health` and `/api/auth/change-password`
+  - `npm run verify` now fails if either primary project document omits an implemented API route
 
 ## Current Verification
 
@@ -92,6 +96,7 @@ Last known completed checks:
 - `npm run verify`: passed, 157 passed / 0 failed after adding the matching context generator
 - `npm test`: passed, 168 passed / 0 failed after reader article redaction
 - `npm run verify`: passed, 168 passed / 0 failed after reader article redaction
+- `npm run verify`: passed, 168 passed / 0 failed after adding API documentation coverage validation
 - Remote `npm run verify` on Tencent Cloud after commit `8814596`: passed, 98 passed / 0 failed
 - Remote listener check after commit `8814596`: Node app listens on `127.0.0.1:4000`; `https://njubci.com/` returns 200; direct `http://111.229.73.49:4000/` no longer returns the app page
 - Remote `npm run verify` on Tencent Cloud after commit `b2702b4`: passed, 111 passed / 0 failed
@@ -118,7 +123,6 @@ Re-run checks after each new implementation slice.
 
 ## Known Dirty State
 
-- `AGENTS.md` has existing local edits.
 - SQLite WAL/SHM files may appear modified while the local server is running.
 - `bci-tracker/` is an untracked legacy or duplicate directory and is not part of the current V2 work unless explicitly reviewed.
 

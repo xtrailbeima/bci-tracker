@@ -121,11 +121,13 @@ npm run verify
 | GET | `/api/auth/me` | 当前登录用户 |
 | POST | `/api/auth/login` | 登录并写入 HttpOnly session cookie |
 | POST | `/api/auth/logout` | 退出登录 |
+| POST | `/api/auth/change-password` | 当前用户修改自己的密码 |
 | GET | `/api/auth/users` | 用户列表 (owner) |
 | POST | `/api/auth/users` | 创建授权用户 (owner) |
 | PATCH | `/api/auth/users/:id` | 更新用户/角色/状态/密码 (owner) |
 | GET | `/api/auth/audit` | 审计日志 (owner) |
 | GET | `/api/stats` | 统计数据 (total, journals, preprints, news) |
+| GET | `/api/source-health` | 数据源抓取健康度 (owner/operator) |
 | GET | `/api/summary` | 本地兼容行业简报 (45 分钟缓存，不调用 Hunyuan) |
 | GET | `/api/summary/daily` | DeepSeek 每日行业速递 |
 | GET | `/api/summary/weekly` | DeepSeek 每周行业周报 |
